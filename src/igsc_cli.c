@@ -10,6 +10,7 @@
 #include <string.h>
 #ifdef __linux__
   #include <unistd.h>
+  #include <libgen.h>
 #else
   #include <windows.h>
   #include <initguid.h>
@@ -925,9 +926,51 @@ out:
     return NULL;
 }
 
+#ifdef __linux__
+char *prog_name(const char *exe_path)
+{
+    const char *p = NULL;
+
+    p = strrchr(exe_path, '/');
+    if (p == NULL)
+    {
+        p = exe_path;
+    }
+    else
+    {
+        p++;
+    }
+
+    return strdup(p);
+}
+#else
+char *prog_name(const char *exe_path)
+{
+    errno_t ret;
+    char fname[_MAX_FNAME];
+    char ext[_MAX_EXT];
+    char *str = NULL;
+    size_t str_len = 0;
+
+   ret = _splitpath_s(exe_path, NULL, 0, NULL, 0,
+                      fname, sizeof(fname), ext, sizeof(ext));
+   if (ret)
+   {
+       return NULL;
+   }
+
+   str_len = strlen(fname) + strlen(ext) + 2;
+   str = calloc(1, str_len);
+   strcat_s(str, str_len, fname);
+   strcat_s(str, str_len, ext);
+
+   return str;
+}
+#endif
+
 int main(int argc, char* argv[])
 {
-    const char *exec_name = argv[0];
+    char *exec_name = prog_name(argv[0]);
     const struct fwupd_op *op = NULL;
     int ret;
 
@@ -942,6 +985,8 @@ int main(int argc, char* argv[])
     {
         help(exec_name, op);
     }
+
+    free(exec_name);
 
     return (ret) ? EXIT_FAILURE : EXIT_SUCCESS;
 }
