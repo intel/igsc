@@ -43,3 +43,12 @@ target_link_libraries(version_tests PRIVATE LIBMETEE)
 target_include_directories(version_tests
                             PRIVATE ${IGCS_INCLUDE_DIRS})
 add_cmocka_test_environment(version_tests)
+
+add_cmocka_test(oprom_parser_tests
+                SOURCES oprom_parser_tests.c
+                LINK_LIBRARIES cmocka
+                COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS} -DUNIT_TESTING=1)
+target_link_libraries(oprom_parser_tests PRIVATE LIBMETEE)
+target_include_directories(oprom_parser_tests
+                           PRIVATE ${IGCS_INCLUDE_DIRS})
+add_cmocka_test_environment(oprom_parser_tests)
