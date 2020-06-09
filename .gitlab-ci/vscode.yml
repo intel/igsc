@@ -1,6 +1,5 @@
 .vscode:
         script:
-                - echo $VS_CODE
-                - cmake -G $VS_CODE -S . -B build
-                - cmake --build build --config Release
+                - cmake $CMAKE_ARGS -G $VS_CODE -S . -B build
+                - cmake --build build --config Release -t $COMPILE_TARGET
 

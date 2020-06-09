@@ -74,7 +74,7 @@ gcc:
         extends: .compile
         variables:
                 CMAKE_ARGS: '-DCMAKE_C_COMPILER=gcc -DLIBMETEE_REPO=$REPO_DIR -DENABLE_TESTS:BOOL=ON'
-                COMPILE_TARGET: 'all'
+                COMPILE_TARGET: 'package'
         artifacts:
                 paths:
                         - build/
@@ -120,10 +120,10 @@ vscode16:
         extends: .vscode
         variables:
                 VS_CODE: "Visual Studio 16 2019"
+                COMPILE_TARGET: package
         artifacts:
                 paths:
-                        - build\\src\\Release\\*
-                        - build\\lib\\Release\\*
+                        - build\igsc-*.zip
 
 centos8:
         stage: build
@@ -171,6 +171,8 @@ cmake:install_tests:
         dependencies:
                 - gcc
 
+
+
 meson:install_tests:
         stage: test
         image: ${CI_REGISTRY}/lms-ubuntu:20.04
@@ -181,6 +183,19 @@ meson:install_tests:
         dependencies:
                 - meson
 
+
+cmake:binary_package:
+        stage: deploy
+        image: ${CI_REGISTRY}/lms-ubuntu:18.04
+        tags:
+                - Linux
+        script:
+                - sudo make -C build package
+        dependencies:
+                - gcc
+        artifacts:
+                paths:
+                        - build/igsc-*.tar.gz
 
 pages:
         stage: deploy
