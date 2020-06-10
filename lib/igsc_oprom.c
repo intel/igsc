@@ -9,9 +9,8 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#ifdef __linux__
-#include <unistd.h>
-#endif /* __linux__ */
+
+#include "msvc/config.h"
 
 #ifdef UNIT_TESTING
 #include <stdarg.h>
@@ -20,11 +19,12 @@
 #include <cmocka.h>
 #endif
 
-#include "msvc/config.h"
 
 #include <igsc_lib.h>
 #include "igsc_oprom.h"
 #include "igsc_log.h"
+
+#include "utils.h"
 
 /* CPD header entry indices */
 #define MANIFEST_INDEX 0
@@ -393,8 +393,8 @@ static int image_oprom_parse(struct igsc_oprom_image *img)
 static int image_oprom_get_version(struct igsc_oprom_image *img,
                                    struct igsc_oprom_version *version)
 {
-    memcpy(version, &img->cpd_img.manifest_header->version,
-           sizeof(struct igsc_oprom_version));
+    gsc_memcpy_s(version, sizeof(*version),
+                 &img->cpd_img.manifest_header->version, sizeof(*version));
     return IGSC_SUCCESS;
 }
 
@@ -440,7 +440,9 @@ static int image_oprom_get_device(struct igsc_oprom_image *img, uint32_t num,
     gsc_debug("max_num %u num %u\n", max_num, num);
     if (num < max_num)
     {
-        memcpy(device, &img->cpd_img.dev_ext->device_ids[num], sizeof(*device));
+        gsc_memcpy_s(device, sizeof(*device),
+                     &img->cpd_img.dev_ext->device_ids[num],
+                     sizeof(*device));
         return IGSC_SUCCESS;
     }
 
@@ -499,7 +501,7 @@ static int image_oprom_alloc_handle(struct igsc_oprom_image **img,
         return IGSC_ERROR_NOMEM;
     }
 
-    memcpy(_buffer, buffer, buffer_len);
+    gsc_memcpy_s(_buffer, buffer_len, buffer, buffer_len);
     _img->buffer = _buffer;
     _img->buffer_len = buffer_len;
 

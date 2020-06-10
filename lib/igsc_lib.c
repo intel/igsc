@@ -9,9 +9,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#ifdef __linux__
-#include <unistd.h>
-#endif /* __linux__ */
 
 #include "msvc/config.h"
 
@@ -34,10 +31,7 @@
 #include "igsc_perf.h"
 #include "igsc_log.h"
 
-#ifdef __linux__
-#define min(a,b) ((a)<(b)?(a):(b))
-#define _countof(a) (sizeof(a)/sizeof(*(a)))
-#endif /* __linux__ */
+#include "utils.h"
 
 /*
  * FIXME: cmocka cannot track strudp allocation need to craft our own
@@ -50,7 +44,7 @@ char *gsc_strdup(const char *s)
     {
         return NULL;
     }
-    memcpy(d, s, len + 1);
+    gsc_memcpy_s(d, len + 1, s, len + 1);
     return d;
 }
 
@@ -225,23 +219,6 @@ static void gsc_fwu_img_layout_reset(struct gsc_fwu_img_layout *layout)
 {
     memset(layout, 0, sizeof(*layout));
 }
-
-#ifdef __linux__
-static inline int memcpy_s(void *dest, size_t dest_size,
-                           const void *src, size_t count)
-{
-    if (count > dest_size)
-        return -1;
-
-    memcpy(dest, src, count);
-    return 0;
-}
-
-static void Sleep(uint32_t msecs)
-{
-    usleep(msecs * 10);
-}
-#endif /* __linux__ */
 
 static bool is_empty(const uint8_t *buf, size_t size)
 {
@@ -680,8 +657,8 @@ static int gsc_fwu_get_oprom_version(struct igsc_lib_ctx *lib_ctx,
                                  sizeof(*version), &pnt);
     if (!status)
     {
-        if (memcpy_s(version->version, IGSC_OPROM_VER_SIZE,
-                     pnt, IGSC_OPROM_VER_SIZE))
+        if (gsc_memcpy_s(version->version, IGSC_OPROM_VER_SIZE,
+                         pnt, IGSC_OPROM_VER_SIZE))
         {
             gsc_error("Copy of version data failed\n");
             status = IGSC_ERROR_INTERNAL;
@@ -728,7 +705,7 @@ static int gsc_fwu_start(struct igsc_lib_ctx *lib_ctx, uint32_t payload_type)
     req->payload_type = payload_type;
     req->flags = 0;
     memset(req->reserved, 0, sizeof(req->reserved));
-    if (memcpy_s(&req->data, buf_len - sizeof(*req), fpt_info, fpt_info_len))
+    if (gsc_memcpy_s(&req->data, buf_len - sizeof(*req), fpt_info, fpt_info_len))
     {
         gsc_error("Copy of meta data failed\n");
         status = IGSC_ERROR_INTERNAL;
@@ -801,7 +778,7 @@ static int gsc_fwu_data(struct igsc_lib_ctx *lib_ctx,
     memset(req, 0, sizeof(req->header));
     req->header.command_id = command_id;
     req->data_length = length;
-    if (memcpy_s(req->data, buf_len - sizeof(*req), data, length))
+    if (gsc_memcpy_s(req->data, buf_len - sizeof(*req), data, length))
     {
         gsc_error("Copy of request has failed\n");
         status = IGSC_ERROR_INTERNAL;
@@ -1262,7 +1239,7 @@ int igsc_device_fw_update(IN struct igsc_device_handle *handle,
         }
         else
         {
-            Sleep(100);
+            gsc_msleep(100);
         }
     }
 
@@ -1436,7 +1413,7 @@ int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
         }
         else
         {
-            Sleep(100);
+            gsc_msleep(100);
         }
     }
 
