@@ -15,7 +15,7 @@ if(NOT WIN32)
     option(SYSLOG "Use syslog for logging" ON)
 endif()
 option(ENABLE_PERF "Enable performance counters" OFF)
-option(BUILD_DOCS "Enable docs build" OFF)
+option(ENABLE_DOCS "Enable docs build" OFF)
 option(ENABLE_TESTS "Perform unit tests after build" OFF)
 
 set(COMPILE_OPTIONS_NX
@@ -62,7 +62,7 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINK_OPTIONS}")
 add_subdirectory("lib")
 add_subdirectory("src")
 
-if(BUILD_DOCS)
+if(ENABLE_DOCS)
   add_subdirectory("doc")
 endif()
 
