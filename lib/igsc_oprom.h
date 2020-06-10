@@ -18,14 +18,6 @@
 
 #pragma pack(1)
 
-struct oprom_header_ext {
-    uint16_t signature;
-    uint32_t image_size:8;             /**< Image size in units of 512 bytes */
-    uint32_t init_func_entry_point:24;
-    uint8_t  reserved[18];
-    uint16_t pci_data_structure_pointer;
-};
-
 struct oprom_header_ext_v2 {
     uint16_t signature;
     uint16_t image_size;              /**< Image size in units of 512 bytes */

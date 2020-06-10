@@ -10,7 +10,7 @@
 #include "igsc_oprom.c"
 
 
-uint8_t buf[sizeof(struct oprom_header_ext) + 1];
+uint8_t buf[sizeof(struct oprom_header_ext_v2) + 1];
 
 static int group_setup(void **state)
 {

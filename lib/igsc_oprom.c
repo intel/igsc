@@ -37,7 +37,28 @@
 #define MFT_EXT_TYPE_IFWI_PART_MAN        22
 #define MDF_EXT_TYPE_MODULE_ATTR          10
 
-struct igsc_cpd_image {
+#define PCI_DATA_SIGNATURE       0x52494350 /* "PCIR" */
+#define PCI_VENDOR_ID            0x8086
+#define PCI_DEVICE_ID            0x00
+#define PCI_DATA_LENGTH          0x18
+#define PCI_DATA_REVISION        0x03
+#define PCI_CLASS_CODE           0x00
+#define PCI_REVISION_LEVEL       0x00
+#define PCI_IMG_SIZE_UNIT_SIZE   512
+#define PCI_LAST_IMAGE_IND_BIT   (1<<7)
+
+#define PCI_SUBSYSTEM_EFI_BOOT_SRV_DRV    0x00
+#define PCI_MACHINE_TYPE_X64              0x00
+#define PCI_COMPRESSION_TYPE_UNCOMPRESSED 0x00
+
+#define MANIFEST_SIZE_MAX_VALUE               (2 * 1024) /* size in longwords */
+#define METADATA_MAX_SIZE_BYTES               (5 * 1024)
+
+#define MANIFEST_COMPRESSION_TYPE_UNCOMPRESSED 0
+#define MANIFEST_COMPRESSION_TYPE_HUFFMAN      1
+#define MANIFEST_COMPRESSION_TYPE_LZMA         2
+
+struct cpd_image {
     struct code_partition_directory_header *cpd_header;  /**< cpd header */
     size_t manifest_offset;                              /**< offset of the manifest */
     struct mft_header *manifest_header;                  /**< pointer to the manifest header */
@@ -57,7 +78,7 @@ struct igsc_oprom_image {
     size_t buffer_len;                     /**< length for the oprom image buffer */
     size_t cpd_offset;                     /**< offset of the cpd image inside the buffer */
     const uint8_t *cpd_ptr;                /**< pointer to the start of cpd image inside the buffer */
-    struct igsc_cpd_image cpd_img;         /**< cpd image structure */
+    struct cpd_image cpd_img;         /**< cpd image structure */
     struct oprom_pci_data *pci_data;       /**< pointer to pci data inside the buffer */
     struct oprom_header_ext_v2 *v2_header; /**< expansion header version 2 */
 
@@ -152,7 +173,6 @@ static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
 
         if (header->extension_type == MFT_EXT_TYPE_DEVICE_TYPE)
         {
-            /* TODO: check the exact match */
             if (header->extension_length < sizeof(*header) + sizeof(struct oprom_subsystem_device_id))
             {
                 gsc_error("Illegal oprom cpd image (device extension %u)\n",
@@ -166,7 +186,6 @@ static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
 
         if (header->extension_type == MFT_EXT_TYPE_SIGNED_PACKAGE_INFO)
         {
-            /* TODO: check the exact match */
             if (header->extension_length < sizeof(struct mft_signed_package_info_ext))
             {
                 gsc_error("Illegal oprom cpd image (signed pkg info ext %u)\n",
@@ -177,7 +196,6 @@ static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
 
         if (header->extension_type == MFT_EXT_TYPE_IFWI_PART_MAN)
         {
-            /* TODO: check the exact match */
             if (header->extension_length < sizeof(struct mft_ifwi_part_man_ext))
             {
                 gsc_error("Illegal oprom cpd image (ifwi part ext %u)\n",
@@ -188,13 +206,23 @@ static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
 
         if (header->extension_type == MDF_EXT_TYPE_MODULE_ATTR)
         {
-            /* TODO: check the exact match */
-            if (header->extension_length < sizeof(struct mdf_module_attr_ext))
+            if (header->extension_length != sizeof(struct mdf_module_attr_ext))
             {
-                gsc_error("Illegal oprom cpd image (mdf module attr ext %u)\n",
+                gsc_error("Illegal oprom cpd image (mdf module attr ext len %u)\n",
                           header->extension_length);
                 return IGSC_ERROR_INVALID_PARAMETER;
             }
+
+            struct mdf_module_attr_ext *attr_ext = (struct mdf_module_attr_ext*)header;
+            if (attr_ext->compression_type != MANIFEST_COMPRESSION_TYPE_UNCOMPRESSED)
+            {
+                gsc_error("Illegal oprom cpd image (mdf module attr ext comp type %u)\n",
+                          attr_ext->compression_type);
+                return IGSC_ERROR_INVALID_PARAMETER;
+            }
+
+            gsc_debug("uncompressed_size %u end-start %lu\n",
+                      attr_ext->uncompressed_size, ext_end - ext_start);
         }
 
         cur_offset += header->extension_length;
@@ -206,11 +234,13 @@ static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
 static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len)
 {
     struct code_partition_directory_header *header = (struct code_partition_directory_header *)img->cpd_ptr;
-    struct igsc_cpd_image *cpd_img = &img->cpd_img;
+    struct cpd_image *cpd_img = &img->cpd_img;
 
-    if (buf_len <= sizeof(*header) + MAX_INDEX * sizeof(header->entries[0]))
+    if (buf_len <= sizeof(*header) + header->num_of_entries * sizeof(header->entries[0]) ||
+         header->num_of_entries < MAX_INDEX)
     {
-        gsc_error("Illegal oprom cpd image (size %lu)\n", buf_len);
+        gsc_error("Illegal oprom cpd image (size/num_of_entries %lu/%u)\n",
+                  buf_len, header->num_of_entries);
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
@@ -233,6 +263,17 @@ static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len)
                   header->entries[MANIFEST_INDEX].offset);
         return IGSC_ERROR_INVALID_PARAMETER;
     }
+
+    gsc_debug("cpd entry manifest length %u\n", header->entries[MANIFEST_INDEX].length);
+    gsc_debug("cpd entry metadata length %u\n", header->entries[METADATA_INDEX].length);
+
+    if (header->entries[MANIFEST_INDEX].length > MANIFEST_SIZE_MAX_VALUE * sizeof(uint32_t))
+    {
+        gsc_error("Illegal manifest length %u)\n",
+                  header->entries[MANIFEST_INDEX].length);
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
     cpd_img->manifest_header = (struct mft_header *)
                                   (img->cpd_ptr + header->entries[MANIFEST_INDEX].offset);
 
@@ -303,12 +344,48 @@ static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len)
                   header->entries[METADATA_INDEX].length);
         return IGSC_ERROR_INVALID_PARAMETER;
     }
+
     cpd_img->metadata_start = header->entries[METADATA_INDEX].offset;
     cpd_img->metadata_end = cpd_img->metadata_start + header->entries[METADATA_INDEX].length;
+
+    if (image_oprom_parse_extensions(img, cpd_img->metadata_start, cpd_img->metadata_end))
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
 
     return image_oprom_parse_extensions(img,
                                         cpd_img->manifest_ext_start,
                                         cpd_img->manifest_ext_end);
+}
+
+static bool verify_pci_data(struct oprom_pci_data *p_d)
+{
+   /* Verify PCI data const values */
+   return (p_d->signature == PCI_DATA_SIGNATURE &&
+           p_d->vendor_id == PCI_VENDOR_ID &&
+           p_d->device_id == PCI_DEVICE_ID &&
+           p_d->pci_data_structure_length == PCI_DATA_LENGTH &&
+           p_d->pci_data_structure_revision == PCI_DATA_REVISION &&
+           p_d->class_code == PCI_CLASS_CODE &&
+           p_d->revision_level == PCI_REVISION_LEVEL &&
+           (p_d->last_image_indicator & PCI_LAST_IMAGE_IND_BIT) == 0);
+}
+
+static bool verify_pci_header(struct oprom_header_ext_v2 *header, size_t buf_len)
+{
+    if (header->pci_data_structure_pointer >= buf_len ||
+        header->pci_data_structure_pointer + sizeof(*header) >= buf_len)
+    {
+        gsc_error("Illegal oprom image structure : pci_data %d %zd\n",
+                  header->pci_data_structure_pointer, buf_len);
+        return false;
+    }
+
+    /* Verify PCI header const values */
+    return (header->signature == ROM_SIGNATURE &&
+            header->subsystem == PCI_SUBSYSTEM_EFI_BOOT_SRV_DRV &&
+            header->machine_type == PCI_MACHINE_TYPE_X64 &&
+            header->compression_type == PCI_COMPRESSION_TYPE_UNCOMPRESSED);
 }
 
 static bool contains_cpd_offset(IN struct igsc_oprom_image *img)
@@ -337,21 +414,12 @@ static int image_oprom_parse(struct igsc_oprom_image *img)
     }
 
     v2_header = (struct oprom_header_ext_v2 *)img->buffer;
-
-    if (v2_header->signature != ROM_SIGNATURE)
+    if (!verify_pci_header(v2_header, img->buffer_len))
     {
-        gsc_error("Illegal oprom image structure (signature 0x%x)\n",
-                  v2_header->signature);
-        return IGSC_ERROR_INVALID_PARAMETER;
+       gsc_error("Illegal oprom image pci header\n");
+       return IGSC_ERROR_INVALID_PARAMETER;
     }
 
-    if (v2_header->pci_data_structure_pointer >= img->buffer_len ||
-        v2_header->pci_data_structure_pointer + sizeof(*v2_header) >= img->buffer_len)
-    {
-        gsc_error("Illegal oprom image structure (pci_data %u %lu)\n",
-                  v2_header->pci_data_structure_pointer, img->buffer_len);
-        return IGSC_ERROR_INVALID_PARAMETER;
-    }
     gsc_debug("pci_data_pointer %ul)\n", v2_header->pci_data_structure_pointer);
 
     img->v2_header = v2_header;
@@ -360,13 +428,25 @@ static int image_oprom_parse(struct igsc_oprom_image *img)
 
     debug_print_pci_data(pci_data);
 
+    if (!verify_pci_data(pci_data))
+    {
+       gsc_error("Illegal oprom image pci data\n");
+       return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
     if (pci_data->code_type != OPROM_CODE_TYPE_DATA && pci_data->code_type != OPROM_CODE_TYPE_CODE)
     {
         gsc_error("Illegal oprom image structure (pci code_type 0x%x)\n",
                   pci_data->code_type);
         return IGSC_ERROR_INVALID_PARAMETER;
     }
-    /* TODO: Should we check here other fields of pci_data structure ? */
+
+    if (v2_header->image_size != pci_data->image_length)
+    {
+        gsc_error("Illegal oprom image pci header/data sizes 0x%x/0x%x)\n",
+                  v2_header->image_size, pci_data->image_length);
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
 
     img->pci_data = pci_data;
 
@@ -401,20 +481,23 @@ static int image_oprom_get_version(struct igsc_oprom_image *img,
 static int image_oprom_get_type(struct igsc_oprom_image *img,
                                 enum igsc_oprom_type *type)
 {
-    uint8_t _type;
-
-    _type = img->pci_data->code_type;
+    uint8_t _type = img->pci_data->code_type;
 
     gsc_debug("code_type 0x%x\n", img->pci_data->code_type);
 
-    if (_type == IGSC_OPROM_DATA || _type == IGSC_OPROM_CODE)
+    if (_type == OPROM_CODE_TYPE_DATA)
     {
-       *type = _type;
+       *type = IGSC_OPROM_DATA;
+       return IGSC_SUCCESS;
+    }
+
+    if (_type == OPROM_CODE_TYPE_CODE)
+    {
+       *type = IGSC_OPROM_CODE;
        return IGSC_SUCCESS;
     }
 
     return IGSC_ERROR_DEVICE_NOT_FOUND;
-
 }
 
 static uint32_t image_oprom_count_devices(struct igsc_oprom_image *img)
@@ -483,7 +566,7 @@ static int image_oprom_alloc_handle(struct igsc_oprom_image **img,
     void *_buffer;
 
     if (img == NULL || buffer == NULL ||
-        buffer_len <= sizeof(struct oprom_header_ext))
+        buffer_len <= sizeof(struct oprom_header_ext_v2))
     {
         return IGSC_ERROR_INVALID_PARAMETER;
     }

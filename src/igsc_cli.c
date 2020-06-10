@@ -561,11 +561,13 @@ static int do_oprom_image_info(int argc, char *argv[])
     ret = igsc_image_oprom_init(&oimg, img->blob, img->size);
     if (ret != IGSC_SUCCESS)
     {
+        fwupd_error("Failed to init :%s\n", image_path);
         goto out;
     }
     ret = igsc_image_oprom_type(oimg, &type);
     if (ret != IGSC_SUCCESS)
     {
+        fwupd_error("Failed to get oprom image type\n");
         goto release;
     }
     printf("OPROM Type: %d\n", type);
