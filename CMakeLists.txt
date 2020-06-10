@@ -17,6 +17,7 @@ endif()
 option(ENABLE_PERF "Enable performance counters" OFF)
 option(ENABLE_DOCS "Enable docs build" OFF)
 option(ENABLE_TESTS "Perform unit tests after build" OFF)
+option(ENABLE_WERROR "Enable treat warnings as error" ON)
 
 set(COMPILE_OPTIONS_NX
     -Wno-unused-parameter
@@ -28,6 +29,7 @@ set(COMPILE_OPTIONS_NX
     -Winit-self
     -fPIC
     "$<$<CONFIG:DEBUG>:-O0;-g3;-ggdb>"
+    "$<$<BOOL:${ENABLE_WERROR}>:-Werror>"
 )
 
 set(COMPILE_OPTIONS_WIN
@@ -37,6 +39,7 @@ set(COMPILE_OPTIONS_WIN
     /MT$<$<CONFIG:Debug>:d>
     /GS
     /sdl
+    "$<$<BOOL:${ENABLE_WERROR}>:/WX>"
 )
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(LINK_OPTIONS_NX "-z noexecstack -z relro -z now")
