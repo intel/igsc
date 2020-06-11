@@ -55,12 +55,13 @@ struct igsc_cpd_image {
 struct igsc_oprom_image {
     const uint8_t *buffer;                 /**< buffer for oprom image */
     size_t buffer_len;                     /**< length for the oprom image buffer */
-    size_t cur_device_pos;                 /**< iterator's current device position */
     size_t cpd_offset;                     /**< offset of the cpd image inside the buffer */
     const uint8_t *cpd_ptr;                /**< pointer to the start of cpd image inside the buffer */
     struct igsc_cpd_image cpd_img;         /**< cpd image structure */
     struct oprom_pci_data *pci_data;       /**< pointer to pci data inside the buffer */
     struct oprom_header_ext_v2 *v2_header; /**< expansion header version 2 */
+
+    uint32_t cur_device_pos;               /**< iterator's current device position */
 };
 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -80,6 +81,7 @@ static void debug_print_device_type_ext(struct mft_oprom_device_type_ext *ext)
 #else
 static inline void debug_print_device_type_ext(struct mft_oprom_device_type_ext *ext)
 {
+    (void)ext;
 }
 #endif
 
