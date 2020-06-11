@@ -81,9 +81,13 @@ static void print_fw_version(const struct igsc_fw_version *fw_version)
            fw_version->build);
 }
 
-static void print_oprom_version(const struct igsc_oprom_version *oprom_version)
+static void print_oprom_version(enum igsc_oprom_type type,
+                                const struct igsc_oprom_version *oprom_version)
 {
-    printf("OPROM Version: %02X %02X %02X %02X %02X %02X %02X %02X\n",
+    const char *type_str = type == IGSC_OPROM_DATA ? "DATA" : "CODE";
+
+    printf("OPROM %s Version: %02X %02X %02X %02X %02X %02X %02X %02X\n",
+           type_str,
            oprom_version->version[0],
            oprom_version->version[1],
            oprom_version->version[2],
@@ -92,6 +96,16 @@ static void print_oprom_version(const struct igsc_oprom_version *oprom_version)
            oprom_version->version[5],
            oprom_version->version[6],
            oprom_version->version[7]);
+}
+
+static inline void print_oprom_code_version(const struct igsc_oprom_version *oprom_version)
+{
+    print_oprom_version(IGSC_OPROM_CODE, oprom_version);
+}
+
+static inline void print_oprom_data_version(const struct igsc_oprom_version *oprom_version)
+{
+    print_oprom_version(IGSC_OPROM_DATA, oprom_version);
 }
 
 static struct fw_img *image_read_from_file(const char* p_path)
@@ -214,6 +228,14 @@ static void progress_func(uint32_t done, uint32_t total, void *ctx)
     fflush(stdout);
 }
 
+static bool arg_is_token(const char *arg, const char *token)
+{
+    size_t arg_len = strlen(arg);
+    size_t token_len = strlen(token);
+
+    return (arg_len == token_len) && !strncmp(arg, token, token_len);
+}
+
 /* prevent optimization
  * FIXME: try to use:
  *   __attribute__((optimize("O0")))
@@ -224,6 +246,10 @@ static inline bool arg_next(int *_argc, char **_argv[])
 {
     int argc = *_argc;
     char **argv = *_argv;
+
+    /* last one */
+    if (argc == 0)
+        return true;
 
     argc--;
     argv++;
@@ -432,7 +458,7 @@ static int do_oprom_code_version(int argc, char *argv[])
         goto exit;
     }
 
-    print_oprom_version(&oprom_version);
+    print_oprom_code_version(&oprom_version);
 
 exit:
     (void)igsc_device_close(&handle);
@@ -475,7 +501,7 @@ static int do_oprom_data_version(int argc, char *argv[])
         goto exit;
     }
 
-    print_oprom_version(&oprom_version);
+    print_oprom_data_version(&oprom_version);
 
 exit:
     (void)igsc_device_close(&handle);
@@ -490,12 +516,23 @@ static int do_list_devices(int argc, char *argv[])
     int ret;
     struct igsc_device_handle handle;
     struct igsc_fw_version fw_version;
+    struct igsc_oprom_version oprom_version;
+    bool do_info = false;
 
-    (void)argv;
-
-    if (argc > 0)
+    if (argc == 1)
     {
-        fwupd_error("No parameters supported\n");
+        if (arg_is_token(argv[0], "--info") || arg_is_token(argv[0], "-i"))
+        {
+            do_info = true;
+        }
+        else
+        {
+            return EXIT_FAILURE;
+        }
+    }
+
+    if (!arg_next(&argc, &argv))
+    {
         return EXIT_FAILURE;
     }
 
@@ -504,6 +541,7 @@ static int do_list_devices(int argc, char *argv[])
         fwupd_error("Cannot create device iterator %d\n", ret);
         return EXIT_FAILURE;
     }
+
     while((ret = igsc_device_iterator_next(iter, &info)) == IGSC_SUCCESS)
     {
         printf("Device '%s': %04hx:%04hx %04hx:%04hx\n",
@@ -517,10 +555,23 @@ static int do_list_devices(int argc, char *argv[])
             continue;
         }
 
-        ret = igsc_device_fw_version(&handle, &fw_version);
-        if (ret == IGSC_SUCCESS)
+        if (do_info)
         {
-            print_fw_version(&fw_version);
+            ret = igsc_device_fw_version(&handle, &fw_version);
+            if (ret == IGSC_SUCCESS)
+            {
+                print_fw_version(&fw_version);
+            }
+            ret = igsc_device_oprom_version(&handle, IGSC_OPROM_CODE, &oprom_version);
+            if (ret == IGSC_SUCCESS)
+            {
+                print_oprom_code_version(&oprom_version);
+            }
+            ret = igsc_device_oprom_version(&handle, IGSC_OPROM_DATA, &oprom_version);
+            if (ret == IGSC_SUCCESS)
+            {
+                print_oprom_data_version(&oprom_version);
+            }
         }
 
         (void)igsc_device_close(&handle);
@@ -576,7 +627,7 @@ static int do_oprom_image_info(int argc, char *argv[])
     {
         goto release;
     }
-    print_oprom_version(&oprom_version);
+    print_oprom_version(type, &oprom_version);
     while ((ret = igsc_image_oprom_iterator_next(oimg, &one_dev)) == IGSC_SUCCESS)
     {
         printf("OPROM supported device: %04X:%04X\n",
@@ -666,7 +717,7 @@ static int do_oprom_update(int argc, char *argv[])
     {
         goto release;
     }
-    print_oprom_version(&oprom_version);
+    print_oprom_version(type, &oprom_version);
 
 release:
     igsc_image_oprom_release(oimg);
@@ -683,7 +734,7 @@ release:
     {
         goto exit;
     }
-    print_oprom_version(&oprom_version);
+    print_oprom_version(type, &oprom_version);
 
     ret = igsc_device_oprom_update(&handle, type, img->blob, img->size,
                                    progress_func, NULL);
@@ -697,7 +748,7 @@ release:
     {
         goto exit;
     }
-    print_oprom_version(&oprom_version);
+    print_oprom_version(type, &oprom_version);
 
     ret = igsc_device_close(&handle);
     if (ret)
@@ -754,7 +805,7 @@ static const struct fwupd_op ops[] = {
     {
         .name  = "list-devices",
         .op    = do_list_devices,
-        .usage = "",
+        .usage = "[--info]",
         .help  = "    list devices supporting fw update\n",
     },
     {
