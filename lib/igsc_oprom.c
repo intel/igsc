@@ -537,11 +537,12 @@ static int image_oprom_get_next(struct igsc_oprom_image *img,
 {
     struct oprom_subsystem_device_id _device;
 
-    if (image_oprom_get_device(img, img->cur_device_pos++, &_device) != IGSC_SUCCESS)
+    if (image_oprom_get_device(img, img->cur_device_pos, &_device) != IGSC_SUCCESS)
     {
         gsc_debug("no more devices\n");
         return IGSC_ERROR_DEVICE_NOT_FOUND;
     }
+    img->cur_device_pos++;
 
     gsc_debug("vid 0x%x did 0x%x\n",  _device.vendor_id, _device.device_id);
 
