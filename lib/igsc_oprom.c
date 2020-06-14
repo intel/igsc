@@ -89,13 +89,12 @@ struct igsc_oprom_image {
 static void debug_print_device_type_ext(struct mft_oprom_device_type_ext *ext)
 {
     struct oprom_subsystem_device_id *dev = &ext->device_ids[0];
-    uint32_t len = 0;
+    uint32_t len = sizeof(struct mft_ext_header_with_data);
 
-    gsc_debug("type %u len %u", ext->extension_type, ext->extension_length);
-    while (len < ext->extension_length)
+    gsc_debug("type %u len %u\n", ext->extension_type, ext->extension_length);
+    for (; len < ext->extension_length; len += sizeof(*dev))
     {
         gsc_debug("vid 0x%x did 0x%x\n", dev->vendor_id, dev->device_id);
-        len += sizeof(*dev);
         dev++;
     }
 }
