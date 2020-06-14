@@ -27,11 +27,19 @@
  * @{
  */
 /** GSC firmware update status SUCCESS */
-#define GSC_FWU_STATUS_SUCCESS    0x0
+#define GSC_FWU_STATUS_SUCCESS                        0x0
 /** GSC firmware update status size error */
-#define GSC_FWU_STATUS_SIZE_ERROR 0x5
+#define GSC_FWU_STATUS_SIZE_ERROR                     0x5
+/** GSC oprom structure is invalid error */
+#define GSC_FWU_STATUS_UPDATE_OPROM_INVALID_STRUCTURE 0x1035
+/** GSC Update oprom section does not exists error */
+#define GSC_FWU_STATUS_UPDATE_OPROM_SECTION_NOT_EXIST 0x1032
+/** GSC firmware update status invalid command error */
+#define GSC_FWU_STATUS_INVALID_COMMAND                0x8D
+/** GSC firmware update status invalid param error */
+#define GSC_FWU_STATUS_INVALID_PARAMS                 0x85
 /** GSC firmware update general failure */
-#define  GSC_FWU_STATUS_FAILURE 0x9E
+#define  GSC_FWU_STATUS_FAILURE                       0x9E
 /** @} */
 
 /**

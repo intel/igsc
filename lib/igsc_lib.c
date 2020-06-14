@@ -472,10 +472,29 @@ static int gsc_fwu_heci_validate_response_header(struct gsc_fwu_heci_response *r
 
     if (resp_header->status != GSC_FWU_STATUS_SUCCESS)
     {
-        const char *msg = "?";
-        if (resp_header->status == GSC_FWU_STATUS_SIZE_ERROR)
+        const char *msg;
+        switch(resp_header->status) {
+        case GSC_FWU_STATUS_SIZE_ERROR:
             msg = "Num of bytes to read/write/erase is bigger than partition size";
-
+            break;
+        case GSC_FWU_STATUS_UPDATE_OPROM_INVALID_STRUCTURE:
+            msg = "Wrong oprom signature";
+            break;
+        case GSC_FWU_STATUS_UPDATE_OPROM_SECTION_NOT_EXIST:
+            msg = "Update oprom section does not exists on flash";
+            break;
+        case GSC_FWU_STATUS_INVALID_COMMAND:
+            msg = "Invalid HECI message sent";
+            break;
+        case GSC_FWU_STATUS_INVALID_PARAMS:
+            msg = "Invalid command parameters";
+            break;
+        case GSC_FWU_STATUS_FAILURE:
+        /* fall through */
+        default:
+            msg = "General firmware error";
+            break;
+        }
         gsc_error("HECI message failed with status %s 0x%x\n",
                 msg, resp_header->status);
         status = IGSC_ERROR_PROTOCOL;
