@@ -570,7 +570,6 @@ static int gsc_fwu_get_version(struct igsc_lib_ctx *lib_ctx,
     memset(req, 0, request_len);
     req->header.command_id = command_id;
     req->partition = partition;
-    req->reserved = 0;
     status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
     if (status != IGSC_SUCCESS)
     {

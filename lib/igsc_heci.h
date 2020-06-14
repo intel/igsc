@@ -118,12 +118,10 @@ enum gsc_fwu_heci_partition_version {
  *
  * @param header @ref gsc_fwu_heci_header
  * @param partition firmware partition type @ref gsc_fwu_heci_partition_version
- * @param reserved reserved
  */
 struct gsc_fwu_heci_version_req {
     struct gsc_fwu_heci_header header;
     uint32_t                   partition;
-    uint32_t                   reserved;
 };
 
 /**
