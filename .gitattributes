@@ -1,0 +1,4 @@
+* text=auto
+# Don't export CI files
+.gitlab-ci.yml export-ignore
+.gitlab-ci export-ignore

@@ -1,0 +1,14 @@
+.cmake_lint:
+        stage: test
+        script:
+                - mkdir ./cmakelint
+                - .gitlab-ci/check-cmake.sh | tee ./cmakelint/cmakelint.log
+        artifacts:
+                paths:
+                        - ./cmakelint/
+        only:
+                changes:
+                        - CMakeLists.txt
+                        - "**/*.cmake"
+                        - "**/CMakeLists.txt"
+

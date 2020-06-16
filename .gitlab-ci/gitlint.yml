@@ -1,0 +1,7 @@
+.gitlint:
+        script:
+                - target=master
+                - git fetch --depth=50 origin ${target}:refs/remotes/origin/${target}
+                - merge_base=$(git merge-base --fork-point origin/${target} HEAD)
+                - git log --oneline ${merge_base}..HEAD
+                - gitlint --commits ${merge_base}..HEAD

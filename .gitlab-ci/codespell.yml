@@ -1,0 +1,9 @@
+.codespell:
+        stage: test
+        script:
+                - mkdir codespell
+                - codespell --quiet-level=4 --ignore-words=.codespell-whitelist --skip=".git","./codespell/codespell.log" | tee ./codespell/codespell.log
+        artifacts:
+                when: on_failure
+                paths:
+                        - ./codespell/codespell.log

@@ -1,0 +1,202 @@
+stages:
+        - stylecheck
+        - build
+        - test
+        - deploy
+
+.ssh_setup: &ssh_setup
+        - mkdir -p  ~/.ssh/
+        - chmod 700 ~/.ssh
+        - echo ${SSH_KNOWN_HOSTS} > ~/.ssh/known_hosts
+        - chmod 644 ~/.ssh/known_hosts
+
+.build_dir: &build_dir
+        - mkdir -p build
+
+include:
+        - '.gitlab-ci/compile.yml'
+        - '.gitlab-ci/gitlint.yml'
+        - '.gitlab-ci/cmake-lint.yml'
+        - '.gitlab-ci/codespell.yml'
+        - '.gitlab-ci/meson.yml'
+        - '.gitlab-ci/vscode.yml'
+        - '.gitlab-ci/tidy.yml'
+
+gitlint:
+        stage: stylecheck
+        image: ${CI_REGISTRY}/${CI_PYTHON}
+        tags:
+                - Linux
+        before_script:
+        - *ssh_setup
+        extends: .gitlint
+
+cmake_lint:
+        stage: stylecheck
+        image: ${CI_REGISTRY}/${CI_PYTHON}
+        tags:
+                - Linux
+        before_script:
+        - *ssh_setup
+        extends: .cmake_lint
+
+codespell:
+        stage: stylecheck
+        image: ${CI_REGISTRY}/${CI_PYTHON}
+        tags:
+                - Linux
+        extends: .codespell
+
+.metee: &metee
+        - BASE_URL=`echo $CI_REPOSITORY_URL | sed "s;\/*$CI_PROJECT_PATH.*;;"`
+        - REPO_URL="$BASE_URL/mesw/metee.git"
+        - REPO_DIR=subprojects/metee
+        - rm -rf $REPO_DIR && git clone $REPO_URL $REPO_DIR
+        - REPO_DIR=$(readlink -f $REPO_DIR) # get the full path
+
+.metee_windows: &metee_windows
+        - $BASE_URL=$CI_REPOSITORY_URL -replace "\/*$CI_PROJECT_PATH.*", ""
+        - $REPO_URL="$BASE_URL/mesw/metee.git"
+        - $REPO_DIR="subprojects/metee"
+        - Get-ChildItem -Path $REPO_DIR -Recurse | Remove-Item
+        - git clone $REPO_URL $REPO_DIR
+        - $env:REPO_DIR=(Resolve-Path -Path $REPO_DIR).path
+
+gcc:
+        stage: build
+        image: ${CI_REGISTRY}/lms-ubuntu:18.04
+        tags:
+                - Linux
+        before_script:
+        - *ssh_setup
+        - *build_dir
+        - *metee
+        extends: .compile
+        variables:
+                CMAKE_ARGS: '-DCMAKE_C_COMPILER=gcc -DLIBMETEE_REPO=$REPO_DIR -DENABLE_TESTS:BOOL=ON'
+                COMPILE_TARGET: 'all'
+        artifacts:
+                paths:
+                        - build/
+
+clang:
+        stage: build
+        image: ${CI_REGISTRY}/lms-ubuntu:18.04
+        tags:
+                - Linux
+        before_script:
+        - *ssh_setup
+        - *build_dir
+        - *metee
+        extends: .compile
+        variables:
+                CMAKE_ARGS: '-DCMAKE_C_COMPILER=clang -DLIBMETEE_REPO=$REPO_DIR'
+                COMPILE_TARGET: 'all'
+
+meson:
+        stage: build
+        image: ${CI_REGISTRY}/lms-ubuntu:20.04
+        tags:
+                - Linux
+        before_script:
+        - *ssh_setup
+        - *build_dir
+        - *metee
+        extends: .meson
+        artifacts:
+                paths:
+                        - build/
+
+vscode16:
+        stage: build
+        tags:
+                - Windows
+        before_script:
+        - *metee_windows
+        # Assigning gitlab variable from powershell is broken
+        # https://gitlab.com/gitlab-org/gitlab-runner/issues/4658#
+        - $env:LIBMETEE_REPO=$env:REPO_DIR
+        - echo $env:LIBMETEE_REPO
+        extends: .vscode
+        variables:
+                VS_CODE: "Visual Studio 16 2019"
+        artifacts:
+                paths:
+                        - build\\src\\Release\\*
+                        - build\\lib\\Release\\*
+
+centos8:
+        stage: build
+        image: ${CI_REGISTRY}/lms-centos:8
+        tags:
+                - Linux
+        before_script:
+        - *ssh_setup
+        - *build_dir
+        - *metee
+        extends: .compile
+        variables:
+                CMAKE_ARGS: '-DCMAKE_C_COMPILER=gcc -DLIBMETEE_REPO=$REPO_DIR'
+                COMPILE_TARGET: 'all'
+
+tidy:
+        stage: build
+        image: ${CI_REGISTRY}/lms-ubuntu:19.10
+        tags:
+                - Linux
+        before_script:
+        - *ssh_setup
+        - *build_dir
+        - *metee          
+        extends: .tidy
+
+unit_tests:
+        stage: test
+        image: ${CI_REGISTRY}/lms-ubuntu:18.04
+        tags:
+                - Linux
+        script:
+                - cd ./build/tests/
+                - ctest --verbose
+        dependencies:
+                - gcc
+
+cmake:install_tests:
+        stage: test
+        image: ${CI_REGISTRY}/lms-ubuntu:18.04
+        tags:
+                - Linux
+        script:
+                - sudo make -C build install
+        dependencies:
+                - gcc
+
+meson:install_tests:
+        stage: test
+        image: ${CI_REGISTRY}/lms-ubuntu:20.04
+        tags:
+                - Linux
+        script:
+                - sudo meson install -C build --no-rebuild
+        dependencies:
+                - meson
+
+
+pages:
+        stage: deploy
+        image: ${CI_REGISTRY}/meswci-docs:latest
+        tags:
+                - Linux
+        before_script:
+        - *ssh_setup
+        variables:
+                STANDALONE_DOCS: 1
+        script:
+                - cd doc; make html
+        after_script:
+                - cp -r doc/_build/html public
+        artifacts:
+                paths:
+                        - public
+        only:
+                - master

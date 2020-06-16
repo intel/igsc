@@ -1,0 +1,67 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (C) 2019-2020 Intel Corporation
+
+if get_option('syslog')
+  add_project_arguments('-DSYSLOG', language : 'c')
+endif
+
+srcs = [
+  'igsc_lib.c',
+  'igsc_oprom.c',
+  'enum/igsc_enum_udev.c',
+]
+
+if get_option('enable_perf')
+  add_project_arguments('-DIGSC_PERF', language : 'c')
+  srcs += ['igsc_perf.c']
+endif
+
+cargs = []
+metee_proj = cmake.subproject('metee', required: true)
+metee_dep = metee_proj.dependency('metee')
+
+libudev_dep = dependency('libudev')
+
+deps = [metee_dep, libudev_dep]
+
+igsc_shared = shared_library(
+  'igsc',
+  sources : [
+    srcs,
+  ],
+  soversion : lt_major,
+  version : ver_str,
+  include_directories : inc_dirs,
+  dependencies : [
+    deps,
+  ],
+  c_args : [
+    cargs,
+  ],
+  install : true,
+)
+
+igsc_static = static_library(
+  'igsc',
+  objects: igsc_shared.extract_all_objects(),
+  include_directories : inc_dirs,
+  dependencies : [
+    deps,
+  ],
+  c_args : [
+    cargs,
+  ],
+  install : true
+)
+
+igsc_dep = declare_dependency(
+  link_with : igsc_shared,
+  include_directories : include_directories('.'),
+  dependencies : deps
+)
+
+igsc_dep_static = declare_dependency(
+  link_with : igsc_static,
+  include_directories : include_directories('.'),
+  dependencies : deps
+)

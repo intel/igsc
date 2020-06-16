@@ -1,0 +1,14 @@
+.tidy:
+        stage: build
+        script:
+             - pushd build
+             - cmake "-DCMAKE_C_CLANG_TIDY=clang-tidy;-checks=*" ..
+             - make -j$(nproc) metee 2> tidy.out
+             - popd
+             - cat build/tidy.out | clang-tidy-to-junit.py $(pwd) > junit.xml
+        artifacts:
+                paths:
+                        - junit.xml
+                reports:
+                        junit: junit.xml
+

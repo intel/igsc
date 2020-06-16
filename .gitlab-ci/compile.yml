@@ -1,0 +1,6 @@
+.compile:
+        stage: build
+        script:
+             - pushd build
+             - cmake ${CMAKE_ARGS} ..
+             - make -j$(nproc) ${COMPILE_TARGET}
