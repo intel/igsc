@@ -255,7 +255,7 @@ static inline bool arg_next(int *_argc, char **_argv[])
 
     /* last one */
     if (argc == 0)
-        return true;
+        return false;
 
     argc--;
     argv++;
@@ -263,33 +263,23 @@ static inline bool arg_next(int *_argc, char **_argv[])
     *_argc = argc;
     *_argv = argv;
 
-    return argc == 0;
+    return argc != 0;
 }
 
-static int do_update(int argc, char *argv[])
+static int firmware_update(const char *device_path,
+                           const char *image_path,
+                           bool allow_downgrade)
 {
     struct fw_img *img = NULL;
     struct igsc_device_handle handle;
     struct igsc_fw_version fw_version;
-    const char *image_path = NULL;
-    const char *device_path = NULL;
     char *device_path_found = NULL;
     int ret;
 
-    if (argc <= 0)
-        return EXIT_FAILURE;
+    /* FIXME */
+    (void)allow_downgrade;
 
-    image_path = argv[0];
-    if (arg_next(&argc, &argv))
-    {
-        return EXIT_FAILURE;
-    }
-
-    if (argc >= 1)
-    {
-        device_path = argv[0];
-    }
-    else
+    if (!device_path)
     {
         if (get_first_device(&device_path_found))
         {
@@ -354,28 +344,11 @@ exit:
     return ret;
 }
 
-static int do_version(int argc, char *argv[])
+static int firmware_version(const char *device_path)
 {
     struct igsc_device_handle handle;
     struct igsc_fw_version fw_version;
-    const char *device_path = NULL;
-    char *device_path_found = NULL;
     int ret;
-
-    (void)argv;
-
-    if (argc >= 1)
-    {
-        device_path = argv[0];
-    }
-    else
-    {
-        if (get_first_device(&device_path_found))
-        {
-            return EXIT_FAILURE;
-        }
-        device_path = device_path_found;
-    }
 
     ret = igsc_device_init_by_device(&handle, device_path);
     if (ret != IGSC_SUCCESS)
@@ -393,23 +366,14 @@ static int do_version(int argc, char *argv[])
 
 exit:
     (void)igsc_device_close(&handle);
-    free(device_path_found);
     return ret;
 }
 
-static int do_image_version(int argc, char *argv[])
+static int image_version(const char *image_path)
 {
     struct fw_img *img = NULL;
     struct igsc_fw_version fw_version;
-    const char *image_path = NULL;
     int ret;
-
-    if (argc <= 0)
-    {
-        return EXIT_FAILURE;
-    }
-
-    image_path = argv[0];
 
     img = image_read_from_file(image_path);
     if (img == NULL)
@@ -428,6 +392,112 @@ static int do_image_version(int argc, char *argv[])
 
     return ret;
 }
+
+static int do_firmware_version(int argc, char *argv[])
+{
+    char *device_path_found = NULL;
+
+    if (argc == 2)
+    {
+        if (arg_is_token(argv[0], "--device") || arg_is_token(argv[0], "-d"))
+        {
+            return firmware_version(argv[1]);
+        }
+        if (arg_is_token(argv[0], "--image") || arg_is_token(argv[0], "-i"))
+        {
+            return image_version(argv[1]);
+        }
+
+        return EXIT_FAILURE;
+    }
+    else if (argc == 0)
+    {
+        int ret;
+
+        if (get_first_device(&device_path_found))
+        {
+            return EXIT_FAILURE;
+        }
+
+        ret = firmware_version(device_path_found);
+        free(device_path_found);
+        return ret;
+    }
+    return EXIT_FAILURE;
+}
+
+static int do_firmware_update(int argc, char *argv[])
+{
+    bool allow_downgrade = false;
+    const char *device_path = NULL;
+    const char *image_path = NULL;
+
+    if (argc <= 0)
+        return EXIT_FAILURE;
+
+    do
+    {
+        if (arg_is_token(argv[0], "--allow-downgrade"))
+        {
+            allow_downgrade = true;
+            continue;
+        }
+        if (arg_is_token(argv[0], "--device") || arg_is_token(argv[0], "-d"))
+        {
+            if (!arg_next(&argc, &argv))
+            {
+                return EXIT_FAILURE;
+            }
+            device_path = argv[0];
+        }
+        else if (arg_is_token(argv[0], "--image") || arg_is_token(argv[0], "-i"))
+        {
+            if (!arg_next(&argc, &argv))
+            {
+                return EXIT_FAILURE;
+            }
+            image_path = argv[0];
+        }
+        else
+        {
+            return EXIT_FAILURE;
+        }
+    } while(arg_next(&argc, &argv));
+
+    if (image_path)
+    {
+        return firmware_update(device_path, image_path, allow_downgrade);
+    }
+
+    return EXIT_FAILURE;
+}
+
+static int do_firmware(int argc, char *argv[])
+{
+    const char *sub_command = NULL;
+
+    if (argc <= 0)
+    {
+        return EXIT_FAILURE;
+    }
+
+    sub_command = argv[0];
+
+    arg_next(&argc, &argv);
+
+    if (arg_is_token(sub_command, "version"))
+    {
+        return do_firmware_version(argc, argv);
+    }
+
+    if (arg_is_token(sub_command, "update"))
+    {
+        return do_firmware_update(argc, argv);
+    }
+
+    return EXIT_FAILURE;
+}
+
 
 static int do_oprom_code_version(int argc, char *argv[])
 {
@@ -537,7 +607,7 @@ static int do_list_devices(int argc, char *argv[])
         }
     }
 
-    if (!arg_next(&argc, &argv))
+    if (arg_next(&argc, &argv))
     {
         return EXIT_FAILURE;
     }
@@ -669,13 +739,13 @@ static int do_oprom_update(int argc, char *argv[])
         return EXIT_FAILURE;
 
     type = atoi(argv[0]);
-    if (arg_next(&argc, &argv))
+    if (!arg_next(&argc, &argv))
     {
         return EXIT_FAILURE;
     }
 
     image_path = argv[0];
-    if (arg_next(&argc, &argv))
+    if (!arg_next(&argc, &argv))
     {
         return EXIT_FAILURE;
     }
@@ -779,22 +849,10 @@ struct fwupd_op {
 
 static const struct fwupd_op ops[] = {
     {
-        .name  = "update",
-        .op    = do_update,
-        .usage = "<image> [<dev>]",
+        .name  = "fw",
+        .op    = do_firmware,
+        .usage = "update <image> [<dev>]\nversion [--device <dev>] | [--image <file>] ",
         .help  = "    update device image\n",
-    },
-    {
-        .name  = "version",
-        .op    = do_version,
-        .usage = "[<dev>]",
-        .help  = "    version of the installed firmware\n",
-    },
-    {
-        .name  = "image-version",
-        .op    = do_image_version,
-        .usage = "<image>",
-        .help  = "    version of the installed firmware\n",
     },
     {
         .name  = "oprom-code-version",
@@ -839,7 +897,7 @@ static void help(const char *exec_name, const struct fwupd_op *op)
 
 static void usage(const char *exe_name)
 {
-    int i;
+    unsigned int i;
 
     printf("\n");
     printf("Usage: %s [-v] <command> <args>\n\n", exe_name);
@@ -873,14 +931,14 @@ struct fwupd_op *args_parse(const char *exe_name, int *argc, char **argv[])
     const struct fwupd_op *op = NULL;
     bool display_help = false;
 
-    if (arg_next(argc, argv))
+    if (!arg_next(argc, argv))
     {
         goto out;
     }
 
     if (arg_is_help(*argv[0]))
     {
-        if (arg_next(argc, argv))
+        if (!arg_next(argc, argv))
         {
             goto out;
         }
@@ -889,7 +947,7 @@ struct fwupd_op *args_parse(const char *exe_name, int *argc, char **argv[])
 
     if (arg_is_verbose(*argv[0]))
     {
-        if (arg_next(argc, argv))
+        if (!arg_next(argc, argv))
         {
             goto out;
         }
