@@ -1,8 +1,9 @@
 1. Introduction
 ----------------
 
-The IGSC FW update library is a pure C low level library that exposes
-a required API to perform a firmware update of a particular Intel discrete
+The The Intel Graphics System Firmware Update Library (IGSCFUL) is
+a pure C low level library that exposes a required API
+to perform a firmware update of a particular Intel discrete
 graphics device. The library utilized a cross platform library `metee`_ in
 order to access the GSC (mei) device. GSC device is an extension of the
 Intel discrete graphics device (dGFX).
@@ -60,15 +61,17 @@ subject to firmware and OPROM update, such as SG1 and DG1.
 1.6. Integrations
 ~~~~~~~~~~~~~~~~~
 
-.. todo:
-  1. Describe integration for firmware update system with fwupd project.
-  2. BMC on servers.
+  1. On Linux client platforms the library integrates with fwupd.org
+     daemon via *igsc plugin. The *fwupd* daemon is commonly an integral part
+     on modern Linux distributions.
+  2. On servers platforms the library might be integrated with BMC based solution.
 
 1.7. Command Line Interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The project supplies a simple command line tool in order to
-support firmware update.
+The project supplies sample command line tool that
+support firmware and oprom update. It's a simple cross
+platform utility.
 
 1.8. Supported Devices
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,9 +83,9 @@ Device          DIDs
 ------------    ----------------------
 DG1/SG1         0x4905 0x4906 0x4907
 ------------    ----------------------
-DG2             0x4F80
-------------    ----------------------
 ATS             0x0201
+------------    ----------------------
+DG2             0x4F80
 ------------    ----------------------
 PVC             0x0BD0
 ============    ======================
