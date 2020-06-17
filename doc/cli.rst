@@ -76,6 +76,9 @@ that demonstrate usage of the library
 3.3 Device enumeration
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+List all supported devices on the system. If --info flag is supplied also print
+the firmware and OPROM partitions versions on each device.
+
 .. code-block:: sh
 
-   igsc list-devices
+   igsc list-devices [--info]
