@@ -20,7 +20,6 @@ option(ENABLE_TESTS "Perform unit tests after build" OFF)
 option(ENABLE_WERROR "Enable treat warnings as error" ON)
 
 set(COMPILE_OPTIONS_NX
-    -Wno-unused-parameter
     -Wall
     -Wextra
     -Wsign-compare

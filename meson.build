@@ -17,7 +17,6 @@ lt_patch = ver_list[2].split('-')[0]
 
 # hide/enable some warnings
 warning_flags = [
-  '-Wno-unused-parameter',
   '-Wno-unused-command-line-argument',
   '-Wsign-compare',
   '-Wformat-security',
