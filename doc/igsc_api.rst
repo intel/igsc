@@ -34,16 +34,18 @@ image.
 2.2 Types defined by the library
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-2. Device path. On a Linux system this type represent a device node path
+1. Device path. On a Linux system this type represent a device node path
    on Windows this 'device instance path'.
+
+`Example:`
+
+    * Linux: **/dev/meiX**
+
+    * Windows: **PCI\VEN_8086&DEV_9D3A&SUBSYS_225D17AA&REV_21\3&11583659&0&B0**
 
 .. code-block:: c
 
-   #ifdef __linux__
-       typedef char igsc_path_t;
-   #else /* WIN */
-       typedef wchar_t igsc_path_t;
-   #endif
+    const char *device_path;
 
 
 2. Device Handle: Internal handle used by the library
@@ -89,7 +91,7 @@ image.
     .. code-block:: c
 
         int igsc_device_init_by_device(IN OUT struct igsc_device_handle *handle,
-                                       IN igsc_path_t *device_path);
+                                       IN const char *device_path);
 
 
   * Initialization of the device by a handle
