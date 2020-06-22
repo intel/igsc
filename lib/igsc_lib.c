@@ -1362,7 +1362,7 @@ int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
     /* OPROM image doesn't require meta data */
     meta.metadata_format_version = GSC_FWU_HECI_METADATA_VERSION_NONE;
     lib_ctx->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].content = (const uint8_t *)&meta;
-    lib_ctx->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].size = 0;
+    lib_ctx->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].size = sizeof(meta);
 
     fpt_size = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].size;
     fpt_data = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].content;
