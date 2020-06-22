@@ -37,7 +37,7 @@ that demonstrate usage of the library
 
 .. code-block:: sh
 
-    igsc oprom-data update [options] [--device <device>]
+    igsc oprom-data update [options] [--device <device>] --image <oprom file>
 
 2. Retrieve OPROM VBT (data) partition version
 
@@ -58,7 +58,7 @@ that demonstrate usage of the library
 
 .. code-block:: sh
 
-    igsc oprom-code update [options] [--device <device>]
+    igsc oprom-code update [options] [--device <device>]  --image <oprom file>
 
 5. Retrieve OPROM code partition version from the device
 
