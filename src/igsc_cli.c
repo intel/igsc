@@ -838,16 +838,16 @@ exit:
     return ret;
 }
 
-typedef int (*fwupd_op)(int argc, char *argv[]);
+typedef int (*gsc_op)(int argc, char *argv[]);
 
-struct fwupd_op {
+struct gsc_op {
     const char *name;
-    fwupd_op    op;
+    gsc_op    op;
     const char  *usage; /* usage title */
     const char  *help;  /* help */
 };
 
-static const struct fwupd_op ops[] = {
+static const struct gsc_op ops[] = {
     {
         .name  = "fw",
         .op    = do_firmware,
@@ -889,7 +889,7 @@ static const struct fwupd_op ops[] = {
     }
 };
 
-static void help(const char *exec_name, const struct fwupd_op *op)
+static void help(const char *exec_name, const struct gsc_op *op)
 {
     printf("%s %s %s\n", exec_name, op->name, op->usage);
     printf("%s\n", op->help);
@@ -924,16 +924,22 @@ static bool arg_is_verbose(const char *arg)
            !strcmp(arg, "--verbose");
 }
 
-static const
-struct fwupd_op *args_parse(const char *exe_name, int *argc, char **argv[])
+static int args_parse(const char *exe_name, int *argc, char **argv[],
+                      const struct gsc_op **op)
 {
     unsigned int i;
-    const struct fwupd_op *op = NULL;
+    const struct gsc_op *__op;
     bool display_help = false;
+
+    if (exe_name == NULL)
+    {
+        return EXIT_FAILURE;
+    }
 
     if (!arg_next(argc, argv))
     {
-        goto out;
+        usage(exe_name);
+        return EXIT_FAILURE;
     }
 
     if (arg_is_help(*argv[0]))
@@ -958,30 +964,30 @@ struct fwupd_op *args_parse(const char *exe_name, int *argc, char **argv[])
     {
         if (!strncmp(*argv[0], ops[i].name, strlen(ops[i].name)))
         {
-            op = &ops[i];
+            __op = &ops[i];
             arg_next(argc, argv);
             break;
         }
     }
 
-    if (op == NULL)
+    if (__op == NULL)
     {
         usage(exe_name);
-        return NULL;
+        return EXIT_FAILURE;
     }
 
     if (display_help || (*argc > 0 && arg_is_help(*argv[0])))
     {
-        help(exe_name, op);
+        help(exe_name, __op);
         arg_next(argc, argv);
-        op = NULL;
+        __op = NULL;
     }
 
-    return op;
+    *op = __op;
 
 out:
     usage(exe_name);
-    return NULL;
+    return EXIT_SUCCESS;
 }
 
 #ifdef __linux__
@@ -1029,21 +1035,18 @@ char *prog_name(const char *exe_path)
 int main(int argc, char* argv[])
 {
     char *exec_name = prog_name(argv[0]);
-    const struct fwupd_op *op = NULL;
-    int ret;
+    const struct gsc_op *op = NULL;
+    int ret = EXIT_FAILURE;
 
-    op = args_parse(exec_name, &argc, &argv);
-    if (!op)
+    ret = args_parse(exec_name, &argc, &argv, &op);
+    if (!ret)
     {
-        return EXIT_SUCCESS;
+        goto out;
     }
 
     ret = op->op(argc, argv);
-    if (ret)
-    {
-        help(exec_name, op);
-    }
 
+out:
     free(exec_name);
 
     return (ret) ? EXIT_FAILURE : EXIT_SUCCESS;
