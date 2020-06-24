@@ -24,17 +24,21 @@ bool verbose = false;
 
 #define fwupd_verbose(fmt, ...) do {          \
     if (verbose)                              \
-        fprintf(stderr, fmt, ##__VA_ARGS__); \
+        fprintf(stderr, fmt, ##__VA_ARGS__);  \
 } while (0)
 
-#define fwupd_error(fmt, ...) do {           \
-    fprintf(stderr, fmt, ##__VA_ARGS__);    \
+#define fwupd_error(fmt, ...) do {                 \
+    fprintf(stderr, "Error: " fmt, ##__VA_ARGS__); \
+} while (0)
+
+#define fwupd_msg(fmt, ...) do {           \
+    fprintf(stdout, fmt, ##__VA_ARGS__);   \
 } while (0)
 
 
 #define MAX_UPDATE_IMAGE_SIZE (8*1024*1024)
 
-struct fw_img {
+struct img {
     uint32_t size;
     uint8_t blob[0];
 };
@@ -54,8 +58,9 @@ static inline int fopen_s(FILE **fp, const char *pathname, const char *mode)
 
 static void fwupd_strerror(int errnum, char *buf, size_t buflen)
 {
-    if (strerror_r(errnum, buf, buflen) != 0) {
-         strncpy(buf, "Unknown error", buflen);
+    if (strerror_r(errnum, buf, buflen) != 0)
+    {
+         strncpy(buf, "Unknown error", buflen - 1);
          buf[buflen - 1] = '\0';
     }
 }
@@ -64,7 +69,8 @@ static void fwupd_strerror(int errnum, char *buf, size_t buflen)
 
 static void fwupd_strerror(int errnum, char *buf, size_t buflen)
 {
-    if (strerror_s(buf, buflen, errnum) != 0) {
+    if (strerror_s(buf, buflen, errnum) != 0)
+    {
          strncpy_s(buf, buflen, "Unknown error", buflen - 1);
          buf[buflen - 1] = '\0';
     }
@@ -82,13 +88,17 @@ static void print_fw_version(const struct igsc_fw_version *fw_version)
            fw_version->build);
 }
 
+const char *oprom_type_to_str(enum igsc_oprom_type type)
+{
+    return  type == IGSC_OPROM_DATA ? "DATA" : "CODE";
+}
+
 static void print_oprom_version(enum igsc_oprom_type type,
                                 const struct igsc_oprom_version *oprom_version)
 {
-    const char *type_str = type == IGSC_OPROM_DATA ? "DATA" : "CODE";
 
     printf("OPROM %s Version: %02X %02X %02X %02X %02X %02X %02X %02X\n",
-           type_str,
+           oprom_type_to_str(type),
            oprom_version->version[0],
            oprom_version->version[1],
            oprom_version->version[2],
@@ -109,18 +119,18 @@ static inline void print_oprom_data_version(const struct igsc_oprom_version *opr
     print_oprom_version(IGSC_OPROM_DATA, oprom_version);
 }
 
-static struct fw_img *image_read_from_file(const char* p_path)
+static struct img *image_read_from_file(const char *p_path)
 {
-    FILE* fp = NULL;
-    struct fw_img *img = NULL;
+    FILE  *fp = NULL;
+    struct img *img = NULL;
     long file_size;
-    char err_msg[64];
+    char err_msg[64] = {0};
 
-    if (fopen_s(&fp, p_path, "rb") != 0)
+    if (fopen_s(&fp, p_path, "rb") != 0 || fp == NULL)
     {
         fwupd_strerror(errno, err_msg, sizeof(err_msg));
         fwupd_verbose("Failed to open file %s : %s\n", p_path, err_msg);
-        return NULL;
+        goto exit;
     }
 
     if (fseek(fp, 0L, SEEK_END) != 0)
@@ -153,7 +163,7 @@ static struct fw_img *image_read_from_file(const char* p_path)
         goto exit;
     }
 
-    img = (struct fw_img *)malloc(file_size + sizeof(*img));
+    img = (struct img *)malloc(file_size + sizeof(*img));
     if (img == NULL)
     {
         fwupd_strerror(errno, err_msg, sizeof(err_msg));
@@ -177,7 +187,10 @@ static struct fw_img *image_read_from_file(const char* p_path)
 
 exit:
     free(img);
-    fclose(fp);
+    if (fp)
+    {
+        fclose(fp);
+    }
 
     return NULL;
 }
@@ -189,10 +202,13 @@ static int get_first_device(char **device_path)
     int ret;
 
     ret = igsc_device_iterator_create(&iter);
-    if (ret != IGSC_SUCCESS) {
+    if (ret != IGSC_SUCCESS)
+    {
         fwupd_error("Cannot create device iterator %d\n", ret);
         return EXIT_FAILURE;
     }
+
+    info.name[0] = '\0';
     ret = igsc_device_iterator_next(iter, &info);
     if (ret == IGSC_SUCCESS)
     {
@@ -234,6 +250,8 @@ static void progress_func(uint32_t done, uint32_t total, void *ctx)
     fflush(stdout);
 }
 
+#define ERROR_BAD_ARGUMENT (-1)
+
 static bool arg_is_token(const char *arg, const char *token)
 {
     size_t arg_len = strlen(arg);
@@ -266,11 +284,20 @@ static inline bool arg_next(int *_argc, char **_argv[])
     return argc != 0;
 }
 
+typedef int (*gsc_op)(int argc, char *argv[]);
+
+struct gsc_op {
+    const char *name;
+    gsc_op    op;
+    const char *usage[3]; /* up to 2 subcommands*/
+    const char  *help;  /* help */
+};
+
 static int firmware_update(const char *device_path,
                            const char *image_path,
                            bool allow_downgrade)
 {
-    struct fw_img *img = NULL;
+    struct img *img = NULL;
     struct igsc_device_handle handle;
     struct igsc_fw_version fw_version;
     char *device_path_found = NULL;
@@ -283,6 +310,7 @@ static int firmware_update(const char *device_path,
     {
         if (get_first_device(&device_path_found))
         {
+            fwupd_error("No device to update\n");
             return EXIT_FAILURE;
         }
         device_path = device_path_found;
@@ -293,7 +321,7 @@ static int firmware_update(const char *device_path,
     {
         ret = EXIT_FAILURE;
         fwupd_error("Failed to read :%s\n", image_path);
-        goto exit;;
+        goto exit;
     }
 
     ret = igsc_image_fw_version(img->blob, img->size, &fw_version);
@@ -332,13 +360,9 @@ static int firmware_update(const char *device_path,
     }
     print_fw_version(&fw_version);
 
-    ret = igsc_device_close(&handle);
-    if (ret)
-    {
-        fwupd_error("Cannot close device %d\n", ret);
-    }
-
 exit:
+    (void)igsc_device_close(&handle);
+
     free(img);
     free(device_path_found);
     return ret;
@@ -371,7 +395,7 @@ exit:
 
 static int image_version(const char *image_path)
 {
-    struct fw_img *img = NULL;
+    struct img *img = NULL;
     struct igsc_fw_version fw_version;
     int ret;
 
@@ -407,8 +431,8 @@ static int do_firmware_version(int argc, char *argv[])
         {
             return image_version(argv[1]);
         }
-
-        return EXIT_FAILURE;
+        fwupd_error("Wrong argument %s\n", argv[0]);
+        return ERROR_BAD_ARGUMENT;
     }
     else if (argc == 0)
     {
@@ -416,6 +440,7 @@ static int do_firmware_version(int argc, char *argv[])
 
         if (get_first_device(&device_path_found))
         {
+            fwupd_error("No device or image\n");
             return EXIT_FAILURE;
         }
 
@@ -423,7 +448,8 @@ static int do_firmware_version(int argc, char *argv[])
         free(device_path_found);
         return ret;
     }
-    return EXIT_FAILURE;
+    fwupd_error("Wrong number of arguments\n");
+    return ERROR_BAD_ARGUMENT;
 }
 
 static int do_firmware_update(int argc, char *argv[])
@@ -433,11 +459,14 @@ static int do_firmware_update(int argc, char *argv[])
     const char *image_path = NULL;
 
     if (argc <= 0)
-        return EXIT_FAILURE;
+    {
+        fwupd_error("No image to update\n");
+        return ERROR_BAD_ARGUMENT;
+    }
 
     do
     {
-        if (arg_is_token(argv[0], "--allow-downgrade"))
+        if (arg_is_token(argv[0], "--allow-downgrade") || arg_is_token(argv[0], "-a"))
         {
             allow_downgrade = true;
             continue;
@@ -446,7 +475,8 @@ static int do_firmware_update(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                return EXIT_FAILURE;
+                fwupd_error("No device to update\n");
+                return ERROR_BAD_ARGUMENT;
             }
             device_path = argv[0];
         }
@@ -454,13 +484,15 @@ static int do_firmware_update(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                return EXIT_FAILURE;
+                fwupd_error("No image to update\n");
+                return ERROR_BAD_ARGUMENT;
             }
             image_path = argv[0];
         }
         else
         {
-            return EXIT_FAILURE;
+            fwupd_error("Wrong argument %s\n", argv[0]);
+            return ERROR_BAD_ARGUMENT;
         }
     } while(arg_next(&argc, &argv));
 
@@ -469,7 +501,8 @@ static int do_firmware_update(int argc, char *argv[])
         return firmware_update(device_path, image_path, allow_downgrade);
     }
 
-    return EXIT_FAILURE;
+    fwupd_error("No image to update\n");
+    return ERROR_BAD_ARGUMENT;
 }
 
 static int do_firmware(int argc, char *argv[])
@@ -478,7 +511,8 @@ static int do_firmware(int argc, char *argv[])
 
     if (argc <= 0)
     {
-        return EXIT_FAILURE;
+        fwupd_error("Missing arguments\n");
+        return ERROR_BAD_ARGUMENT;
     }
 
     sub_command = argv[0];
@@ -495,94 +529,359 @@ static int do_firmware(int argc, char *argv[])
         return do_firmware_update(argc, argv);
     }
 
-    return EXIT_FAILURE;
+    fwupd_error("Wrong argument %s\n", sub_command);
+    return ERROR_BAD_ARGUMENT;
 }
 
-
-static int do_oprom_code_version(int argc, char *argv[])
+static int oprom_version(const char *device_path, enum igsc_oprom_type igsc_oprom_type)
 {
-    struct igsc_device_handle handle;
     struct igsc_oprom_version oprom_version;
-    const char *device_path = NULL;
-    char *device_path_found = NULL;
+    struct igsc_device_handle handle;
     int ret;
 
-    (void)argv;
-
-    if (argc >= 1)
-    {
-        device_path = argv[0];
-    }
-    else
-    {
-        if (get_first_device(&device_path_found))
-        {
-            return EXIT_FAILURE;
-        }
-        device_path = device_path_found;
-    }
-
     ret = igsc_device_init_by_device(&handle, device_path);
-    if (ret != IGSC_SUCCESS)
-    {
-        return ret;
-    }
-
-    ret = igsc_device_oprom_version(&handle, IGSC_OPROM_CODE, &oprom_version);
     if (ret != IGSC_SUCCESS)
     {
         goto exit;
     }
 
-    print_oprom_code_version(&oprom_version);
-
-exit:
-    (void)igsc_device_close(&handle);
-    free(device_path_found);
-    return ret;
-}
-
-static int do_oprom_data_version(int argc, char *argv[])
-{
-    struct igsc_device_handle handle;
-    struct igsc_oprom_version oprom_version;
-    const char *device_path = NULL;
-    char *device_path_found = NULL;
-    int ret;
-
-    (void)argv;
-
-    if (argc >= 1)
-    {
-        device_path = argv[0];
-    }
-    else
-    {
-        if (get_first_device(&device_path_found))
-        {
-            return EXIT_FAILURE;
-        }
-        device_path = device_path_found;
-    }
-
-    ret = igsc_device_init_by_device(&handle, device_path);
-    if (ret != IGSC_SUCCESS)
-    {
-        return ret;
-    }
-
-    ret = igsc_device_oprom_version(&handle, IGSC_OPROM_DATA, &oprom_version);
+    ret = igsc_device_oprom_version(&handle, igsc_oprom_type, &oprom_version);
     if (ret != IGSC_SUCCESS)
     {
         goto exit;
     }
 
-    print_oprom_data_version(&oprom_version);
+    print_oprom_version(igsc_oprom_type, &oprom_version);
 
 exit:
     (void)igsc_device_close(&handle);
+    return ret;
+}
+
+static int oprom_image_version(const char *image_path, enum igsc_oprom_type type)
+{
+    struct img *img = NULL;
+    struct igsc_oprom_image *oimg = NULL;
+    struct igsc_oprom_version oprom_version;
+    enum igsc_oprom_type type_img;
+    int ret;
+
+    img = image_read_from_file(image_path);
+    if (img == NULL)
+    {
+        fwupd_error("Failed to read :%s\n", image_path);
+        return EXIT_FAILURE;
+    }
+
+    ret = igsc_image_oprom_init(&oimg, img->blob, img->size);
+    if (ret != IGSC_SUCCESS)
+    {
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    ret = igsc_image_oprom_type(oimg, &type_img);
+    if (ret != IGSC_SUCCESS)
+    {
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    if (type != type_img)
+    {
+        fwupd_error("Image type is %s expecting %s\n",
+                    oprom_type_to_str(type_img),
+                    oprom_type_to_str(type));
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    ret = igsc_image_oprom_version(oimg, &oprom_version);
+    if (ret == IGSC_SUCCESS)
+    {
+        print_oprom_version(type, &oprom_version);
+    }
+
+out:
+    igsc_image_oprom_release(oimg);
+    free(img);
+
+    return ret;
+}
+
+static int do_oprom_version(int argc, char *argv[], enum igsc_oprom_type type)
+{
+    char *device_path_found = NULL;
+
+    if (argc == 2)
+    {
+        if (arg_is_token(argv[0], "--device") || arg_is_token(argv[0], "-d"))
+        {
+            return oprom_version(argv[1], type);
+        }
+        if (arg_is_token(argv[0], "--image") || arg_is_token(argv[0], "-i"))
+        {
+            return oprom_image_version(argv[1], type);
+        }
+        fwupd_error("Wrong argument %s\n", argv[0]);
+        return ERROR_BAD_ARGUMENT;
+    }
+    else if (argc == 0)
+    {
+        int ret;
+
+        if (get_first_device(&device_path_found))
+        {
+            fwupd_error("No device or image\n");
+            return EXIT_FAILURE;
+        }
+
+        ret = oprom_version(device_path_found, type);
+        free(device_path_found);
+        return ret;
+    }
+    fwupd_error("Wrong number of arguments\n");
+    return ERROR_BAD_ARGUMENT;
+}
+
+/**
+ * Compare oprom version
+ */
+static int oprom_version_compare(struct igsc_oprom_version new,
+                                 struct igsc_oprom_version old)
+{
+    if (memcmp(&new, &old, sizeof(new)) == 0)
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+static int oprom_update(const char *image_path, const char *device_path,
+                        char *device_path_found, enum igsc_oprom_type type,
+                        bool allow_downgrade)
+{
+    struct img *img = NULL;
+    struct igsc_oprom_image *oimg = NULL;
+    struct igsc_device_handle handle;
+    struct igsc_oprom_version dev_version;
+    struct igsc_oprom_version img_version;
+    enum igsc_oprom_type type_img;
+    int cmp;
+    bool update = false;
+    int ret;
+
+
+    img = image_read_from_file(image_path);
+    if (img == NULL)
+    {
+        ret = EXIT_FAILURE;
+        fwupd_error("Failed to read :%s\n", image_path);
+        goto exit;
+    }
+
+    ret = igsc_image_oprom_init(&oimg, img->blob, img->size);
+    if (ret != IGSC_SUCCESS)
+    {
+        goto exit;
+    }
+    ret = igsc_image_oprom_type(oimg, &type_img);
+    if (ret != IGSC_SUCCESS)
+    {
+        goto exit;
+    }
+
+    if (type != type_img)
+    {
+        fwupd_error("Image type is %s expecting %s\n",
+                    oprom_type_to_str(type_img),
+                    oprom_type_to_str(type));
+        ret = EXIT_FAILURE;
+        goto exit;
+    }
+
+    ret = igsc_image_oprom_version(oimg, &img_version);
+    if (ret != IGSC_SUCCESS)
+    {
+        goto exit;
+    }
+    print_oprom_version(type, &img_version);
+
+    ret = igsc_device_init_by_device(&handle, device_path);
+    if (ret)
+    {
+        fwupd_error("Cannot initialize device %d\n", ret);
+        goto exit;
+    }
+
+    ret = igsc_device_oprom_version(&handle, type, &dev_version);
+    if (ret != IGSC_SUCCESS)
+    {
+        goto exit;
+    }
+    print_oprom_version(type, &dev_version);
+
+    cmp = oprom_version_compare(img_version, dev_version);
+    if (cmp > 0)
+    {
+        update = true;
+    }
+    else
+    {
+        fwupd_msg("Installed version is newer or equal\n");
+        update = allow_downgrade;
+    }
+
+    if (!update)
+    {
+        fwupd_msg("In order to update run with --allow-downgrade\n");
+        goto exit;
+    }
+
+    ret = igsc_device_oprom_update(&handle, type, img->blob, img->size,
+                                   progress_func, NULL);
+    if (ret)
+    {
+        fwupd_error("Cannot update from buffer %d\n", ret);
+    }
+
+    ret = igsc_device_oprom_version(&handle, type, &dev_version);
+    if (ret != IGSC_SUCCESS)
+    {
+        goto exit;
+    }
+    print_oprom_version(type, &dev_version);
+
+exit:
+    igsc_image_oprom_release(oimg);
+    (void)igsc_device_close(&handle);
+    free(img);
     free(device_path_found);
     return ret;
+}
+
+static int do_oprom_update(int argc, char *argv[], enum igsc_oprom_type type)
+{
+    bool allow_downgrade = false;
+    const char *image_path = NULL;
+    const char *device_path = NULL;
+    char *device_path_found = NULL;
+
+    if (argc <= 0)
+    {
+        fwupd_error("No image to update\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    do
+    {
+        if (arg_is_token(argv[0], "--allow-downgrade") || arg_is_token(argv[0], "-a"))
+        {
+            allow_downgrade = true;
+            continue;
+        }
+        if (arg_is_token(argv[0], "--device") || arg_is_token(argv[0], "-d"))
+        {
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No device to update\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            device_path = argv[0];
+        }
+        else if (arg_is_token(argv[0], "--image") || arg_is_token(argv[0], "-i"))
+        {
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No image to update\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            image_path = argv[0];
+        }
+        else
+        {
+            fwupd_error("Wrong argument %s\n", argv[0]);
+            return ERROR_BAD_ARGUMENT;
+        }
+    } while (arg_next(&argc, &argv));
+
+    if (!device_path)
+    {
+        if (get_first_device(&device_path_found))
+        {
+            fwupd_error("No device to update\n");
+            return EXIT_FAILURE;
+        }
+        device_path = device_path_found;
+    }
+
+    if (image_path)
+    {
+        return oprom_update(image_path, device_path, device_path_found, type, allow_downgrade);
+    }
+
+    free(device_path_found);
+
+    fwupd_error("No image to update\n");
+    return ERROR_BAD_ARGUMENT;
+}
+
+static int do_oprom_data(int argc, char *argv[])
+{
+    const char *sub_command = NULL;
+
+    if (argc <= 0)
+    {
+        fwupd_error("Missing arguments\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    sub_command = argv[0];
+
+    arg_next(&argc, &argv);
+
+    if (arg_is_token(sub_command, "version"))
+    {
+        return do_oprom_version(argc, argv, IGSC_OPROM_DATA);
+    }
+
+    if (arg_is_token(sub_command, "update"))
+    {
+        return do_oprom_update(argc, argv, IGSC_OPROM_DATA);
+    }
+
+    fwupd_error("Wrong argument %s\n", sub_command);
+
+    return ERROR_BAD_ARGUMENT;
+}
+
+static int do_oprom_code(int argc, char *argv[])
+{
+    const char *sub_command = NULL;
+
+    if (argc <= 0)
+    {
+        fwupd_error("Missing arguments\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    sub_command = argv[0];
+
+    arg_next(&argc, &argv);
+
+    if (arg_is_token(sub_command, "version"))
+    {
+        return do_oprom_version(argc, argv, IGSC_OPROM_CODE);
+    }
+
+    if (arg_is_token(sub_command, "update"))
+    {
+        return do_oprom_update(argc, argv, IGSC_OPROM_CODE);
+    }
+
+    fwupd_error("Wrong argument %s\n", sub_command);
+    return ERROR_BAD_ARGUMENT;
 }
 
 static int do_list_devices(int argc, char *argv[])
@@ -594,8 +893,9 @@ static int do_list_devices(int argc, char *argv[])
     struct igsc_fw_version fw_version;
     struct igsc_oprom_version oprom_version;
     bool do_info = false;
+    unsigned int ndevices = 0;
 
-    if (argc == 1)
+    if (argc >= 1)
     {
         if (arg_is_token(argv[0], "--info") || arg_is_token(argv[0], "-i"))
         {
@@ -603,31 +903,40 @@ static int do_list_devices(int argc, char *argv[])
         }
         else
         {
-            return EXIT_FAILURE;
+            fwupd_error("Wrong argument: %s\n", argv[0]);
+            return ERROR_BAD_ARGUMENT;
         }
     }
 
+    /* Should be no more args */
     if (arg_next(&argc, &argv))
     {
-        return EXIT_FAILURE;
+        return ERROR_BAD_ARGUMENT;
     }
 
     ret = igsc_device_iterator_create(&iter);
-    if (ret != IGSC_SUCCESS) {
+    if (ret != IGSC_SUCCESS)
+    {
         fwupd_error("Cannot create device iterator %d\n", ret);
         return EXIT_FAILURE;
     }
 
+    info.name[0] = '\0';
     while((ret = igsc_device_iterator_next(iter, &info)) == IGSC_SUCCESS)
     {
-        printf("Device '%s': %04hx:%04hx %04hx:%04hx\n",
+        printf("Device [%d] '%s': %04hx:%04hx %04hx:%04hx\n",
+               ndevices,
                info.name,
                info.vendor_id, info.device_id,
                info.subsys_vendor_id, info.subsys_device_id);
 
+        ndevices++;
+
         ret = igsc_device_init_by_device_info(&handle, &info);
         if (ret != IGSC_SUCCESS)
         {
+            /* make sure we have a printable name */
+            info.name[0] = '\0';
             continue;
         }
 
@@ -649,7 +958,8 @@ static int do_list_devices(int argc, char *argv[])
                 print_oprom_data_version(&oprom_version);
             }
         }
-
+        /* make sure we have a printable name */
+        info.name[0] = '\0';
         (void)igsc_device_close(&handle);
     }
     igsc_device_iterator_destroy(iter);
@@ -657,253 +967,124 @@ static int do_list_devices(int argc, char *argv[])
     {
         ret = EXIT_SUCCESS;
     }
+    if (ndevices == 0)
+    {
+        fwupd_msg("No device found\n");
+    }
 
     return ret;
 }
 
-static int do_oprom_image_info(int argc, char *argv[])
-{
-    struct fw_img *img = NULL;
-    struct igsc_oprom_version oprom_version;
-    const char *image_path = NULL;
-    struct igsc_oprom_image *oimg = NULL;
-    enum igsc_oprom_type type;
-    struct igsc_oprom_device_info one_dev;
-    int ret;
-
-    if (argc <= 0)
-    {
-        return EXIT_FAILURE;
-    }
-
-    image_path = argv[0];
-
-    img = image_read_from_file(image_path);
-    if (img == NULL)
-    {
-        fwupd_error("Failed to read :%s\n", image_path);
-        return EXIT_FAILURE;
-    }
-
-    ret = igsc_image_oprom_init(&oimg, img->blob, img->size);
-    if (ret != IGSC_SUCCESS)
-    {
-        fwupd_error("Failed to init :%s\n", image_path);
-        goto out;
-    }
-    ret = igsc_image_oprom_type(oimg, &type);
-    if (ret != IGSC_SUCCESS)
-    {
-        fwupd_error("Failed to get oprom image type\n");
-        goto release;
-    }
-    printf("OPROM Type: %d\n", type);
-    ret = igsc_image_oprom_version(oimg, &oprom_version);
-    if (ret != IGSC_SUCCESS)
-    {
-        goto release;
-    }
-    print_oprom_version(type, &oprom_version);
-    while ((ret = igsc_image_oprom_iterator_next(oimg, &one_dev)) == IGSC_SUCCESS)
-    {
-        printf("OPROM supported device: %04X:%04X\n",
-               one_dev.subsys_vendor_id, one_dev.subsys_device_id);
-    }
-    if (ret == IGSC_ERROR_DEVICE_NOT_FOUND)
-    {
-        ret = IGSC_SUCCESS;
-    }
-
-release:
-    igsc_image_oprom_release(oimg);
-out:
-    free(img);
-
-    return ret;
-}
-
-static int do_oprom_update(int argc, char *argv[])
-{
-    struct fw_img *img = NULL;
-    struct igsc_oprom_image *oimg = NULL;
-    struct igsc_device_handle handle;
-    struct igsc_oprom_version oprom_version;
-    const char *image_path = NULL;
-    const char *device_path = NULL;
-    char *device_path_found = NULL;
-    enum igsc_oprom_type type;
-    enum igsc_oprom_type type_img;
-    int ret;
-
-    if (argc <= 0)
-        return EXIT_FAILURE;
-
-    type = atoi(argv[0]);
-    if (!arg_next(&argc, &argv))
-    {
-        return EXIT_FAILURE;
-    }
-
-    image_path = argv[0];
-    if (!arg_next(&argc, &argv))
-    {
-        return EXIT_FAILURE;
-    }
-
-    if (argc >= 1)
-    {
-        device_path = argv[0];
-    }
-    else
-    {
-        if (get_first_device(&device_path_found))
-        {
-            return EXIT_FAILURE;
-        }
-        device_path = device_path_found;
-    }
-
-    img = image_read_from_file(image_path);
-    if (img == NULL)
-    {
-        ret = EXIT_FAILURE;
-        fwupd_error("Failed to read :%s\n", image_path);
-        goto exit;
-    }
-
-    ret = igsc_image_oprom_init(&oimg, img->blob, img->size);
-    if (ret != IGSC_SUCCESS)
-    {
-        goto exit;
-    }
-    ret = igsc_image_oprom_type(oimg, &type_img);
-    if (ret != IGSC_SUCCESS)
-    {
-        goto release;
-    }
-    printf("OPROM Type: %d\n", type_img);
-    if (type != type_img)
-    {
-        ret = EXIT_FAILURE;
-        fwupd_error("Image type is different: %d?=%d\n", type, type_img);
-        goto release;
-    }
-    ret = igsc_image_oprom_version(oimg, &oprom_version);
-    if (ret != IGSC_SUCCESS)
-    {
-        goto release;
-    }
-    print_oprom_version(type, &oprom_version);
-
-release:
-    igsc_image_oprom_release(oimg);
-
-    ret = igsc_device_init_by_device(&handle, device_path);
-    if (ret)
-    {
-        fwupd_error("Cannot initialize device %d\n", ret);
-        goto exit;
-    }
-
-    ret = igsc_device_oprom_version(&handle, type, &oprom_version);
-    if (ret != IGSC_SUCCESS)
-    {
-        goto exit;
-    }
-    print_oprom_version(type, &oprom_version);
-
-    ret = igsc_device_oprom_update(&handle, type, img->blob, img->size,
-                                   progress_func, NULL);
-    if (ret)
-    {
-        fwupd_error("Cannot update from buffer %d\n", ret);
-    }
-
-    ret = igsc_device_oprom_version(&handle, type, &oprom_version);
-    if (ret != IGSC_SUCCESS)
-    {
-        goto exit;
-    }
-    print_oprom_version(type, &oprom_version);
-
-    ret = igsc_device_close(&handle);
-    if (ret)
-    {
-        fwupd_error("Cannot close device %d\n", ret);
-    }
-
-exit:
-    free(img);
-    free(device_path_found);
-    return ret;
-}
-
-typedef int (*gsc_op)(int argc, char *argv[]);
-
-struct gsc_op {
-    const char *name;
-    gsc_op    op;
-    const char  *usage; /* usage title */
-    const char  *help;  /* help */
-};
-
-static const struct gsc_op ops[] = {
+static const struct gsc_op g_ops[] = {
     {
         .name  = "fw",
         .op    = do_firmware,
-        .usage = "update <image> [<dev>]\nversion [--device <dev>] | [--image <file>] ",
-        .help  = "    update device image\n",
+        .usage = {"update [options] [--device <dev>] --image  <image>",
+                  "version [--device <dev>] | --image <file> ",
+                   NULL},
+        .help  = "Update firmware partition or retrieve version from the devices or the supplied image\n"
+                 "\nOPTIONS:\n\n"
+                 "    -a | --allow-downgrade\n"
+                 "            allow downgrade or override the same version\n"
+                 "    -d | --device <device>\n"
+                 "            device to be updated\n"
+                 "    -i | --image <image file>\n"
+                 "            supplied image\n",
     },
     {
-        .name  = "oprom-code-version",
-        .op    = do_oprom_code_version,
-        .usage = "[<dev>]",
-        .help  = "    version of the installed oprom code\n",
+        .name  = "oprom-data",
+        .op    = do_oprom_data,
+        .usage = {"update [options] [--device <dev>] --image  <image>",
+                  "version [--device <dev>] | --image <file>",
+                  NULL},
+        .help  = "Update oprom data partition or retrieve version from the devices or the supplied image\n"
+                 "\nOPTIONS:\n\n"
+                 "    -a | --allow-downgrade\n"
+                 "            allow downgrade or override the same version\n"
+                 "    -d | --device <device>\n"
+                 "            device to be updated\n"
+                 "    -i | --image <image file>\n"
+                 "            supplied image\n",
     },
     {
-        .name  = "oprom-data-version",
-        .op    = do_oprom_data_version,
-        .usage = "[<dev>]",
-        .help  = "    version of the installed oprom data\n",
+        .name  = "oprom-code",
+        .op    = do_oprom_code,
+        .usage = {"update [options] [--device <dev>] --image <image>",
+                  "version [--device <dev>] | --image <file>",
+                  NULL},
+        .help  = "Update oprom code partition or retrieve version from the devices or the supplied image\n"
+                 "\nOPTIONS:\n\n"
+                 "    -a | --allow-downgrade\n"
+                 "            allow downgrade or override the same version\n"
+                 "    -d | --device <device>\n"
+                 "            device to be updated\n"
+                 "    -i | --image <image file>\n"
+                 "            supplied image\n",
     },
     {
         .name  = "list-devices",
         .op    = do_list_devices,
-        .usage = "[--info]",
-        .help  = "    list devices supporting fw update\n",
-    },
-    {
-        .name  = "oprom-image-info",
-        .op    = do_oprom_image_info,
-        .usage = "<image>",
-        .help  = "    print oprom image info\n",
-    },
-    {
-        .name  = "oprom-update",
-        .op    = do_oprom_update,
-        .usage = "<type> <image> [<dev>]",
-        .help  = "    update OPROM image\n",
+        .usage = {"[--info]", NULL, NULL},
+        .help  = "List devices supporting firmware or oprom update\n"
+                 "OPTIONS:\n\n"
+                 "    --info\n"
+                 "         display information for each device\n",
     },
     {
         .name  = NULL,
     }
 };
 
-static void help(const char *exec_name, const struct gsc_op *op)
+static void __op_usage(const char *exe_name, const struct gsc_op *op, bool indent)
 {
-    printf("%s %s %s\n", exec_name, op->name, op->usage);
-    printf("%s\n", op->help);
+    unsigned int j;
+    
+    for (j = 0; op->usage[j]; j++)
+    {
+        printf("%s%s %s %s\n", indent ? "    " : "", exe_name, op->name, op->usage[j]);
+    }
+}
+
+static void op_usage(const char *exe_name, const struct gsc_op *op)
+{
+        __op_usage(exe_name, op, true);
+}
+
+static void op_help(const char *exe_name, const struct gsc_op *op)
+{
+    printf("\n");
+    __op_usage(exe_name, op, false);
+    printf("\n%s\n", op->help);
+}
+
+/* FIXME: currently same as usage */
+static void help(const char *exe_name)
+{
+    unsigned int i;
+
+    printf("Usage: %s [-v] <command> <args>\n\n", exe_name);
+    for (i = 0; g_ops[i].name; i++)
+    {
+        op_usage(exe_name, &g_ops[i]);
+        printf("\n");
+    }
+
+    printf("\n");
+    printf("    %s -v/--verbose: runs in verbose mode\n", exe_name);
+    printf("    %s help : shows this help\n", exe_name);
+    printf("    %s help <command>: shows detailed help\n", exe_name);
 }
 
 static void usage(const char *exe_name)
 {
     unsigned int i;
 
-    printf("\n");
     printf("Usage: %s [-v] <command> <args>\n\n", exe_name);
-    for (i = 0; ops[i].name; i++)
-        printf("    %s %s %s\n",
-               exe_name, ops[i].name, ops[i].usage);
+    for (i = 0; g_ops[i].name; i++)
+    {
+        op_usage(exe_name, &g_ops[i]);
+        printf("\n");
+    }
 
     printf("\n");
     printf("    %s -v/--verbose: runs in verbose mode\n", exe_name);
@@ -925,18 +1106,19 @@ static bool arg_is_verbose(const char *arg)
 }
 
 static int args_parse(const char *exe_name, int *argc, char **argv[],
-                      const struct gsc_op **op)
+                      const struct gsc_op **op, bool *display_help)
 {
     unsigned int i;
-    const struct gsc_op *__op;
-    bool display_help = false;
+    const struct gsc_op *__op = NULL;
 
     if (exe_name == NULL)
     {
         return EXIT_FAILURE;
     }
 
-    if (!arg_next(argc, argv))
+    *display_help = false;
+
+    if (*argc == 0)
     {
         usage(exe_name);
         return EXIT_FAILURE;
@@ -944,11 +1126,12 @@ static int args_parse(const char *exe_name, int *argc, char **argv[],
 
     if (arg_is_help(*argv[0]))
     {
+        *display_help = true;
         if (!arg_next(argc, argv))
         {
+            help(exe_name);
             goto out;
         }
-        display_help = true;
     }
 
     if (arg_is_verbose(*argv[0]))
@@ -960,11 +1143,11 @@ static int args_parse(const char *exe_name, int *argc, char **argv[],
         verbose = true;
     }
 
-    for (i = 0; ops[i].name; i++)
+    for (i = 0; g_ops[i].name; i++)
     {
-        if (!strncmp(*argv[0], ops[i].name, strlen(ops[i].name)))
+        if (arg_is_token(*argv[0], g_ops[i].name))
         {
-            __op = &ops[i];
+            __op = &g_ops[i];
             arg_next(argc, argv);
             break;
         }
@@ -976,9 +1159,10 @@ static int args_parse(const char *exe_name, int *argc, char **argv[],
         return EXIT_FAILURE;
     }
 
-    if (display_help || (*argc > 0 && arg_is_help(*argv[0])))
+    if (*display_help || (*argc > 0 && arg_is_help(*argv[0])))
     {
-        help(exe_name, __op);
+        *display_help = true;
+        op_help(exe_name, __op);
         arg_next(argc, argv);
         __op = NULL;
     }
@@ -986,7 +1170,6 @@ static int args_parse(const char *exe_name, int *argc, char **argv[],
     *op = __op;
 
 out:
-    usage(exe_name);
     return EXIT_SUCCESS;
 }
 
@@ -1034,20 +1217,31 @@ char *prog_name(const char *exe_path)
 
 int main(int argc, char* argv[])
 {
-    char *exec_name = prog_name(argv[0]);
+    char *exe_name = prog_name(argv[0]);
     const struct gsc_op *op = NULL;
+    bool display_help = false;
     int ret = EXIT_FAILURE;
 
-    ret = args_parse(exec_name, &argc, &argv, &op);
-    if (!ret)
+    arg_next(&argc, &argv);
+
+    ret = args_parse(exe_name, &argc, &argv, &op, &display_help);
+    if (ret != EXIT_SUCCESS || op == NULL)
+    {
+        goto out;
+    }
+
+    if (display_help)
     {
         goto out;
     }
 
     ret = op->op(argc, argv);
+    if (ret == ERROR_BAD_ARGUMENT)
+    {
+        op_help(exe_name, op);
+    }
 
 out:
-    free(exec_name);
-
+    free(exe_name);
     return (ret) ? EXIT_FAILURE : EXIT_SUCCESS;
 }
