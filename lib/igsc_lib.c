@@ -187,12 +187,25 @@ exit:
     return status;
 }
 
+#define RECONNECT_ITERATIONS  10
+#define RECONNECT_TIMEOUT    100
+
 static int driver_reconnect(struct igsc_lib_ctx *lib_ctx)
 {
     TEESTATUS tee_status;
     int status;
+    uint32_t counter = 0;
 
-    tee_status = TeeConnect(&lib_ctx->driver_handle);
+    for (counter = 0; counter < RECONNECT_ITERATIONS; counter++)
+    {
+        tee_status = TeeConnect(&lib_ctx->driver_handle);
+        if (TEE_IS_SUCCESS(tee_status))
+        {
+            break;
+        }
+        gsc_msleep(RECONNECT_TIMEOUT);
+    }
+
     if (!TEE_IS_SUCCESS(tee_status))
     {
         gsc_error("Error in HECI connect (%d)\n", tee_status);
@@ -1263,7 +1276,7 @@ int igsc_device_fw_update(IN struct igsc_device_handle *handle,
 
     gsc_pref_cnt_checkpoint(perf_ctx, "After PLRs");
 
-    driver_reconnect(lib_ctx);
+    ret = driver_reconnect(lib_ctx);
 
 exit:
     gsc_fwu_img_layout_reset(&lib_ctx->layout);
