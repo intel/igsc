@@ -1450,8 +1450,6 @@ int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
 
     gsc_pref_cnt_checkpoint(perf_ctx, "After PLRs");
 
-    driver_reconnect(lib_ctx);
-
 exit:
     gsc_fwu_img_layout_reset(&lib_ctx->layout);
 
