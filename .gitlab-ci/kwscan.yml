@@ -1,0 +1,11 @@
+.kwscan:
+        stage: build
+        script:
+             - export BUILD_DIR=build
+             - export KWBUILD=${CI_JOB_ID}
+             - cmake ${CMAKE_ARGS} -B ${BUILD_DIR}
+             - ./.gitlab-ci/kwscan.sh
+
+        artifacts:
+                paths:
+                        - ./kwbuild/KW/*.log

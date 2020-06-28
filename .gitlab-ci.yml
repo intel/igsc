@@ -21,6 +21,7 @@ include:
         - '.gitlab-ci/meson.yml'
         - '.gitlab-ci/vscode.yml'
         - '.gitlab-ci/tidy.yml'
+        - '.gitlab-ci/kwscan.yml'
 
 gitlint:
         stage: stylecheck
@@ -147,8 +148,19 @@ tidy:
         before_script:
         - *ssh_setup
         - *build_dir
-        - *metee          
+        - *metee
         extends: .tidy
+
+kwscan:linux:
+        stage: build
+        image: ${CI_REGISTRY}/lms-ubuntu:20.04
+        tags:
+                - Linux
+        before_script:
+        - *ssh_setup
+        - *build_dir
+        - *metee
+        extends: .kwscan
 
 unit_tests:
         stage: test
