@@ -155,13 +155,20 @@ struct gsc_fwu_heci_version_resp {
  * @{
  */
 
-/* TODO: add better definitions */
-/** Firmware status register 1 FW update is in idle state */
-#define HECI1_CSE_FS_FWUPDATE_STATE_IDLE     0
-/** FW initialization completed: all modules initialized */
-#define HECI1_CSE_FS_INITSTATE_COMPLETED     1
+/** Firmware status register 1 - FW update is in idle state bit */
+#define HECI1_CSE_FS_FWUPDATE_STATE_IDLE_BIT    (1<<11)
+/** Firmware status register 1 - FW initialization completed bit */
+#define HECI1_CSE_FS_INITSTATE_COMPLETED_BIT    (1<<9)
 /** Firmware status register 2  value - firmware update state */
-#define HECI1_CSE_GS1_PHASE_FWUPDATE         7
+#define HECI1_CSE_GS1_PHASE_FWUPDATE       7
+/** Firmware status register - firmware update phase bits shift */
+#define HECI1_CSE_FS_FWUPD_PHASE_SHIFT    28
+/** Firmware status register - firmware update phase bits mask */
+#define HECI1_CSE_FS_FWUPD_PHASE_MASK    0xF
+/** Firmware status register - firmware update percentage bits shift */
+#define HECI1_CSE_FS_FWUPD_PERCENT_SHIFT  16
+/** Firmware status register - firmware update percentage bits mask */
+#define HECI1_CSE_FS_FWUPD_PERCENT_MASK  0xFF
 
 enum gsc_fwu_heci_metadata_version {
     /** GSC Firmware Update metadata version for no metadata case */
@@ -171,8 +178,6 @@ enum gsc_fwu_heci_metadata_version {
     /** GSC Firmware Update metadata version Upper Sentinel */
     GSC_FWU_HECI_METADATA_VERSION_MAX,
 };
-
-
 
 
 /**

@@ -922,8 +922,8 @@ static bool gsc_fwu_is_in_progress(struct igsc_lib_ctx *lib_ctx)
         goto exit;
     }
 
-    init_completed = ( ((value >> 9) & 0x1) == HECI1_CSE_FS_INITSTATE_COMPLETED);
-    fu_idle = ( ((value >> 11) & 0x1) == HECI1_CSE_FS_FWUPDATE_STATE_IDLE);
+    init_completed = !!(value & HECI1_CSE_FS_INITSTATE_COMPLETED_BIT);
+    fu_idle = !(value & HECI1_CSE_FS_FWUPDATE_STATE_IDLE_BIT);
 
     if (init_completed && fu_idle)
     {
@@ -961,8 +961,10 @@ static int get_percentage(struct igsc_lib_ctx *lib_ctx, uint32_t *percentage)
         goto exit;
     }
 
-    fwsts_phase = (value >> 28) & 0xF;
-    fwsts_value = (value >> 16) & 0xFF;
+    fwsts_phase = (value >> HECI1_CSE_FS_FWUPD_PHASE_SHIFT) &
+                  HECI1_CSE_FS_FWUPD_PHASE_MASK;
+    fwsts_value = (value >> HECI1_CSE_FS_FWUPD_PERCENT_SHIFT) &
+                  HECI1_CSE_FS_FWUPD_PERCENT_MASK;
 
     if (fwsts_phase != HECI1_CSE_GS1_PHASE_FWUPDATE)
     {
