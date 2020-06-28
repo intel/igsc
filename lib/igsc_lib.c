@@ -1178,7 +1178,7 @@ int igsc_device_fw_update(IN struct igsc_device_handle *handle,
     uint32_t bytes_sent = 0;
     uint32_t chunk_size = 0;
     uint32_t data_counter = 0;
-    uint32_t percentage;
+    uint32_t percentage = 0;
     uint32_t fpt_size = 0;
     const uint8_t *fpt_data = NULL;
 
@@ -1273,6 +1273,19 @@ int igsc_device_fw_update(IN struct igsc_device_handle *handle,
             gsc_msleep(100);
         }
     }
+    /*
+     * In the case that the actual update was completed
+     * between the fwu_end message and the progress
+     * check gsc_fwu_is_in_progress() the progress_f(100)
+     * needs to be called explicitly to announce the completion.
+     */
+    if (percentage != 100)
+    {
+         if (progress_f)
+         {
+             progress_f(100, 100, ctx);
+         }
+    }
 
     gsc_pref_cnt_checkpoint(perf_ctx, "After PLRs");
 
@@ -1335,7 +1348,7 @@ int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
     uint32_t bytes_sent = 0;
     uint32_t chunk_size = 0;
     uint32_t data_counter = 0;
-    uint32_t percentage;
+    uint32_t percentage = 0;
     uint32_t fpt_size = 0;
     const uint8_t *fpt_data = NULL;
     uint32_t partition;
@@ -1446,6 +1459,20 @@ int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
         {
             gsc_msleep(100);
         }
+    }
+
+    /*
+     * In the case that the actual update was completed
+     * between the fwu_end message and the progress
+     * check gsc_fwu_is_in_progress() the progress_f(100)
+     * needs to be called explicitly to announce the completion.
+     */
+    if (percentage != 100)
+    {
+         if (progress_f)
+         {
+             progress_f(100, 100, ctx);
+         }
     }
 
     gsc_pref_cnt_checkpoint(perf_ctx, "After PLRs");

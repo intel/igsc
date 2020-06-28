@@ -212,16 +212,21 @@ static void progress_func(uint32_t done, uint32_t total, void *ctx)
 
     memset(buffer, 0, sizeof(buffer));
 
-    if (percent >= PERCENT_100)
+    if (percent > PERCENT_100)
     {
-        percent = PERCENT_100 - 1;
+        percent = PERCENT_100;
     }
 
     if (percent > 0)
     {
         memset(buffer, '#', percent);
     }
-    memset(buffer + percent, ' ', PERCENT_100 - percent - 1);
+
+    if (percent < PERCENT_100)
+    {
+        memset(buffer + percent, ' ', PERCENT_100 - percent);
+    }
+
     buffer[PERCENT_100] = '\0';
 
     printf("\b%c[2K\rProgress %d/%d:%2d%%:[%s]\n", 27, done, total, percent, buffer);
