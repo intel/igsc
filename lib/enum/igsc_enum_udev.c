@@ -159,6 +159,7 @@ int igsc_device_iterator_next(struct igsc_device_iterator *iter,
         if (prop)
         {
             strncpy(info->name, prop, IGCS_INFO_NAME_SIZE);
+            info->name[IGCS_INFO_NAME_SIZE - 1] = '\0';
         }
         udev_device_unref(mei);
     }
