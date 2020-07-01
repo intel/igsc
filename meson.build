@@ -22,6 +22,7 @@ warning_flags = [
   '-Wformat-security',
   '-Wstack-protector',
   '-Winit-self',
+  '-Wstrict-prototypes',
 ]
 
 # secure compile flags

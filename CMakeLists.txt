@@ -26,6 +26,7 @@ set(COMPILE_OPTIONS_NX
     -Wformat-security
     -Wstack-protector
     -Winit-self
+    -Wstrict-prototypes
     -fPIC
     "$<$<CONFIG:DEBUG>:-O0;-g3;-ggdb>"
     "$<$<BOOL:${ENABLE_WERROR}>:-Werror>"
