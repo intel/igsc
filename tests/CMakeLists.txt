@@ -52,3 +52,14 @@ target_link_libraries(oprom_parser_tests PRIVATE LIBMETEE)
 target_include_directories(oprom_parser_tests
                            PRIVATE ${IGCS_INCLUDE_DIRS})
 add_cmocka_test_environment(oprom_parser_tests)
+
+add_cmocka_test(cli_tests
+                SOURCES cli_tests.c enum_mock.c ../lib/igsc_lib.c ../lib/igsc_oprom.c
+                LINK_LIBRARIES cmocka
+                COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS} -DUNIT_TESTING=1
+                LINK_OPTIONS  "-Wl,--wrap=igsc_device_iterator_next -Wl,--wrap=igsc_device_iterator_create -Wl,--wrap=igsc_device_iterator_destroy")
+target_link_libraries(cli_tests PRIVATE LIBMETEE)
+target_include_directories(cli_tests
+                           PRIVATE ${IGCS_INCLUDE_DIRS}
+                           PRIVATE ../src)
+add_cmocka_test_environment(cli_tests)

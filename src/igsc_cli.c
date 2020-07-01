@@ -35,6 +35,12 @@ bool verbose = false;
     fprintf(stdout, fmt, ##__VA_ARGS__);   \
 } while (0)
 
+#ifdef UNIT_TESTING
+#define  mockable_static __attribute__((weak))
+#else
+#define  mockable_static static
+#endif
+
 
 #define MAX_UPDATE_IMAGE_SIZE (8*1024*1024)
 
@@ -293,9 +299,9 @@ struct gsc_op {
     const char  *help;  /* help */
 };
 
-static int firmware_update(const char *device_path,
-                           const char *image_path,
-                           bool allow_downgrade)
+mockable_static int firmware_update(const char *device_path,
+                                    const char *image_path,
+                                    bool allow_downgrade)
 {
     struct img *img = NULL;
     struct igsc_device_handle handle;
@@ -368,7 +374,7 @@ exit:
     return ret;
 }
 
-static int firmware_version(const char *device_path)
+mockable_static int firmware_version(const char *device_path)
 {
     struct igsc_device_handle handle;
     struct igsc_fw_version fw_version;
@@ -393,7 +399,7 @@ exit:
     return ret;
 }
 
-static int image_version(const char *image_path)
+mockable_static int image_version(const char *image_path)
 {
     struct img *img = NULL;
     struct igsc_fw_version fw_version;
@@ -533,7 +539,7 @@ static int do_firmware(int argc, char *argv[])
     return ERROR_BAD_ARGUMENT;
 }
 
-static int oprom_version(const char *device_path, enum igsc_oprom_type igsc_oprom_type)
+mockable_static int oprom_version(const char *device_path, enum igsc_oprom_type igsc_oprom_type)
 {
     struct igsc_oprom_version oprom_version;
     struct igsc_device_handle handle;
@@ -558,7 +564,7 @@ exit:
     return ret;
 }
 
-static int oprom_image_version(const char *image_path, enum igsc_oprom_type type)
+mockable_static int oprom_image_version(const char *image_path, enum igsc_oprom_type type)
 {
     struct img *img = NULL;
     struct igsc_oprom_image *oimg = NULL;
@@ -658,9 +664,9 @@ static int oprom_version_compare(struct igsc_oprom_version new,
     return 1;
 }
 
-static int oprom_update(const char *image_path, const char *device_path,
-                        char *device_path_found, enum igsc_oprom_type type,
-                        bool allow_downgrade)
+mockable_static int oprom_update(const char *image_path, const char *device_path,
+                                 char *device_path_found, enum igsc_oprom_type type,
+                                 bool allow_downgrade)
 {
     struct img *img = NULL;
     struct igsc_oprom_image *oimg = NULL;
@@ -1215,6 +1221,7 @@ char *prog_name(const char *exe_path)
 }
 #endif
 
+#ifndef UNIT_TESTING
 int main(int argc, char* argv[])
 {
     char *exe_name = prog_name(argv[0]);
@@ -1245,3 +1252,4 @@ out:
     free(exe_name);
     return (ret) ? EXIT_FAILURE : EXIT_SUCCESS;
 }
+#endif /* UNIT_TESTING */
