@@ -1240,6 +1240,25 @@ int igsc_device_fw_update(IN struct igsc_device_handle *handle,
 
     gsc_pref_cnt_checkpoint(perf_ctx, "After FWU_END");
 
+    {
+    /* In order the underlying library detects the firmware reset
+     * and updates its state for the current handle a dummy command
+     * (get fw version) needs to be performed. The expectation is
+     * that it will fail eventually.
+     */
+        #define MAX_GET_VERSION_RETRIES 20
+        struct igsc_fw_version version;
+        unsigned int i;
+        for (i = 0; i < MAX_GET_VERSION_RETRIES; i++)
+        {
+            if (gsc_get_fw_version(lib_ctx, &version) != IGSC_SUCCESS)
+            {
+               break;
+            }
+            gsc_msleep(100);
+        }
+    }
+
     while (gsc_fwu_is_in_progress(lib_ctx))
     {
         if (get_percentage(lib_ctx, &percentage) == IGSC_SUCCESS)
