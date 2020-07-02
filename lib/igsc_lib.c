@@ -566,10 +566,9 @@ exit:
     return status;
 }
 
-
 static int gsc_fwu_get_version(struct igsc_lib_ctx *lib_ctx,
                                uint32_t partition,
-                               uint32_t version_length, void **version)
+                               uint8_t *version, size_t version_length)
 {
     int status;
     size_t request_len;
@@ -644,58 +643,33 @@ static int gsc_fwu_get_version(struct igsc_lib_ctx *lib_ctx,
         goto exit;
     }
 
-    *version = &resp->version;
+    if (gsc_memcpy_s(version, version_length,
+                     resp->version, resp->version_length))
+    {
+        gsc_error("Copy of version data failed\n");
+        status = IGSC_ERROR_INTERNAL;
+        goto exit;
+    }
+
     status = IGSC_SUCCESS;
 
 exit:
     return status;
 }
 
-static void gsc_fw_copy_version(struct igsc_fw_version* version,
-                                struct gsc_fwu_external_version *overall_version)
-{
-    version->project[0] = overall_version->project[0];
-    version->project[1] = overall_version->project[1];
-    version->project[2] = overall_version->project[2];
-    version->project[3] = overall_version->project[3];
-    version->hotfix = overall_version->hotfix;
-    version->build = overall_version->build;
-}
-
 static int gsc_get_fw_version(struct igsc_lib_ctx *lib_ctx,
                               struct igsc_fw_version *version)
 {
-    int status;
-    void *pnt = NULL;
-
-    status = gsc_fwu_get_version(lib_ctx, GSC_FWU_HECI_PART_VERSION_GFX_FW,
-                                 sizeof(*version), &pnt);
-    if (!status)
-    {
-        gsc_fw_copy_version(version, pnt);
-    }
-    return status;
+    return gsc_fwu_get_version(lib_ctx, GSC_FWU_HECI_PART_VERSION_GFX_FW,
+                               (uint8_t *)version, sizeof(*version));
 }
 
 static int gsc_fwu_get_oprom_version(struct igsc_lib_ctx *lib_ctx,
                                      uint32_t partition,
                                      struct igsc_oprom_version *version)
 {
-    int  status;
-    void *pnt = NULL;
-
-    status = gsc_fwu_get_version(lib_ctx, partition,
-                                 sizeof(*version), &pnt);
-    if (!status)
-    {
-        if (gsc_memcpy_s(version->version, IGSC_OPROM_VER_SIZE,
-                         pnt, IGSC_OPROM_VER_SIZE))
-        {
-            gsc_error("Copy of version data failed\n");
-            status = IGSC_ERROR_INTERNAL;
-        }
-    }
-    return status;
+    return gsc_fwu_get_version(lib_ctx, partition,
+                               (uint8_t *)version, sizeof(*version));
 }
 
 static int gsc_fwu_start(struct igsc_lib_ctx *lib_ctx, uint32_t payload_type)
@@ -1164,7 +1138,12 @@ int igsc_image_fw_version(IN  const uint8_t *buffer,
 
     meta_v1 = (struct gsc_fwu_image_metadata_v1 *)meta->metadata;
 
-    gsc_fw_copy_version(version, &meta_v1->overall_version);
+    if (gsc_memcpy_s(version, sizeof(*version),
+                     &meta_v1->overall_version, sizeof(meta_v1->overall_version)))
+    {
+        gsc_error("Copy of version data failed\n");
+        return IGSC_ERROR_INTERNAL;
+    }
 
     return IGSC_SUCCESS;
 }
