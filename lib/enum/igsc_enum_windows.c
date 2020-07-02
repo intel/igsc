@@ -54,7 +54,7 @@ int igsc_device_iterator_create(struct igsc_device_iterator **iter)
         goto clean_it;
     }
 
-    if (deviceInterfaceListLength <= 1)
+    if (deviceInterfaceListLength == 0)
     {
         ret = IGSC_ERROR_DEVICE_NOT_FOUND;
         goto clean_it;
