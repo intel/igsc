@@ -5,7 +5,6 @@ KWPROJECT=IGSC_FUL
 KWURL=https://sfip-kw-cd.intel.com:8080
 WORKSPACE=kwbuild
 Jobs_num=$(nproc)
-#replace_path=--replace_path
 echo "variables:"
 echo "-------------------------------------------------------------------------"
 echo "KWPROJECT : ${KWPROJECT}"
@@ -13,7 +12,6 @@ echo "KWURL     : ${KWURL}"
 echo "KWBUILD   : ${KWBUILD}"
 echo "WORKSPACE : ${WORKSPACE}"
 echo "Jobs_num  : ${Jobs_num}"
-echo "replace_path: ${replace_path}"
 echo "Compiler_options ${Compiler_options}"
 echo "-------------------------------------------------------------------------"
 
@@ -21,6 +19,10 @@ echo "-------------------------------------------------------------------------"
 [ -z ${KWURL} ] && { echo "KWURL is not set "; exit 1; }
 [ -z ${KWBUILD} ] &&  { echo "KWBUILD is not set"; exit 1; }
 [ -z ${WORKSPACE} ] && { echo "WORKSPACE is not set"; exit 1; }
+
+SRCDIR=$(pwd)
+PROJECT=igsc
+replace_path="--replace-path ${SRCDIR}=${PROJECT}"
 
 BUILD_DIR=build
 CMPL_CMD="make -C ${BUILD_DIR}"
@@ -52,7 +54,6 @@ kwbuildproject \
     --buildspec-variable "kwpsroot=${KW_SRC_ROOT}" \
     --force --jobs-num $Jobs_num ${replace_path} ${Compiler_options} 2>&1 | tee ${WORKAREA}/output.log
 
-awk '/([0-9]+) error\(s\) and ([0-9]+) warning\(s\)/{print $1$4}' ${WORKAREA}/output.log
 
 ### Upload to server
 echo `date +%R:%S` Uploading...
