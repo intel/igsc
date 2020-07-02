@@ -1,0 +1,20 @@
+@startuml
+SW -> FW: fwu_get_version
+FW -> SW: fw_version_response
+
+group update needed
+
+    SW -> FW: fwu_start
+    FW -> SW: fwu_response
+    loop image size / MTU
+        SW -> FW: fwu_data
+        FW -> SW: fwu_data_response
+    end
+   SW -> FW: fwu_end
+   loop pool fw status register
+        SW ->o FW:  fw status register
+   end
+   SW -> FW: fwu_get_version
+   FW -> SW: fw_version_response
+end
+@enduml

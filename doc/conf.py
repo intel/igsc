@@ -42,6 +42,7 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.imgmath',
     'sphinx.ext.githubpages',
+    'sphinx.ext.imgconverter',
     'sphinx_tabs.tabs'
 ]
 
