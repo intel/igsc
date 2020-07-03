@@ -27,11 +27,18 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include "igsc_export.h"
-
+/**
+ * A file descriptor
+ * @typedef igsc_handle_t
+ * @n
+ * Under Linux: file descriptor int fd = open(2)
+ * @n
+ * Under Windows: HANDLE handle = CreateFile()
+ */
 #ifdef __linux__
-#define igsc_handle_t int
+typedef int igsc_handle_t;
 #else /* __linux__ */
-#define igsc_handle_t void*
+typedef void *igsc_handle_t;
 #endif /* __linux__ */
 
 /**
@@ -51,6 +58,9 @@ struct igsc_oprom_version {
     char version[IGSC_OPROM_VER_SIZE]; /**< OPROM Version string */
 };
 
+/**
+ * OPROM partition type
+ */
 enum igsc_oprom_type {
     IGSC_OPROM_DATA = 0,
     IGSC_OPROM_CODE = 1,
@@ -80,6 +90,12 @@ struct igsc_device_iterator;
  */
 struct igsc_device_info {
     char name[IGCS_INFO_NAME_SIZE];
+
+    uint16_t domain;
+    uint8_t  bus;
+    uint8_t  dev;
+    uint8_t  func;
+
     uint16_t device_id;
     uint16_t vendor_id;
     uint16_t subsys_device_id;
@@ -226,7 +242,7 @@ igsc_device_fw_update(IN  struct igsc_device_handle *handle,
  *  @brief Retrieves the GSC OPROM version from the device.
  *
  *  @param handle A handle to the device.
- *  @param oprom_type An OPROM type requested @ref enum igsc_oprom_type
+ *  @param oprom_type An OPROM type requested @ref igsc_oprom_type
  *  @param version The memory to store obtained OPROM version.
  *
  *  @return 0 if successful, otherwise error code.
