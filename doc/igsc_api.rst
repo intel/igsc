@@ -18,15 +18,16 @@ in mind. The library supports both Linux and Windows.
 
 The API is divided into 3 groups:
 
-1. **Device API**: API utilizing underlying operating system in order
-   to enumerate and access graphics device and retrieve information.
-
-2. **Device FW API**: This API provides wrapper for accessing the GSC Firmware API.
+1. **Device FW API**: This API provides wrapper for accessing the GSC Firmware API.
    The API requires device access. This API includes actual image update
    functionality.
 
 3. **Image API**: Provides API for retrieving the required information from
-   the update images.
+   the update images and utilizes library image parsing capabilities.
+
+1. **Device API**: API utilizing underlying operating system in order
+   to enumerate and access graphics device and retrieve information.
+
 
 Orthogonally the API provides facility to update GSC Firmware and the OPROM
 image.
@@ -41,11 +42,25 @@ image.
 
     * Linux: **/dev/meiX**
 
-    * Windows: **PCI\VEN_8086&DEV_9D3A&SUBSYS_225D17AA&REV_21\3&11583659&0&B0**
+    * Windows: **"\\?\DISPLAY#INTC_HECI_2#7&1077c94e&0&UID60434#{5315db55-e7c7-4e67-b396-800a75dd6fe4}"**
 
 .. code-block:: c
 
     const char *device_path;
+
+2. Device System Handle
+
+  * *Under Linux:* A file descriptor returned by `int open(2)`
+
+  * *Under Windows:* A file handle returned by `HANLDE CreateFile()`
+
+.. code-block:: c
+
+   #ifdef __linux__
+   typedef int igsc_handle_t;
+   #else /* __linux__ */
+   typedef void* igsc_handle_t;
+   #endif /* __linux__ */
 
 
 2. Device Handle: Internal handle used by the library
@@ -159,8 +174,8 @@ The structure represents the device firmware version.
 .. code-block:: c
 
     int igsc_image_fw_version(IN  const uint8_t *buffer,
-                                  IN  uint32_t buffer_len,
-                                  OUT struct igsc_fw_version *version);
+                              IN  uint32_t buffer_len,
+                              OUT struct igsc_fw_version *version);
 
 
 4. A type of the progress function: A function provided by the caller,
@@ -211,7 +226,7 @@ The structure represents the device firmware version.
   .. code-block:: c
 
     enum igsc_oprom_type {
-      IGSC_OPROM_VBT = 0,
+      IGSC_OPROM_DATA = 0,
       IGSC_OPROM_CODE = 1,
       IGSC_OPROM_MAX
     };
@@ -333,16 +348,26 @@ information.
          uint32_t *buf;
          uint32_t buf_len;
          struct igsc_device_info device, info;
-         struct igsc_device_handle *hadnle;
+         struct igsc_device_handle *handle = NULL;
+         const char *device_path = NULL;
 
+         device_path = argv[1];
+
+         read_image(argv[2], &buf, buf_len);
+
+         igsc_device_init_by_device(&handle, device_path);
          igsc_image_oprom_init(&img, buf, buf_len);
 
-         while (igsc_image_oprom_next_device(img, &info)) {
+         while (igsc_image_oprom_next_device(img, &info))
+         {
            if (compare(device, info))
-             igsc_device_oprom_vbt_update(handle, buf, buf_len);
+           {
+             igsc_device_oprom_update(handle, IGSC_OPROM_DATA, buf, buf_len);
+           }
          }
 
          igsc_image_oprom_relese(img);
+         igsc_device_close(handle);
       }
 
 
@@ -353,15 +378,23 @@ information.
       int main(int argc, char *argv[])
       {
           struct igsc_oprom_image *img = NULL;
-          uint32_t *buf;
-          uint32_t buf_len;
-          struct igsc_device_info *device;
+          uint32_t *buf = NULL;
+          size_t buf_len = 0;
+          struct igsc_device_info device;
           struct igsc_device_handle *hadnle;
 
+          device_path = argv[1];
+
+          read_image(argv[2], &buf, buf_len);
+
+          igsc_device_init_by_device(&handle, device_path);
           igsc_image_oprom_init(&img, buf, buf_len);
 
-          if (igsc_image_oprom_match_device(img, device)) {
-             igsc_device_oprom_vbt_update(handle, buf, buf_len);
+          igsc_device_get_info(handle, &devices, sizeof(device));
+
+          if (igsc_image_oprom_match_device(img, device))
+          {
+             igsc_device_oprom_update(handle, IGSC_OPROM_CODE, buf, buf_len);
           }
 
          igsc_image_oprom_relese(img);
