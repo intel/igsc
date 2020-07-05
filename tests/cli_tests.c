@@ -30,12 +30,14 @@ int mock_firmware_version(const char *device_path);
 
 int mock_image_version(const char *device_path);
 
-int mock_oprom_version(const char *device_path, enum igsc_oprom_type igsc_oprom_type);
+int mock_oprom_device_version(const char *device_path,
+                              enum igsc_oprom_type igsc_oprom_type);
 
 int mock_oprom_update(const char *image_path, const char *device_path,
                       char *device_path_found, enum igsc_oprom_type type);
 
-int mock_oprom_image_version(const char *image_path, enum igsc_oprom_type igsc_oprom_type);
+int mock_oprom_image_version(const char *image_path,
+                             enum igsc_oprom_type igsc_oprom_type);
 
 int firmware_update(const char *device_path,
                            const char *image_path,
@@ -54,12 +56,14 @@ int image_version(const char *device_path)
     return mock_image_version(device_path);
 }
 
-int oprom_version(const char *device_path, enum igsc_oprom_type igsc_oprom_type)
+int oprom_device_version(const char *device_path,
+                         enum igsc_oprom_type igsc_oprom_type)
 {
-    return mock_oprom_version(device_path, igsc_oprom_type);
+    return mock_oprom_device_version(device_path, igsc_oprom_type);
 }
 
-int oprom_update(const char *image_path, const char *device_path, char *device_path_found, enum igsc_oprom_type type)
+int oprom_update(const char *image_path, const char *device_path,
+                 char *device_path_found, enum igsc_oprom_type type)
 {
     return mock_oprom_update(image_path, device_path, device_path_found, type);
 }

@@ -85,7 +85,8 @@ int mock_image_version(const char *device_path)
     return EXIT_SUCCESS;
 }
 
-int mock_oprom_version(const char *device_path, enum igsc_oprom_type igsc_oprom_type)
+int mock_oprom_device_version(const char *device_path,
+                             enum igsc_oprom_type igsc_oprom_type)
 {
     return EXIT_SUCCESS;
 }
@@ -96,7 +97,8 @@ int mock_oprom_update(const char *image_path, const char *device_path,
     return EXIT_SUCCESS;
 }
 
-int mock_oprom_image_version(const char *image_path, enum igsc_oprom_type igsc_oprom_type)
+int mock_oprom_image_version(const char *image_path,
+                             enum igsc_oprom_type igsc_oprom_type)
 {
     return EXIT_SUCCESS;
 }

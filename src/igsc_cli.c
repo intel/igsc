@@ -54,7 +54,9 @@ struct img {
 static inline int fopen_s(FILE **fp, const char *pathname, const char *mode)
 {
     if (!fp)
+    {
         return EINVAL;
+    }
 
     errno = 0;
     *fp = fopen(pathname, mode);
@@ -102,7 +104,6 @@ const char *oprom_type_to_str(enum igsc_oprom_type type)
 static void print_oprom_version(enum igsc_oprom_type type,
                                 const struct igsc_oprom_version *oprom_version)
 {
-
     printf("OPROM %s Version: %02X %02X %02X %02X %02X %02X %02X %02X\n",
            oprom_type_to_str(type),
            oprom_version->version[0],
@@ -157,7 +158,7 @@ static struct img *image_read_from_file(const char *p_path)
 
     if (file_size > IGSC_MAX_IMAGE_SIZE)
     {
-        fwupd_verbose("Update Image size (%ld) too large\n", file_size);
+        fwupd_verbose("Update image size (%ld) too large\n", file_size);
         goto exit;
     }
 
@@ -210,7 +211,7 @@ static int get_first_device(char **device_path)
     ret = igsc_device_iterator_create(&iter);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Cannot create device iterator %d\n", ret);
+        fwupd_error("Cannot create device iterator\n");
         return EXIT_FAILURE;
     }
 
@@ -341,7 +342,7 @@ mockable_static int firmware_update(const char *device_path,
     ret = igsc_device_init_by_device(&handle, device_path);
     if (ret)
     {
-        fwupd_error("Cannot initialize device %d\n", ret);
+        fwupd_error("Cannot initialize device: %s\n", device_path);
         goto exit;
     }
 
@@ -356,12 +357,13 @@ mockable_static int firmware_update(const char *device_path,
                                  progress_func, NULL);
     if (ret)
     {
-        fwupd_error("Cannot update from buffer %d\n", ret);
+        fwupd_error("Update process failed\n");
     }
 
     ret = igsc_device_fw_version(&handle, &fw_version);
     if (ret != IGSC_SUCCESS)
     {
+        fwupd_error("Cannot retrieve the version\n");
         goto exit;
     }
     print_fw_version(&fw_version);
@@ -389,6 +391,7 @@ mockable_static int firmware_version(const char *device_path)
     ret = igsc_device_fw_version(&handle, &fw_version);
     if (ret != IGSC_SUCCESS)
     {
+        fwupd_error("Cannot retrieve the version\n");
         goto exit;
     }
 
@@ -409,17 +412,20 @@ mockable_static int image_version(const char *image_path)
     if (img == NULL)
     {
         fwupd_error("Failed to read :%s\n", image_path);
-        return EXIT_FAILURE;
+        ret = EXIT_FAILURE;
+        goto exit;
     }
 
     ret = igsc_image_fw_version(img->blob, img->size, &fw_version);
-    if (ret == IGSC_SUCCESS)
+    if (ret != IGSC_SUCCESS)
     {
-        print_fw_version(&fw_version);
+        fwupd_error("Cannot retrieve the version\n");
+        goto exit;
     }
+    print_fw_version(&fw_version);
 
+exit:
     free(img);
-
     return ret;
 }
 
@@ -539,7 +545,8 @@ static int do_firmware(int argc, char *argv[])
     return ERROR_BAD_ARGUMENT;
 }
 
-mockable_static int oprom_version(const char *device_path, enum igsc_oprom_type igsc_oprom_type)
+mockable_static int oprom_device_version(const char *device_path,
+                                         enum igsc_oprom_type igsc_oprom_type)
 {
     struct igsc_oprom_version oprom_version;
     struct igsc_device_handle handle;
@@ -580,6 +587,13 @@ mockable_static int oprom_image_version(const char *image_path, enum igsc_oprom_
     }
 
     ret = igsc_image_oprom_init(&oimg, img->blob, img->size);
+    if (ret == IGSC_ERROR_BAD_IMAGE)
+    {
+        fwupd_error("Invalid image format: %s", image_path);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
     if (ret != IGSC_SUCCESS)
     {
         ret = EXIT_FAILURE;
@@ -623,7 +637,7 @@ static int do_oprom_version(int argc, char *argv[], enum igsc_oprom_type type)
     {
         if (arg_is_token(argv[0], "--device") || arg_is_token(argv[0], "-d"))
         {
-            return oprom_version(argv[1], type);
+            return oprom_device_version(argv[1], type);
         }
         if (arg_is_token(argv[0], "--image") || arg_is_token(argv[0], "-i"))
         {
@@ -642,7 +656,7 @@ static int do_oprom_version(int argc, char *argv[], enum igsc_oprom_type type)
             return EXIT_FAILURE;
         }
 
-        ret = oprom_version(device_path_found, type);
+        ret = oprom_device_version(device_path_found, type);
         free(device_path_found);
         return ret;
     }
@@ -683,18 +697,28 @@ mockable_static int oprom_update(const char *image_path, const char *device_path
     if (img == NULL)
     {
         ret = EXIT_FAILURE;
-        fwupd_error("Failed to read :%s\n", image_path);
+        fwupd_error("Failed to read: %s\n", image_path);
         goto exit;
     }
 
     ret = igsc_image_oprom_init(&oimg, img->blob, img->size);
-    if (ret != IGSC_SUCCESS)
+    if (ret == IGSC_ERROR_BAD_IMAGE)
     {
+        fwupd_error("Invalid image format: %s\n", image_path);
+        ret = EXIT_FAILURE;
         goto exit;
     }
+
+    if (ret != IGSC_SUCCESS)
+    {
+        ret = EXIT_FAILURE;
+        goto exit;
+    }
+
     ret = igsc_image_oprom_type(oimg, &type_img);
     if (ret != IGSC_SUCCESS)
     {
+        fwupd_error("Invalid image format: %s\n", image_path);
         goto exit;
     }
 
@@ -710,6 +734,7 @@ mockable_static int oprom_update(const char *image_path, const char *device_path
     ret = igsc_image_oprom_version(oimg, &img_version);
     if (ret != IGSC_SUCCESS)
     {
+        fwupd_error("Invalid image format: %s\n", image_path);
         goto exit;
     }
     print_oprom_version(type, &img_version);
@@ -717,13 +742,14 @@ mockable_static int oprom_update(const char *image_path, const char *device_path
     ret = igsc_device_init_by_device(&handle, device_path);
     if (ret)
     {
-        fwupd_error("Cannot initialize device %d\n", ret);
+        fwupd_error("Cannot initialize device: %s\n", device_path);
         goto exit;
     }
 
     ret = igsc_device_oprom_version(&handle, type, &dev_version);
     if (ret != IGSC_SUCCESS)
     {
+        fwupd_error("Cannot initialize device: %s\n", device_path);
         goto exit;
     }
     print_oprom_version(type, &dev_version);
@@ -741,7 +767,7 @@ mockable_static int oprom_update(const char *image_path, const char *device_path
 
     if (!update)
     {
-        fwupd_msg("In order to update run with --allow-downgrade\n");
+        fwupd_msg("In order to update run with -a | --allow-downgrade\n");
         goto exit;
     }
 
@@ -749,7 +775,7 @@ mockable_static int oprom_update(const char *image_path, const char *device_path
                                    progress_func, NULL);
     if (ret)
     {
-        fwupd_error("Cannot update from buffer %d\n", ret);
+        fwupd_error("OPROM update failed\n");
     }
 
     ret = igsc_device_oprom_version(&handle, type, &dev_version);
