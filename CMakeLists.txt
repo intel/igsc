@@ -8,6 +8,7 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 include(version.cmake)
+add_definitions(-DIGSC_VERSION=\"${GSC_VERSION_STRING}\")
 include(GNUInstallDirs)
 include(metee.cmake)
 

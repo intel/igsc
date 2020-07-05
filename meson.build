@@ -15,6 +15,8 @@ lt_major = ver_list[0]
 lt_minor = ver_list[1]
 lt_patch = ver_list[2].split('-')[0]
 
+add_project_arguments('-DIGSC_VERSION="' + ver_str + '"', language : 'c')
+
 # hide/enable some warnings
 warning_flags = [
   '-Wno-unused-command-line-argument',

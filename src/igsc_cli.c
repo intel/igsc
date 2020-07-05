@@ -1063,6 +1063,17 @@ static void op_help(const char *exe_name, const struct gsc_op *op)
     printf("\n%s\n", op->help);
 }
 
+#ifndef IGSC_VERSION
+#error IGSC_VERSION not defiled
+#endif
+
+static const char igsc_version[] = IGSC_VERSION;
+
+static void print_version(const char *exe_name)
+{
+    printf("%s version %s\n", exe_name, igsc_version);
+}
+
 /* FIXME: currently same as usage */
 static void help(const char *exe_name)
 {
@@ -1076,6 +1087,7 @@ static void help(const char *exe_name)
     }
 
     printf("\n");
+    printf("    %s -V/--version: display version\n", exe_name);
     printf("    %s -v/--verbose: runs in verbose mode\n", exe_name);
     printf("    %s help : shows this help\n", exe_name);
     printf("    %s help <command>: shows detailed help\n", exe_name);
@@ -1093,6 +1105,7 @@ static void usage(const char *exe_name)
     }
 
     printf("\n");
+    printf("    %s -V/--version: display version\n", exe_name);
     printf("    %s -v/--verbose: runs in verbose mode\n", exe_name);
     printf("    %s help : shows this help\n", exe_name);
     printf("    %s help <command>: shows detailed help\n", exe_name);
@@ -1109,6 +1122,12 @@ static bool arg_is_verbose(const char *arg)
 {
     return !strcmp(arg, "-v") ||
            !strcmp(arg, "--verbose");
+}
+
+static bool arg_is_version(const char *arg)
+{
+    return arg_is_token(arg, "-V") ||
+           arg_is_token(arg, "--version");
 }
 
 static int args_parse(const char *exe_name, int *argc, char **argv[],
@@ -1128,6 +1147,12 @@ static int args_parse(const char *exe_name, int *argc, char **argv[],
     {
         usage(exe_name);
         return EXIT_FAILURE;
+    }
+
+    if (arg_is_version(*argv[0]))
+    {
+        print_version(exe_name);
+        return EXIT_SUCCESS;
     }
 
     if (arg_is_help(*argv[0]))
