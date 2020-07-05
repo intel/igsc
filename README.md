@@ -4,6 +4,17 @@
 ## Introduction
 ---------------
 
+### Version
+
+The library is versioned according [semantic versioning 2.0.0](https://semver.org/ "semantic versioning")
+
+*MAJOR.MINOR.PATCH-<extension>, increment the:
+
+ * *MAJOR* incompatible API changes,
+ * *MINOR* add functionality in a backwards compatible manner
+ * *PATCH* version when you make backwards compatible bug fixes.
+ * *Extension Label* git shortened commit hash or other extension.
+
 ### Documentation
 
 [API Documentation](https://mesw.gitlab-pages.devtools.intel.com/fwupd/fwupd-test/ "API Documentation")
