@@ -44,11 +44,13 @@ Both cmake and meson build framework are supported.
     ninja -v -C builddir/
 ```
 
-## Command Line Tool Usage
+## Command Line Tool Usage Example:
 --------------------------
 
-`# igsc update  <fw image file> [<device>]`
+`# igsc <partitin> update|version  [--image <fw image file>]  [ --device <device>]`
 
-`# igsc version [<device>]`
+**Example:**
 
-`# igsc image-version <fw image file>`
+`# igsc fw version --device /dev/mei2
+
+`# igsc oprom-data update --image <fw image file>`
