@@ -36,7 +36,7 @@ static void setup_pci_data(struct oprom_pci_data *p_d)
     p_d->pci_data_structure_revision = PCI_DATA_REVISION;
     p_d->class_code = PCI_CLASS_CODE;
     p_d->revision_level = PCI_REVISION_LEVEL;
-    p_d->last_image_indicator & ~PCI_LAST_IMAGE_IND_BIT;
+    p_d->last_image_indicator = PCI_LAST_IMAGE_IND_BIT;
 }
 
 static void setup_pci_header(struct oprom_header_ext_v2 *header)

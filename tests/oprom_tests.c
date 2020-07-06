@@ -49,8 +49,8 @@ static void test_params_image_oprom_version(void **state)
 {
     struct igsc_oprom_image *img = *state;
 
-    assert_int_equal(igsc_image_oprom_version(NULL, NULL), IGSC_ERROR_INVALID_PARAMETER);
-    assert_int_equal(igsc_image_oprom_version(img, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_image_oprom_version(NULL, 0, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_image_oprom_version(img, 0, NULL), IGSC_ERROR_INVALID_PARAMETER);
 }
 
 static void test_params_image_oprom_type(void **state)
@@ -58,7 +58,7 @@ static void test_params_image_oprom_type(void **state)
     struct igsc_oprom_image *img = *state;
 
     assert_int_equal(igsc_image_oprom_type(NULL, NULL), IGSC_ERROR_INVALID_PARAMETER);
-    assert_int_equal(igsc_image_oprom_version(img, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_image_oprom_version(img, 0, NULL), IGSC_ERROR_INVALID_PARAMETER);
 }
 
 static void test_params_image_oprom_count_devices(void **state)

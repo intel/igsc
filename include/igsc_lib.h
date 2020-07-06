@@ -65,9 +65,9 @@ struct igsc_oprom_version {
  * OPROM partition type
  */
 enum igsc_oprom_type {
-    IGSC_OPROM_DATA = 0, /**< OPROM data (VBT) */
-    IGSC_OPROM_CODE = 1, /**< OPROM code (VBIOS and GOP) */
-    IGSC_OPROM_MAX
+    IGSC_OPROM_NONE = 0,     /**< OPROM INVALID PARTITION */
+    IGSC_OPROM_DATA = 0x01,  /**< OPROM data (VBT) */
+    IGSC_OPROM_CODE = 0x02,  /**< OPROM code (VBIOS and GOP) */
 };
 
 /**
@@ -310,6 +310,7 @@ int igsc_image_oprom_init(IN OUT struct igsc_oprom_image **img,
  */
 IGSC_EXPORT
 int igsc_image_oprom_version(IN struct igsc_oprom_image *img,
+                             IN enum igsc_oprom_type type,
                              OUT struct igsc_oprom_version *version);
 
 /**

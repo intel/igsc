@@ -58,6 +58,10 @@
 #define MANIFEST_COMPRESSION_TYPE_HUFFMAN      1
 #define MANIFEST_COMPRESSION_TYPE_LZMA         2
 
+#define CUR_PART_UNDEF 0
+#define CUR_PART_CODE  0xC
+#define CUR_PART_DATA  0xD
+
 struct cpd_image {
     struct code_partition_directory_header *cpd_header;  /**< cpd header */
     size_t manifest_offset;                              /**< offset of the manifest */
@@ -74,19 +78,20 @@ struct cpd_image {
 };
 
 struct igsc_oprom_image {
-    const uint8_t *buffer;                 /**< buffer for oprom image */
-    size_t buffer_len;                     /**< length for the oprom image buffer */
-    uint8_t *code_part_ptr;                /**< pointer to the code part of the oprom update */
-    size_t  code_part_len;                 /**< length of the code part of the oprom update */
-    uint8_t *data_part_ptr;                /**< pointer to the data part of the oprom update */
-    size_t  data_part_len;                 /**< length of the data part of the oprom update */
-    size_t cpd_offset;                     /**< offset of the cpd image inside the buffer */
-    const uint8_t *cpd_ptr;                /**< pointer to the start of cpd image inside the buffer */
-    struct cpd_image cpd_img;         /**< cpd image structure */
-    struct oprom_pci_data *pci_data;       /**< pointer to pci data inside the buffer */
-    struct oprom_header_ext_v2 *v2_header; /**< expansion header version 2 */
+    const uint8_t *buffer;                  /**< buffer for oprom image */
+    size_t buffer_len;                      /**< length for the oprom image buffer */
+    const uint8_t *code_part_ptr;           /**< pointer to the code part of the oprom update */
+    uint32_t  code_part_len;                /**< length of the code part of the oprom update */
+    const uint8_t *data_part_ptr;           /**< pointer to the data part of the oprom update */
+    uint32_t  data_part_len;                /**< length of the data part of the oprom update */
+    struct igsc_oprom_version code_version; /**< version of the oprom code partition */
+    struct igsc_oprom_version data_version; /**< version of the oprom data partition */
+    size_t cpd_offset;                      /**< offset of the cpd image inside the buffer */
+    const uint8_t *cpd_ptr;                 /**< pointer to the start of cpd image inside the buffer */
+    struct cpd_image cpd_img;               /**< cpd image structure */
+    struct oprom_header_ext_v2 *v2_header;  /**< expansion header version 2 */
 
-    uint32_t cur_device_pos;               /**< iterator's current device position */
+    uint32_t cur_device_pos;                /**< iterator's current device position */
 };
 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -102,10 +107,34 @@ static void debug_print_device_type_ext(struct mft_oprom_device_type_ext *ext)
         dev++;
     }
 }
+
+static void debug_print_oprom_version(enum igsc_oprom_type type,
+                                      const struct igsc_oprom_version *oprom_version)
+{
+
+    gsc_debug("OPROM %d Version: %02X %02X %02X %02X %02X %02X %02X %02X\n",
+           type,
+           oprom_version->version[0],
+           oprom_version->version[1],
+           oprom_version->version[2],
+           oprom_version->version[3],
+           oprom_version->version[4],
+           oprom_version->version[5],
+           oprom_version->version[6],
+           oprom_version->version[7]);
+}
+
 #else
 static inline void debug_print_device_type_ext(struct mft_oprom_device_type_ext *ext)
 {
     (void)ext;
+}
+
+static void debug_print_oprom_version(enum igsc_oprom_type type,
+                                      const struct igsc_oprom_version *oprom_version)
+{
+    (void)type;
+    (void)oprom_version;
 }
 #endif
 
@@ -234,7 +263,7 @@ static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
 }
 
 
-static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len)
+static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len, uint8_t type)
 {
     struct code_partition_directory_header *header = (struct code_partition_directory_header *)img->cpd_ptr;
     struct cpd_image *cpd_img = &img->cpd_img;
@@ -281,6 +310,21 @@ static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len)
                                   (img->cpd_ptr + header->entries[MANIFEST_INDEX].offset);
 
     debug_print_manifest_header(cpd_img->manifest_header);
+
+    if (type == CUR_PART_DATA)
+    {
+        gsc_memcpy_s(&img->data_version, sizeof(img->data_version),
+                     &cpd_img->manifest_header->version,
+                     sizeof(cpd_img->manifest_header->version));
+        debug_print_oprom_version(IGSC_OPROM_DATA, &img->data_version);
+    }
+    else
+    {
+        gsc_memcpy_s(&img->code_version, sizeof(img->code_version),
+                     &cpd_img->manifest_header->version,
+                     sizeof(cpd_img->manifest_header->version));
+        debug_print_oprom_version(IGSC_OPROM_CODE, &img->code_version);
+    }
 
     cpd_img->manifest_offset = header->entries[MANIFEST_INDEX].offset;
     cpd_img->public_key_offset = cpd_img->manifest_offset + sizeof(struct mft_header);
@@ -370,8 +414,7 @@ static bool verify_pci_data(struct oprom_pci_data *p_d)
            p_d->pci_data_structure_length == PCI_DATA_LENGTH &&
            p_d->pci_data_structure_revision == PCI_DATA_REVISION &&
            p_d->class_code == PCI_CLASS_CODE &&
-           p_d->revision_level == PCI_REVISION_LEVEL &&
-           (p_d->last_image_indicator & PCI_LAST_IMAGE_IND_BIT) == 0);
+           p_d->revision_level == PCI_REVISION_LEVEL);
 }
 
 static bool verify_pci_header(struct oprom_header_ext_v2 *header, size_t buf_len)
@@ -401,10 +444,6 @@ static bool contains_cpd_offset(IN struct igsc_oprom_image *img)
 {
     return (img->v2_header->unofficial_payload_offset != 0);
 }
-
-#define CUR_PART_UNDEF 0
-#define CUR_PART_CODE  0xC
-#define CUR_PART_DATA  0xD
 
 static int image_oprom_parse(struct igsc_oprom_image *img)
 {
@@ -475,14 +514,14 @@ static int image_oprom_parse(struct igsc_oprom_image *img)
 
         if (pci_data->code_type == OPROM_CODE_TYPE_DATA)
         {
-            img->data_part_ptr = (uint8_t *)img->buffer + offset;
+            img->data_part_ptr = img->buffer + offset;
             img->data_part_len = pci_data->image_length * PCI_IMG_SIZE_UNIT_SIZE;
             cur_part_type = CUR_PART_DATA;
             gsc_debug("DATA part: offset %ld len %ld\n", offset, img->data_part_len);
         }
         else if (pci_data->code_type == OPROM_CODE_TYPE_CODE)
         {
-            img->code_part_ptr = (uint8_t *)img->buffer + offset;
+            img->code_part_ptr = img->buffer + offset;
             img->code_part_len = pci_data->image_length * PCI_IMG_SIZE_UNIT_SIZE;
             cur_part_type = CUR_PART_CODE;
             gsc_debug("CODE part: offset %ld len %ld\n", offset, img->code_part_len);
@@ -531,8 +570,6 @@ static int image_oprom_parse(struct igsc_oprom_image *img)
             return IGSC_ERROR_BAD_IMAGE;
         }
 
-        img->pci_data = pci_data;
-
         if (contains_cpd_offset(img))
         {
             if (v2_header->unofficial_payload_offset >= img->buffer_len - offset)
@@ -547,7 +584,7 @@ static int image_oprom_parse(struct igsc_oprom_image *img)
 
             gsc_debug("cpd_offset %lu\n", img->cpd_offset);
 
-            ret = image_oprom_parse_cpd(img, img->buffer_len - offset - img->cpd_offset);
+            ret = image_oprom_parse_cpd(img, img->buffer_len - offset - img->cpd_offset, cur_part_type);
             if (ret != 0)
                 return ret;
         }
@@ -558,35 +595,54 @@ static int image_oprom_parse(struct igsc_oprom_image *img)
     return ret;
 }
 
-
-static int image_oprom_get_version(struct igsc_oprom_image *img,
-                                   struct igsc_oprom_version *version)
+static enum igsc_oprom_type image_oprom_get_type(struct igsc_oprom_image *img)
 {
-    gsc_memcpy_s(version, sizeof(*version),
-                 &img->cpd_img.manifest_header->version, sizeof(*version));
-    return IGSC_SUCCESS;
+    enum igsc_oprom_type type = IGSC_OPROM_NONE;
+
+    if (img->data_part_ptr && img->data_part_len)
+    {
+       type |= IGSC_OPROM_DATA;
+    }
+
+    if (img->code_part_ptr && img->code_part_len)
+    {
+       type |= IGSC_OPROM_CODE;
+    }
+
+    return type;
 }
 
-static int image_oprom_get_type(struct igsc_oprom_image *img,
-                                enum igsc_oprom_type *type)
+static int image_oprom_get_version(struct igsc_oprom_image *img,
+                                   enum igsc_oprom_type type,
+                                   struct igsc_oprom_version *version)
 {
-    uint8_t _type = img->pci_data->code_type;
+    enum igsc_oprom_type img_type;
 
-    gsc_debug("code_type 0x%x\n", img->pci_data->code_type);
-
-    if (_type == OPROM_CODE_TYPE_DATA)
+    img_type = image_oprom_get_type(img);
+    if (img_type == IGSC_OPROM_NONE)
     {
-       *type = IGSC_OPROM_DATA;
-       return IGSC_SUCCESS;
+        return IGSC_ERROR_BAD_IMAGE;
     }
 
-    if (_type == OPROM_CODE_TYPE_CODE)
+    if ((img_type & type) == 0)
     {
-       *type = IGSC_OPROM_CODE;
-       return IGSC_SUCCESS;
+        return IGSC_ERROR_NOT_SUPPORTED;
     }
 
-    return IGSC_ERROR_BAD_IMAGE;
+    if (type == IGSC_OPROM_DATA)
+    {
+        gsc_memcpy_s(version, sizeof(*version),
+                     &img->data_version,  sizeof(*version));
+        return IGSC_SUCCESS;
+    }
+    else if (type == IGSC_OPROM_CODE)
+    {
+        gsc_memcpy_s(version, sizeof(*version),
+                     &img->code_version,  sizeof(*version));
+        return IGSC_SUCCESS;
+    }
+
+    return IGSC_ERROR_INVALID_PARAMETER;
 }
 
 static uint32_t image_oprom_count_devices(struct igsc_oprom_image *img)
@@ -688,22 +744,9 @@ int image_oprom_get_buffer(IN struct igsc_oprom_image *img,
                            OUT const uint8_t **buffer,
                            OUT size_t *buffer_len)
 {
-    enum igsc_oprom_type img_type = IGSC_OPROM_MAX;
-    int ret;
+    enum igsc_oprom_type img_type;
 
     if (img == NULL || buffer == NULL || buffer_len == NULL )
-    {
-        return IGSC_ERROR_INVALID_PARAMETER;
-    }
-
-    ret = image_oprom_get_type(img, &img_type);
-
-    if (ret != IGSC_SUCCESS)
-    {
-        return ret;
-    }
-
-    if (type != img_type)
     {
         return IGSC_ERROR_INVALID_PARAMETER;
     }
@@ -713,8 +756,36 @@ int image_oprom_get_buffer(IN struct igsc_oprom_image *img,
         return IGSC_ERROR_BAD_IMAGE;
     }
 
-   *buffer = img->buffer;
-   *buffer_len = img->buffer_len;
+    img_type = image_oprom_get_type(img);
+    if (img_type == IGSC_OPROM_NONE)
+    {
+        return IGSC_ERROR_BAD_IMAGE;
+    }
+
+    if ((type & img_type) == 0)
+    {
+        return IGSC_ERROR_NOT_SUPPORTED;
+    }
+
+    if (type == IGSC_OPROM_DATA)
+    {
+        *buffer = img->data_part_ptr;
+        *buffer_len = img->data_part_len;
+    }
+    else if (type == IGSC_OPROM_CODE)
+    {
+        *buffer = img->code_part_ptr;
+        *buffer_len = img->code_part_len;
+    }
+    else
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    if (buffer == NULL || buffer_len == 0)
+    {
+        return IGSC_ERROR_BAD_IMAGE;
+    }
 
     return IGSC_SUCCESS;
 }
@@ -739,6 +810,7 @@ int igsc_image_oprom_init(OUT struct igsc_oprom_image **img,
 }
 
 int igsc_image_oprom_version(IN struct igsc_oprom_image *img,
+                             enum igsc_oprom_type type,
                              OUT struct igsc_oprom_version *version)
 {
     if (img == NULL || version == NULL)
@@ -746,25 +818,28 @@ int igsc_image_oprom_version(IN struct igsc_oprom_image *img,
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
-    return image_oprom_get_version(img, version);
+    return image_oprom_get_version(img, type, version);
 }
 
 int igsc_image_oprom_type(IN struct igsc_oprom_image *img,
                           OUT uint32_t *oprom_type)
 {
-    enum igsc_oprom_type type;
-    int ret;
+    enum igsc_oprom_type img_type;
 
     if (img == NULL || oprom_type == NULL)
     {
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
-    ret = image_oprom_get_type(img, &type);
+    img_type = image_oprom_get_type(img);
+    if (img_type == IGSC_OPROM_NONE)
+    {
+        return IGSC_ERROR_BAD_IMAGE;
+    }
 
-    *oprom_type = type;
+    *oprom_type = img_type;
 
-    return ret;
+    return IGSC_SUCCESS;
 }
 
 int igsc_image_oprom_iterator_reset(IN struct igsc_oprom_image *img)
@@ -860,10 +935,7 @@ int igsc_image_oprom_release(IN struct igsc_oprom_image *img)
     }
 
     free((void *)img->buffer);
-    img->buffer = NULL;
-    img->buffer_len = 0;
-    img->cur_device_pos = 0;
-
+    memset(img, 0, sizeof(*img));
     free(img);
 
     return IGSC_SUCCESS;

@@ -31,6 +31,7 @@
 #include "igsc_oprom.h"
 #include "igsc_perf.h"
 #include "igsc_log.h"
+#include "igsc_oprom.h"
 
 #include "utils.h"
 
@@ -1337,11 +1338,12 @@ int igsc_device_oprom_version(IN struct igsc_device_handle *handle,
     return ret;
 }
 
-int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
-                             IN  uint32_t oprom_type,
-                             IN  struct igsc_oprom_image *img,
-                             IN  igsc_progress_func_t progress_f,
-                             IN  void *ctx)
+static int igsc_oprom_update_from_buffer(IN  struct igsc_device_handle *handle,
+                                         IN  uint32_t oprom_type,
+                                         IN  const uint8_t *buffer,
+                                         IN  size_t buffer_len,
+                                         IN  igsc_progress_func_t progress_f,
+                                         IN  void *ctx)
 {
     struct igsc_lib_ctx *lib_ctx;
     int ret;
@@ -1352,14 +1354,12 @@ int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
     uint32_t fpt_size = 0;
     const uint8_t *fpt_data = NULL;
     uint32_t partition;
-    const uint8_t *buffer = NULL;
-    size_t buffer_len = 0;
     struct gsc_fwu_heci_image_metadata meta;
 
     struct gsc_perf_cnt _perf_ctx;
     struct gsc_perf_cnt *perf_ctx = &_perf_ctx;
 
-    if (handle == NULL || handle->ctx == NULL || img == NULL)
+    if (handle == NULL || handle->ctx == NULL || buffer == NULL)
     {
         gsc_error("Bad parameters\n");
         return IGSC_ERROR_INVALID_PARAMETER;
@@ -1370,18 +1370,6 @@ int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
     {
         gsc_error("Bad oprom type %d\n", oprom_type);
         return IGSC_ERROR_INVALID_PARAMETER;
-    }
-
-    ret = image_oprom_get_buffer(img, oprom_type, &buffer, &buffer_len);
-    if (ret != IGSC_SUCCESS)
-    {
-        return ret;
-    }
-
-    if (buffer_len == 0 || buffer_len > IGSC_MAX_IMAGE_SIZE)
-    {
-        gsc_error("Image size (%zd) too big\n", buffer_len);
-        return IGSC_ERROR_BAD_IMAGE;
     }
 
     lib_ctx = handle->ctx;
@@ -1490,4 +1478,30 @@ exit:
     driver_deinit(lib_ctx);
 
     return ret;
+}
+
+int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
+                             IN  uint32_t oprom_type,
+                             IN  struct igsc_oprom_image *img,
+                             IN  igsc_progress_func_t progress_f,
+                             IN  void *ctx)
+{
+    int ret;
+    const uint8_t *buffer = NULL;
+    size_t buffer_len;
+
+    ret = image_oprom_get_buffer(img, oprom_type, &buffer, &buffer_len);
+    if (ret != IGSC_SUCCESS)
+    {
+        return ret;
+    }
+
+    if (buffer == NULL || buffer_len == 0 || buffer_len > IGSC_MAX_IMAGE_SIZE)
+    {
+        gsc_error("Image size (%zd) too big\n", buffer_len);
+        return IGSC_ERROR_BAD_IMAGE;
+    }
+
+    return igsc_oprom_update_from_buffer(handle, oprom_type, buffer, buffer_len,
+                                         progress_f, ctx);
 }

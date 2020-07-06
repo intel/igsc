@@ -98,7 +98,13 @@ static void print_fw_version(const struct igsc_fw_version *fw_version)
 
 const char *oprom_type_to_str(uint32_t type)
 {
-    return  type == IGSC_OPROM_DATA ? "DATA" : "CODE";
+    if (type == IGSC_OPROM_NONE)
+        return "UNKNOWN";
+    if (type == IGSC_OPROM_DATA)
+        return "DATA";
+    if (type == IGSC_OPROM_CODE)
+        return "CODE";
+    return "DATA and CODE";
 }
 
 static void print_oprom_version(enum igsc_oprom_type type,
@@ -607,7 +613,7 @@ mockable_static int oprom_image_version(const char *image_path, enum igsc_oprom_
         goto out;
     }
 
-    if ((uint32_t)type != img_type)
+    if ((type & img_type) == 0)
     {
         fwupd_error("Image type is %s expecting %s\n",
                     oprom_type_to_str(img_type),
@@ -616,7 +622,7 @@ mockable_static int oprom_image_version(const char *image_path, enum igsc_oprom_
         goto out;
     }
 
-    ret = igsc_image_oprom_version(oimg, &oprom_version);
+    ret = igsc_image_oprom_version(oimg, type, &oprom_version);
     if (ret == IGSC_SUCCESS)
     {
         print_oprom_version(type, &oprom_version);
@@ -692,7 +698,6 @@ mockable_static int oprom_update(const char *image_path, const char *device_path
     bool update = false;
     int ret;
 
-
     img = image_read_from_file(image_path);
     if (img == NULL)
     {
@@ -722,7 +727,7 @@ mockable_static int oprom_update(const char *image_path, const char *device_path
         goto exit;
     }
 
-    if ((uint32_t)type != img_type)
+    if ((type & img_type) == 0)
     {
         fwupd_error("Image type is %s expecting %s\n",
                     oprom_type_to_str(img_type),
@@ -731,7 +736,7 @@ mockable_static int oprom_update(const char *image_path, const char *device_path
         goto exit;
     }
 
-    ret = igsc_image_oprom_version(oimg, &img_version);
+    ret = igsc_image_oprom_version(oimg, type, &img_version);
     if (ret != IGSC_SUCCESS)
     {
         fwupd_error("Invalid image format: %s\n", image_path);
