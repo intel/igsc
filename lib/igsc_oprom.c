@@ -44,8 +44,8 @@
 #define PCI_DATA_REVISION        0x03
 #define PCI_CLASS_CODE           0x00
 #define PCI_REVISION_LEVEL       0x00
-#define PCI_IMG_SIZE_UNIT_SIZE   512
-#define PCI_LAST_IMAGE_IND_BIT   (1<<7)
+#define PCI_IMG_SIZE_UNIT_SIZE   512U
+#define PCI_LAST_IMAGE_IND_BIT   (1U << 7)
 
 #define PCI_SUBSYSTEM_EFI_BOOT_SRV_DRV    0x00
 #define PCI_MACHINE_TYPE_X64              0x00
@@ -76,6 +76,10 @@ struct cpd_image {
 struct igsc_oprom_image {
     const uint8_t *buffer;                 /**< buffer for oprom image */
     size_t buffer_len;                     /**< length for the oprom image buffer */
+    uint8_t *code_part_ptr;                /**< pointer to the code part of the oprom update */
+    size_t  code_part_len;                 /**< length of the code part of the oprom update */
+    uint8_t *data_part_ptr;                /**< pointer to the data part of the oprom update */
+    size_t  data_part_len;                 /**< length of the data part of the oprom update */
     size_t cpd_offset;                     /**< offset of the cpd image inside the buffer */
     const uint8_t *cpd_ptr;                /**< pointer to the start of cpd image inside the buffer */
     struct cpd_image cpd_img;         /**< cpd image structure */
@@ -372,7 +376,8 @@ static bool verify_pci_data(struct oprom_pci_data *p_d)
 
 static bool verify_pci_header(struct oprom_header_ext_v2 *header, size_t buf_len)
 {
-    if (header->pci_data_structure_pointer >= buf_len ||
+    if (sizeof(*header) >= buf_len ||
+        header->pci_data_structure_pointer >= buf_len ||
         header->pci_data_structure_pointer + sizeof(*header) >= buf_len)
     {
         gsc_error("Illegal oprom image structure : pci_data %d %zd\n",
@@ -380,9 +385,14 @@ static bool verify_pci_header(struct oprom_header_ext_v2 *header, size_t buf_len
         return false;
     }
 
+    return (header->signature == ROM_SIGNATURE);
+}
+
+/* Verify pci header values for DATA and CODE section types*/
+static bool verify_pci_header_ext(struct oprom_header_ext_v2 *header)
+{
     /* Verify PCI header const values */
-    return (header->signature == ROM_SIGNATURE &&
-            header->subsystem == PCI_SUBSYSTEM_EFI_BOOT_SRV_DRV &&
+    return (header->subsystem == PCI_SUBSYSTEM_EFI_BOOT_SRV_DRV &&
             header->machine_type == PCI_MACHINE_TYPE_X64 &&
             header->compression_type == PCI_COMPRESSION_TYPE_UNCOMPRESSED);
 }
@@ -392,19 +402,24 @@ static bool contains_cpd_offset(IN struct igsc_oprom_image *img)
     return (img->v2_header->unofficial_payload_offset != 0);
 }
 
+#define CUR_PART_UNDEF 0
+#define CUR_PART_CODE  0xC
+#define CUR_PART_DATA  0xD
+
 static int image_oprom_parse(struct igsc_oprom_image *img)
 {
     struct oprom_header_ext_v2 *v2_header;
     struct oprom_pci_data *pci_data;
+    size_t offset = 0;
+    int ret = 0;
+    uint8_t cur_part_type = CUR_PART_UNDEF;
+    bool stop = false;
 
-    /* Note that we assume here that the input oprom image contains */
-    /* only one partition - either Data or Code and not both of them together. */
-    /* This means that the original oprom image that might have contained both */
-    /* should be divided into two images - one for Data and one for Code. */
-    /* Also, we assume that the first PCI header has the required code_type */
-    /* (Data or Code), otherwise the image is proclaimed illegal. */
-    /* The subsequent PCI headers may have different code_type and thus are */
-    /* of no interest to us */
+    /* Note that we assume here that the original oprom image may contain both */
+    /* the Data and Code sections each followed by unspecified number of other sections. */
+    /* Also, we assume that the first PCI header of each has the required code_type */
+    /* (Data or Code). The subsequent PCI headers may have different code_type and thus */
+    /* we do not parse them, instead we only add them to the correcponding part */
 
     if (img == NULL)
     {
@@ -412,60 +427,135 @@ static int image_oprom_parse(struct igsc_oprom_image *img)
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
-    v2_header = (struct oprom_header_ext_v2 *)img->buffer;
-    if (!verify_pci_header(v2_header, img->buffer_len))
+    while (offset < img->buffer_len && !stop)
     {
-       gsc_error("Illegal oprom image pci header\n");
-       return IGSC_ERROR_BAD_IMAGE;
-    }
-
-    gsc_debug("pci_data_pointer %ul)\n", v2_header->pci_data_structure_pointer);
-
-    img->v2_header = v2_header;
-
-    pci_data = (struct oprom_pci_data *) (img->buffer + v2_header->pci_data_structure_pointer);
-
-    debug_print_pci_data(pci_data);
-
-    if (!verify_pci_data(pci_data))
-    {
-       gsc_error("Illegal oprom image pci data\n");
-       return IGSC_ERROR_BAD_IMAGE;
-    }
-
-    if (pci_data->code_type != OPROM_CODE_TYPE_DATA && pci_data->code_type != OPROM_CODE_TYPE_CODE)
-    {
-        gsc_error("Illegal oprom image structure (pci code_type 0x%x)\n",
-                  pci_data->code_type);
-        return IGSC_ERROR_BAD_IMAGE;
-    }
-
-    if (v2_header->image_size != pci_data->image_length)
-    {
-        gsc_error("Illegal oprom image pci header/data sizes 0x%x/0x%x)\n",
-                  v2_header->image_size, pci_data->image_length);
-        return IGSC_ERROR_BAD_IMAGE;
-    }
-
-    img->pci_data = pci_data;
-
-    if (contains_cpd_offset(img))
-    {
-        if (v2_header->unofficial_payload_offset >= img->buffer_len)
+        v2_header = (struct oprom_header_ext_v2 *)(img->buffer + offset);
+        if (!verify_pci_header(v2_header, img->buffer_len - offset))
         {
-            gsc_error("Illegal oprom cpd offset\n");
+           gsc_error("Illegal oprom image pci header\n");
+           return IGSC_ERROR_BAD_IMAGE;
+        }
+
+        gsc_debug("pci_data_pointer %ul\n", v2_header->pci_data_structure_pointer);
+
+        img->v2_header = v2_header;
+
+        pci_data = (struct oprom_pci_data *)(img->buffer + offset +
+                                             v2_header->pci_data_structure_pointer);
+
+        if (sizeof(*pci_data) > img->buffer_len - offset - v2_header->pci_data_structure_pointer)
+        {
+            gsc_error("Illegal oprom image - too small\n");
             return IGSC_ERROR_BAD_IMAGE;
         }
 
-        img->cpd_offset = v2_header->unofficial_payload_offset;
-        img->cpd_ptr = img->buffer + v2_header->unofficial_payload_offset;
+        debug_print_pci_data(pci_data);
 
-        gsc_debug("cpd_offset %lu\n", img->cpd_offset);
+        if (pci_data->image_length * PCI_IMG_SIZE_UNIT_SIZE > img->buffer_len - offset)
+        {
+            gsc_error("Illegal oprom image pci data length %u\n", pci_data->image_length);
+            return IGSC_ERROR_BAD_IMAGE;
+        }
 
-        return image_oprom_parse_cpd(img, img->buffer_len - img->cpd_offset);
+        if (pci_data->code_type == OPROM_CODE_TYPE_DATA ||
+            pci_data->code_type == OPROM_CODE_TYPE_CODE)
+        {
+            if (!verify_pci_header_ext(v2_header))
+            {
+               gsc_error("Illegal oprom image pci header for data/code section\n");
+               return IGSC_ERROR_BAD_IMAGE;
+            }
+        }
+
+        if (pci_data->last_image_indicator)
+        {
+            gsc_debug("Found last_image_indicator 0x%x\n", pci_data->last_image_indicator);
+            stop = true;
+        }
+
+        if (pci_data->code_type == OPROM_CODE_TYPE_DATA)
+        {
+            img->data_part_ptr = (uint8_t *)img->buffer + offset;
+            img->data_part_len = pci_data->image_length * PCI_IMG_SIZE_UNIT_SIZE;
+            cur_part_type = CUR_PART_DATA;
+            gsc_debug("DATA part: offset %ld len %ld\n", offset, img->data_part_len);
+        }
+        else if (pci_data->code_type == OPROM_CODE_TYPE_CODE)
+        {
+            img->code_part_ptr = (uint8_t *)img->buffer + offset;
+            img->code_part_len = pci_data->image_length * PCI_IMG_SIZE_UNIT_SIZE;
+            cur_part_type = CUR_PART_CODE;
+            gsc_debug("CODE part: offset %ld len %ld\n", offset, img->code_part_len);
+        }
+        else
+        {
+            /* If the type is neither code nor data - just sum the lengths
+             * and continue the loop - no need for parsing of this part.
+             */
+            if (cur_part_type == CUR_PART_DATA)
+            {
+                img->data_part_len += pci_data->image_length * PCI_IMG_SIZE_UNIT_SIZE;
+                offset += pci_data->image_length * PCI_IMG_SIZE_UNIT_SIZE;
+                gsc_debug("DATA part: type 0x%x offset %ld len %ld\n",
+                          pci_data->code_type, offset, img->data_part_len);
+
+                continue;
+            }
+            else if (cur_part_type == CUR_PART_CODE)
+            {
+                img->code_part_len += pci_data->image_length * PCI_IMG_SIZE_UNIT_SIZE;
+                offset += pci_data->image_length * PCI_IMG_SIZE_UNIT_SIZE;
+                gsc_debug("CODE part: type 0x%x offset %ld len %ld\n",
+                          pci_data->code_type, offset, img->code_part_len);
+                continue;
+            }
+            else
+            {
+                /* The first section must be either code or data */
+                gsc_error("Illegal oprom image structure (pci code_type 0x%x)\n",
+                          pci_data->code_type);
+                return IGSC_ERROR_BAD_IMAGE;
+            }
+        }
+
+        if (!verify_pci_data(pci_data))
+        {
+           gsc_error("Illegal oprom image pci data\n");
+           return IGSC_ERROR_BAD_IMAGE;
+        }
+
+        if (v2_header->image_size != pci_data->image_length)
+        {
+            gsc_error("Illegal oprom image pci header/data sizes 0x%x/0x%x)\n",
+                      v2_header->image_size, pci_data->image_length);
+            return IGSC_ERROR_BAD_IMAGE;
+        }
+
+        img->pci_data = pci_data;
+
+        if (contains_cpd_offset(img))
+        {
+            if (v2_header->unofficial_payload_offset >= img->buffer_len - offset)
+            {
+                gsc_error("Illegal oprom cpd offset\n");
+                return IGSC_ERROR_BAD_IMAGE;
+            }
+
+            img->cpd_offset = v2_header->unofficial_payload_offset;
+            img->cpd_ptr = img->buffer + offset + v2_header->unofficial_payload_offset;
+
+
+            gsc_debug("cpd_offset %lu\n", img->cpd_offset);
+
+            ret = image_oprom_parse_cpd(img, img->buffer_len - offset - img->cpd_offset);
+            if (ret != 0)
+                return ret;
+        }
+
+        offset += pci_data->image_length * PCI_IMG_SIZE_UNIT_SIZE;
+        gsc_debug("buffer offset %lu\n", offset);
     }
-
-    return 0;
+    return ret;
 }
 
 
