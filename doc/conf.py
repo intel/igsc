@@ -23,10 +23,21 @@ project = 'Graphics Firmware Interface'
 copyright = u'2020, Intel'
 author = 'Intel, Inc'
 
-# The short X.Y version
+standalone_docs = os.environ.get('STANDALONE_DOCS', None)
+
+if standalone_docs:
+    IGSC_BASE = os.path.abspath('..')
+    IGSC_BUILD = '_build'
+
+
 version = '0.5'
+
+with open(os.path.join(IGSC_BASE, 'VERSION')) as the_fd:
+    version = the_fd.readline()
+
+# The short X.Y version
 # The full version, including alpha/beta/rc tags
-release = '0.5'
+release = version
 
 # -- General configuration ---------------------------------------------------
 
@@ -186,12 +197,10 @@ breathe_projects = {
      "igsc": "",
 }
 
-standalone_docs = os.environ.get('STANDALONE_DOCS', None)
-
 if standalone_docs:
     import subprocess
-    input_dir = '../'
-    output_dir = '_build'
+    input_dir = IGSC_BASE
+    output_dir = IGSC_BUILD
     configure_doxyfile(input_dir, output_dir)
     subprocess.call('doxygen', shell=True)
     breathe_projects['igsc'] = os.path.join(output_dir, 'xml')
