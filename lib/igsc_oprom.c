@@ -167,7 +167,7 @@ static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
         {
             gsc_error("Illegal oprom cpd image (extension length %u)\n",
                       header->extension_length);
-            return IGSC_ERROR_INVALID_PARAMETER;
+            return IGSC_ERROR_BAD_IMAGE;
         }
 
         if (header->extension_type == MFT_EXT_TYPE_DEVICE_TYPE)
@@ -176,7 +176,7 @@ static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
             {
                 gsc_error("Illegal oprom cpd image (device extension %u)\n",
                            header->extension_length);
-                return IGSC_ERROR_INVALID_PARAMETER;
+                return IGSC_ERROR_BAD_IMAGE;
             }
 
             img->cpd_img.dev_ext = (struct mft_oprom_device_type_ext *)header;
@@ -189,7 +189,7 @@ static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
             {
                 gsc_error("Illegal oprom cpd image (signed pkg info ext %u)\n",
                            header->extension_length);
-                return IGSC_ERROR_INVALID_PARAMETER;
+                return IGSC_ERROR_BAD_IMAGE;
             }
         }
 
@@ -199,7 +199,7 @@ static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
             {
                 gsc_error("Illegal oprom cpd image (ifwi part ext %u)\n",
                           header->extension_length);
-                return IGSC_ERROR_INVALID_PARAMETER;
+                return IGSC_ERROR_BAD_IMAGE;
             }
         }
 
@@ -209,7 +209,7 @@ static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
             {
                 gsc_error("Illegal oprom cpd image (mdf module attr ext len %u)\n",
                           header->extension_length);
-                return IGSC_ERROR_INVALID_PARAMETER;
+                return IGSC_ERROR_BAD_IMAGE;
             }
 
             struct mdf_module_attr_ext *attr_ext = (struct mdf_module_attr_ext*)header;
@@ -217,7 +217,7 @@ static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
             {
                 gsc_error("Illegal oprom cpd image (mdf module attr ext comp type %u)\n",
                           attr_ext->compression_type);
-                return IGSC_ERROR_INVALID_PARAMETER;
+                return IGSC_ERROR_BAD_IMAGE;
             }
 
             gsc_debug("uncompressed_size %u end-start %lu\n",
@@ -240,13 +240,13 @@ static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len)
     {
         gsc_error("Illegal oprom cpd image (size/num_of_entries %lu/%u)\n",
                   buf_len, header->num_of_entries);
-        return IGSC_ERROR_INVALID_PARAMETER;
+        return IGSC_ERROR_BAD_IMAGE;
     }
 
     if (header->header_marker != 0x44504324)
     {
         gsc_error("Illegal oprom cpd image (header marker 0x%x)\n", header->header_marker);
-        return IGSC_ERROR_INVALID_PARAMETER;
+        return IGSC_ERROR_BAD_IMAGE;
     }
 
     debug_print_partition_directory_header(header);
@@ -260,7 +260,7 @@ static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len)
     {
         gsc_error("Illegal manifest offset %u)\n",
                   header->entries[MANIFEST_INDEX].offset);
-        return IGSC_ERROR_INVALID_PARAMETER;
+        return IGSC_ERROR_BAD_IMAGE;
     }
 
     gsc_debug("cpd entry manifest length %u\n", header->entries[MANIFEST_INDEX].length);
@@ -270,7 +270,7 @@ static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len)
     {
         gsc_error("Illegal manifest length %u)\n",
                   header->entries[MANIFEST_INDEX].length);
-        return IGSC_ERROR_INVALID_PARAMETER;
+        return IGSC_ERROR_BAD_IMAGE;
     }
 
     cpd_img->manifest_header = (struct mft_header *)
@@ -295,7 +295,7 @@ static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len)
     {
         gsc_error("Illegal oprom cpd image (public key offset %lu)\n",
                   cpd_img->public_key_offset);
-        return IGSC_ERROR_INVALID_PARAMETER;
+        return IGSC_ERROR_BAD_IMAGE;
     }
     cpd_img->public_key =  (struct mft_rsa_3k_key *)
                    (img->cpd_ptr + cpd_img->public_key_offset);
@@ -304,14 +304,14 @@ static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len)
     {
         gsc_error("Illegal oprom cpd image (signature offset %lu)\n",
                   cpd_img->signature_offset);
-        return IGSC_ERROR_INVALID_PARAMETER;
+        return IGSC_ERROR_BAD_IMAGE;
     }
     cpd_img->signature = (struct rsa_3072_pss_signature *)(img->cpd_ptr + cpd_img->signature_offset);
 
     if (cpd_img->manifest_ext_start > buf_len)
     {
         gsc_error("Illegal oprom cpd image (extensions start %lu)\n", cpd_img->manifest_ext_start);
-        return IGSC_ERROR_INVALID_PARAMETER;
+        return IGSC_ERROR_BAD_IMAGE;
 
     }
 
@@ -319,7 +319,7 @@ static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len)
     {
         gsc_error("Illegal oprom cpd image (header size/length %u/%u)\n",
                   cpd_img->manifest_header->size, cpd_img->manifest_header->header_length);
-        return IGSC_ERROR_INVALID_PARAMETER;
+        return IGSC_ERROR_BAD_IMAGE;
     }
 
     cpd_img->manifest_ext_end = cpd_img->manifest_ext_start +
@@ -330,7 +330,7 @@ static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len)
     if (cpd_img->manifest_ext_end > buf_len)
     {
         gsc_error("Illegal oprom cpd image (extensions end %lu)\n", cpd_img->manifest_ext_end);
-        return IGSC_ERROR_INVALID_PARAMETER;
+        return IGSC_ERROR_BAD_IMAGE;
     }
 
     cpd_img->metadata_start = header->entries[METADATA_INDEX].offset;
@@ -341,7 +341,7 @@ static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len)
         gsc_error("Illegal oprom cpd image (metadata offset/length %u/%u)\n",
                   header->entries[METADATA_INDEX].offset,
                   header->entries[METADATA_INDEX].length);
-        return IGSC_ERROR_INVALID_PARAMETER;
+        return IGSC_ERROR_BAD_IMAGE;
     }
 
     cpd_img->metadata_start = header->entries[METADATA_INDEX].offset;
@@ -349,7 +349,7 @@ static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len)
 
     if (image_oprom_parse_extensions(img, cpd_img->metadata_start, cpd_img->metadata_end))
     {
-        return IGSC_ERROR_INVALID_PARAMETER;
+        return IGSC_ERROR_BAD_IMAGE;
     }
 
     return image_oprom_parse_extensions(img,
@@ -416,7 +416,7 @@ static int image_oprom_parse(struct igsc_oprom_image *img)
     if (!verify_pci_header(v2_header, img->buffer_len))
     {
        gsc_error("Illegal oprom image pci header\n");
-       return IGSC_ERROR_INVALID_PARAMETER;
+       return IGSC_ERROR_BAD_IMAGE;
     }
 
     gsc_debug("pci_data_pointer %ul)\n", v2_header->pci_data_structure_pointer);
@@ -430,21 +430,21 @@ static int image_oprom_parse(struct igsc_oprom_image *img)
     if (!verify_pci_data(pci_data))
     {
        gsc_error("Illegal oprom image pci data\n");
-       return IGSC_ERROR_INVALID_PARAMETER;
+       return IGSC_ERROR_BAD_IMAGE;
     }
 
     if (pci_data->code_type != OPROM_CODE_TYPE_DATA && pci_data->code_type != OPROM_CODE_TYPE_CODE)
     {
         gsc_error("Illegal oprom image structure (pci code_type 0x%x)\n",
                   pci_data->code_type);
-        return IGSC_ERROR_INVALID_PARAMETER;
+        return IGSC_ERROR_BAD_IMAGE;
     }
 
     if (v2_header->image_size != pci_data->image_length)
     {
         gsc_error("Illegal oprom image pci header/data sizes 0x%x/0x%x)\n",
                   v2_header->image_size, pci_data->image_length);
-        return IGSC_ERROR_INVALID_PARAMETER;
+        return IGSC_ERROR_BAD_IMAGE;
     }
 
     img->pci_data = pci_data;
@@ -454,7 +454,7 @@ static int image_oprom_parse(struct igsc_oprom_image *img)
         if (v2_header->unofficial_payload_offset >= img->buffer_len)
         {
             gsc_error("Illegal oprom cpd offset\n");
-            return IGSC_ERROR_INVALID_PARAMETER;
+            return IGSC_ERROR_BAD_IMAGE;
         }
 
         img->cpd_offset = v2_header->unofficial_payload_offset;
