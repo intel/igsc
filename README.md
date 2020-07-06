@@ -6,7 +6,7 @@
 
 ### Documentation
 
-[API Documentation](https://mesw.gitlab-pages.devtools.intel.com/fwupd/fwupd-test/ "API Documentation")
+[API Documentation](https://mesw.gitlab-pages.devtools.intel.com/fwupd/igsc/ "API Documentation")
 
 ## Build
 
