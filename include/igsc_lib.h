@@ -50,6 +50,9 @@ struct igsc_fw_version {
     uint16_t   build;      /**< FW Build Number */
 };
 
+/**
+ * OPROM partition version size in bytes
+ */
 #define IGSC_OPROM_VER_SIZE 8
 /**
  * Structure to store OPROM version data
@@ -62,14 +65,18 @@ struct igsc_oprom_version {
  * OPROM partition type
  */
 enum igsc_oprom_type {
-    IGSC_OPROM_DATA = 0,
-    IGSC_OPROM_CODE = 1,
+    IGSC_OPROM_DATA = 0, /**< OPROM data (VBT) */
+    IGSC_OPROM_CODE = 1, /**< OPROM code (VBIOS and GOP) */
     IGSC_OPROM_MAX
 };
 
+/**
+ * subsystem vendor and device id support by the OPROM image
+ * as defined by PCI.
+ */
 struct igsc_oprom_device_info {
-  uint16_t subsys_vendor_id;
-  uint16_t subsys_device_id;
+  uint16_t subsys_vendor_id; /**< subsystem vendor id */
+  uint16_t subsys_device_id; /**< subsystem device id */
 };
 
 /**
@@ -83,32 +90,35 @@ struct igsc_oprom_image;
  */
 struct igsc_device_iterator;
 
+/**
+ * A device node path (Linux) or device instance path (Windows) Length
+ */
 #define IGCS_INFO_NAME_SIZE 256
 
 /**
  * Structure to store GSC device info
  */
 struct igsc_device_info {
-    char name[IGCS_INFO_NAME_SIZE];
+    char name[IGCS_INFO_NAME_SIZE];  /**<  the device node path */
 
-    uint16_t domain;
-    uint8_t  bus;
-    uint8_t  dev;
-    uint8_t  func;
+    uint16_t domain;                 /**< pci domain (Linux only) */
+    uint8_t  bus;                    /**< pci bus number for GFX device */
+    uint8_t  dev;                    /**< device number on pci bus */
+    uint8_t  func;                   /**< func the device function of the */
 
-    uint16_t device_id;
-    uint16_t vendor_id;
-    uint16_t subsys_device_id;
-    uint16_t subsys_vendor_id;
+    uint16_t device_id;              /**< gfx device id */
+    uint16_t vendor_id;              /**< gfx device vendor id */
+    uint16_t subsys_device_id;       /**< gfx device subsystem device id */
+    uint16_t subsys_vendor_id;       /**< gfx device subsystem vendor id */
 };
 
 /**
  * @name IGCS_ERRORS
  *     The Library return codes
  * @addtogroup IGSC_ERRORS
+ * @{
  */
-/** @{ */
-#define IGSC_ERROR_BASE              0x0000U                  /**< Error Base */
+#define IGSC_ERROR_BASE              0x0000U               /**< Error Base */
 #define IGSC_SUCCESS                 (IGSC_ERROR_BASE + 0) /**< Success */
 #define IGSC_ERROR_INTERNAL          (IGSC_ERROR_BASE + 1) /**< Internal Error */
 #define IGSC_ERROR_NOMEM             (IGSC_ERROR_BASE + 2) /**< Memory Allocation Failed */
@@ -119,7 +129,9 @@ struct igsc_device_info {
 #define IGSC_ERROR_BUFFER_TOO_SMALL  (IGSC_ERROR_BASE + 7) /**< Provided buffer is too small */
 #define IGSC_ERROR_INVALID_STATE     (IGSC_ERROR_BASE + 8) /**< Invalid library internal state */
 #define IGSC_ERROR_NOT_SUPPORTED     (IGSC_ERROR_BASE + 9) /**< Unsupported request */
-/** @} */
+/**
+ * @}
+ */
 
 /**
  * @def IGSC_MAX_IMAGE_SIZE
@@ -143,7 +155,7 @@ struct igsc_device_handle
  *  @param handle A handle to the device. All subsequent calls to the lib's
  *         functions must be with this handle.
  *  @param device_path A path to the device
- *  @return 0 if successful, otherwise error code.
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
 int igsc_device_init_by_device(IN OUT struct igsc_device_handle *handle,
@@ -155,7 +167,7 @@ int igsc_device_init_by_device(IN OUT struct igsc_device_handle *handle,
  *  @param handle A handle to the device. All subsequent calls to the lib's
  *         functions must be with this handle.
  *  @param dev_handle An open device handle
- *  @return 0 if successful, otherwise error code.
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 int igsc_device_init_by_handle(IN OUT struct igsc_device_handle *handle,
                                IN igsc_handle_t dev_handle);
@@ -166,7 +178,7 @@ int igsc_device_init_by_handle(IN OUT struct igsc_device_handle *handle,
  *  @param handle A handle to the device. All subsequent calls to the lib's
  *         functions must be with this handle.
  *  @param dev_info A device info structure
- *  @return 0 if successful, otherwise error code.
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
 int igsc_device_init_by_device_info(IN OUT struct igsc_device_handle *handle,
@@ -177,7 +189,7 @@ int igsc_device_init_by_device_info(IN OUT struct igsc_device_handle *handle,
  *
  *  @param handle A handle to the device.
  *
- *  @return 0 if successful, otherwise error code.
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
 int igsc_device_close(IN OUT struct igsc_device_handle *handle);
@@ -188,7 +200,7 @@ int igsc_device_close(IN OUT struct igsc_device_handle *handle);
  *  @param handle A handle to the device.
  *  @param version The memory to store obtained firmware version.
  *
- *  @return 0 if successful, otherwise error code.
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
 int igsc_device_fw_version(IN  struct igsc_device_handle *handle,
@@ -202,7 +214,7 @@ int igsc_device_fw_version(IN  struct igsc_device_handle *handle,
  *  @param buffer_len Length of the buffer with the firmware update image.
  *  @param version The memory to store the obtained firmware version.
  *
- *  @return 0 if successful, otherwise error code.
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
 int igsc_image_fw_version(IN  const uint8_t *buffer,
@@ -210,7 +222,6 @@ int igsc_image_fw_version(IN  const uint8_t *buffer,
                           OUT struct igsc_fw_version *version);
 
 /**
- *  @typedef progress_func_t
  *  @brief Callback function template for monitor firmware update progress.
  *
  *  @param sent Number of bytes sent to the firmware.
@@ -229,7 +240,7 @@ typedef void (*igsc_progress_func_t)(uint32_t sent, uint32_t total, void *ctx);
  *         progress monitor.
  *  @param ctx Context passed to progress_f function.
  *
- *  @return 0 if successful, otherwise error code.
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT int
 igsc_device_fw_update(IN  struct igsc_device_handle *handle,
@@ -245,7 +256,7 @@ igsc_device_fw_update(IN  struct igsc_device_handle *handle,
  *  @param oprom_type An OPROM type requested @see enum igsc_oprom_type
  *  @param version The memory to store obtained OPROM version.
  *
- *  @return 0 if successful, otherwise error code.
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
 int igsc_device_oprom_version(IN struct igsc_device_handle *handle,
@@ -262,7 +273,7 @@ int igsc_device_oprom_version(IN struct igsc_device_handle *handle,
  *         progress monitor.
  *  @param ctx Context passed to progress_f function.
  *
- *  @return 0 if successful, otherwise error code.
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
 int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
@@ -270,7 +281,10 @@ int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
                              IN  struct igsc_oprom_image *img,
                              IN  igsc_progress_func_t progress_f,
                              IN  void *ctx);
-/** @{ */
+/**
+ * @addtogroup oprom
+ * @{
+ */
 
 /**
  *  @brief initializes OPROM image handle from the supplied OPROM update image.
@@ -386,14 +400,16 @@ int igsc_image_oprom_iterator_next(IN struct igsc_oprom_image *img,
  */
 IGSC_EXPORT
 int igsc_image_oprom_release(IN struct igsc_oprom_image *img);
-/** @} */
+/**
+ * @}
+ */
 
 /**
  *  @brief Create iterator for devices capable of FW update.
  *
  *  @param iter pointer to return the iterator pointer
  *
- *  @return 0 if successful, otherwise error code.
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
 int igsc_device_iterator_create(struct igsc_device_iterator **iter);
@@ -404,7 +420,7 @@ int igsc_device_iterator_create(struct igsc_device_iterator **iter);
  *  @param iter pointer to iterator.
  *  @param info pointer for device information.
  *
- *  @return 0 if successful, otherwise error code.
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
 int igsc_device_iterator_next(struct igsc_device_iterator *iter,
@@ -415,7 +431,7 @@ int igsc_device_iterator_next(struct igsc_device_iterator *iter,
  *
  *  @param iter pointer to iterator
  *
- *  @return 0 if successful, otherwise error code.
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
 void igsc_device_iterator_destroy(struct igsc_device_iterator *iter);
