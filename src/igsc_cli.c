@@ -96,7 +96,7 @@ static void print_fw_version(const struct igsc_fw_version *fw_version)
            fw_version->build);
 }
 
-const char *oprom_type_to_str(enum igsc_oprom_type type)
+const char *oprom_type_to_str(uint32_t type)
 {
     return  type == IGSC_OPROM_DATA ? "DATA" : "CODE";
 }
@@ -576,7 +576,7 @@ mockable_static int oprom_image_version(const char *image_path, enum igsc_oprom_
     struct img *img = NULL;
     struct igsc_oprom_image *oimg = NULL;
     struct igsc_oprom_version oprom_version;
-    enum igsc_oprom_type type_img;
+    uint32_t img_type;
     int ret;
 
     img = image_read_from_file(image_path);
@@ -600,17 +600,17 @@ mockable_static int oprom_image_version(const char *image_path, enum igsc_oprom_
         goto out;
     }
 
-    ret = igsc_image_oprom_type(oimg, &type_img);
+    ret = igsc_image_oprom_type(oimg, &img_type);
     if (ret != IGSC_SUCCESS)
     {
         ret = EXIT_FAILURE;
         goto out;
     }
 
-    if (type != type_img)
+    if ((uint32_t)type != img_type)
     {
         fwupd_error("Image type is %s expecting %s\n",
-                    oprom_type_to_str(type_img),
+                    oprom_type_to_str(img_type),
                     oprom_type_to_str(type));
         ret = EXIT_FAILURE;
         goto out;
@@ -687,7 +687,7 @@ mockable_static int oprom_update(const char *image_path, const char *device_path
     struct igsc_device_handle handle;
     struct igsc_oprom_version dev_version;
     struct igsc_oprom_version img_version;
-    enum igsc_oprom_type type_img;
+    uint32_t img_type;
     int cmp;
     bool update = false;
     int ret;
@@ -715,17 +715,17 @@ mockable_static int oprom_update(const char *image_path, const char *device_path
         goto exit;
     }
 
-    ret = igsc_image_oprom_type(oimg, &type_img);
+    ret = igsc_image_oprom_type(oimg, &img_type);
     if (ret != IGSC_SUCCESS)
     {
         fwupd_error("Invalid image format: %s\n", image_path);
         goto exit;
     }
 
-    if (type != type_img)
+    if ((uint32_t)type != img_type)
     {
         fwupd_error("Image type is %s expecting %s\n",
-                    oprom_type_to_str(type_img),
+                    oprom_type_to_str(img_type),
                     oprom_type_to_str(type));
         ret = EXIT_FAILURE;
         goto exit;

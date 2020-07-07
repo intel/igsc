@@ -660,14 +660,21 @@ int igsc_image_oprom_version(IN struct igsc_oprom_image *img,
 }
 
 int igsc_image_oprom_type(IN struct igsc_oprom_image *img,
-                          OUT enum igsc_oprom_type *type)
+                          OUT uint32_t *oprom_type)
 {
-    if (img == NULL || type == NULL)
+    enum igsc_oprom_type type;
+    int ret;
+
+    if (img == NULL || oprom_type == NULL)
     {
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
-    return image_oprom_get_type(img, type);
+    ret = image_oprom_get_type(img, &type);
+
+    *oprom_type = type;
+
+    return ret;
 }
 
 int igsc_image_oprom_iterator_reset(IN struct igsc_oprom_image *img)

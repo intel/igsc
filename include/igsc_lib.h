@@ -242,7 +242,7 @@ igsc_device_fw_update(IN  struct igsc_device_handle *handle,
  *  @brief Retrieves the GSC OPROM version from the device.
  *
  *  @param handle A handle to the device.
- *  @param oprom_type An OPROM type requested @ref igsc_oprom_type
+ *  @param oprom_type An OPROM type requested @see enum igsc_oprom_type
  *  @param version The memory to store obtained OPROM version.
  *
  *  @return 0 if successful, otherwise error code.
@@ -302,14 +302,14 @@ int igsc_image_oprom_version(IN struct igsc_oprom_image *img,
  *  @brief Retrieves the OPROM type from the provided OPROM update image.
  *
  *  @param img OPROM image handle
- *  @param type The variable to store obtained OPROM image type
+ *  @param oprom_type The variable to store obtained OPROM image type
  *  @see enum igsc_oprom_type
  *
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
 int igsc_image_oprom_type(IN struct igsc_oprom_image *img,
-                          OUT enum igsc_oprom_type *type);
+                          IN  uint32_t *oprom_type);
 
 /**
  *  @brief Retrieves a count of of different devices supported
