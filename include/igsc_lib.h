@@ -256,9 +256,8 @@ int igsc_device_oprom_version(IN struct igsc_device_handle *handle,
  *  @brief Perform the OPROM update from the provided image.
  *
  *  @param handle A handle to the device.
- *  @param type OPROM part to update
- *  @param buffer A pointer to the buffer with the image.
- *  @param buffer_len Length of the buffer with the image.
+ *  @param oprom_type OPROM part to update @see igsc_oprom_type
+ *  @param img A pointer to the parsed oprom image structure.
  *  @param progress_f Pointer to the callback function for OPROM update
  *         progress monitor.
  *  @param ctx Context passed to progress_f function.
@@ -267,9 +266,8 @@ int igsc_device_oprom_version(IN struct igsc_device_handle *handle,
  */
 IGSC_EXPORT
 int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
-                             IN  uint32_t type,
-                             IN  const uint8_t *buffer,
-                             IN  const uint32_t buffer_len,
+                             IN  uint32_t oprom_type,
+                             IN  struct igsc_oprom_image *img,
                              IN  igsc_progress_func_t progress_f,
                              IN  void *ctx);
 /** @{ */

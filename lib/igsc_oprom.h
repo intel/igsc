@@ -209,4 +209,9 @@ struct mft_oprom_device_type_ext {
 
 #pragma pack()
 
+int image_oprom_get_buffer(IN struct igsc_oprom_image *img,
+                           IN enum igsc_oprom_type type,
+                           OUT const uint8_t **buffer,
+                           OUT size_t *buffer_len);
+
 #endif /* !__IGSC_OPROM_H__ */

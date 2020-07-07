@@ -771,8 +771,7 @@ mockable_static int oprom_update(const char *image_path, const char *device_path
         goto exit;
     }
 
-    ret = igsc_device_oprom_update(&handle, type, img->blob, img->size,
-                                   progress_func, NULL);
+    ret = igsc_device_oprom_update(&handle, type, oimg, progress_func, NULL);
     if (ret)
     {
         fwupd_error("OPROM update failed\n");

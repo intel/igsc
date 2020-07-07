@@ -28,6 +28,7 @@
 #endif
 
 #include "igsc_lib.h"
+#include "igsc_oprom.h"
 #include "igsc_perf.h"
 #include "igsc_log.h"
 
@@ -437,7 +438,7 @@ exit:
 }
 
 static int gsc_fwu_buffer_validate(struct igsc_lib_ctx *lib_ctx,
-                              size_t req_sz, size_t resp_sz)
+                                   size_t req_sz, size_t resp_sz)
 {
     if (lib_ctx->working_buffer == NULL)
     {
@@ -1338,8 +1339,7 @@ int igsc_device_oprom_version(IN struct igsc_device_handle *handle,
 
 int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
                              IN  uint32_t oprom_type,
-                             IN  const uint8_t *buffer,
-                             IN  const uint32_t buffer_len,
+                             IN  struct igsc_oprom_image *img,
                              IN  igsc_progress_func_t progress_f,
                              IN  void *ctx)
 {
@@ -1352,13 +1352,14 @@ int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
     uint32_t fpt_size = 0;
     const uint8_t *fpt_data = NULL;
     uint32_t partition;
+    const uint8_t *buffer = NULL;
+    size_t buffer_len = 0;
     struct gsc_fwu_heci_image_metadata meta;
 
     struct gsc_perf_cnt _perf_ctx;
     struct gsc_perf_cnt *perf_ctx = &_perf_ctx;
 
-    if (handle == NULL || handle->ctx == NULL ||
-        buffer == NULL || buffer_len == 0)
+    if (handle == NULL || handle->ctx == NULL || img == NULL)
     {
         gsc_error("Bad parameters\n");
         return IGSC_ERROR_INVALID_PARAMETER;
@@ -1371,9 +1372,15 @@ int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
-    if (buffer_len > IGSC_MAX_IMAGE_SIZE)
+    ret = image_oprom_get_buffer(img, oprom_type, &buffer, &buffer_len);
+    if (ret != IGSC_SUCCESS)
     {
-        gsc_error("Image size (%d) too big\n", buffer_len);
+        return ret;
+    }
+
+    if (buffer_len == 0 || buffer_len > IGSC_MAX_IMAGE_SIZE)
+    {
+        gsc_error("Image size (%zd) too big\n", buffer_len);
         return IGSC_ERROR_BAD_IMAGE;
     }
 
@@ -1383,7 +1390,7 @@ int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
     gsc_pref_cnt_checkpoint(perf_ctx, "Program start");
 
     lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].content = buffer;
-    lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].size = buffer_len;
+    lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].size = (uint32_t)buffer_len;
 
     /* OPROM image doesn't require meta data */
     meta.metadata_format_version = GSC_FWU_HECI_METADATA_VERSION_NONE;

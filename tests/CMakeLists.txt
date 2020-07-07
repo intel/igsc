@@ -18,7 +18,7 @@ target_include_directories(igsc_tests
 add_cmocka_test_environment(igsc_tests)
 
 add_cmocka_test(firmware_parser_tests
-                SOURCES firmware_parser_tests.c
+                SOURCES firmware_parser_tests.c ../lib/igsc_oprom.c
                 LINK_LIBRARIES cmocka
                 COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS} -g -DUNIT_TESTING=1)
 target_link_libraries(firmware_parser_tests PRIVATE LIBMETEE)
@@ -36,7 +36,7 @@ target_include_directories(oprom_tests
 add_cmocka_test_environment(oprom_tests)
 
 add_cmocka_test(version_tests
-                SOURCES version_tests.c tee_mock.c
+                SOURCES version_tests.c tee_mock.c ../lib/igsc_oprom.c
                 LINK_LIBRARIES cmocka
                 COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS} -DUNIT_TESTING=1)
 target_link_libraries(version_tests PRIVATE LIBMETEE)

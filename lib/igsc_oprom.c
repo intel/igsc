@@ -496,7 +496,7 @@ static int image_oprom_get_type(struct igsc_oprom_image *img,
        return IGSC_SUCCESS;
     }
 
-    return IGSC_ERROR_DEVICE_NOT_FOUND;
+    return IGSC_ERROR_BAD_IMAGE;
 }
 
 static uint32_t image_oprom_count_devices(struct igsc_oprom_image *img)
@@ -589,6 +589,42 @@ static int image_oprom_alloc_handle(struct igsc_oprom_image **img,
     _img->buffer_len = buffer_len;
 
     *img = _img;
+
+    return IGSC_SUCCESS;
+}
+
+int image_oprom_get_buffer(IN struct igsc_oprom_image *img,
+                           IN enum igsc_oprom_type type,
+                           OUT const uint8_t **buffer,
+                           OUT size_t *buffer_len)
+{
+    enum igsc_oprom_type img_type = IGSC_OPROM_MAX;
+    int ret;
+
+    if (img == NULL || buffer == NULL || buffer_len == NULL )
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    ret = image_oprom_get_type(img, &img_type);
+
+    if (ret != IGSC_SUCCESS)
+    {
+        return ret;
+    }
+
+    if (type != img_type)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    if (img->buffer == NULL || img->buffer_len == 0)
+    {
+        return IGSC_ERROR_BAD_IMAGE;
+    }
+
+   *buffer = img->buffer;
+   *buffer_len = img->buffer_len;
 
     return IGSC_SUCCESS;
 }
