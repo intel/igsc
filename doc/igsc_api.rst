@@ -260,21 +260,7 @@ information.
                                   IN  uint32_t igsc_oprom_type,
                                   OUT struct igsc_oprom_version *version);
 
-5. Update option ROM partitions:
-
-   The function gets a buffer in memory and sends it to the device.
-   It calls progress function handler for each chunk it sends.
-
-  .. code-block:: c
-
-    int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
-                                 IN  uint32_t igsc_oprom_type,
-                                 IN  const uint8_t *buffer,
-                                 IN  const uint32_t buffer_len,
-                                 IN  igsc_progress_func_t progress_f,
-                                 IN  void *ctx);
-
-6. OPROM image Information retrieval:
+5. OPROM image Information retrieval:
 
    a. The function allocates and initializes an opaque
       structure `struct igsc_oprom_image` supplied
@@ -338,6 +324,22 @@ information.
 
       int igsc_image_oprom_relese(IN struct igsc_oprom_image *img);
 
+
+
+6. Update option ROM partitions:
+
+   The function gets a parsed image sends it to the device.
+   It calls progress function handler for each chunk it sends.
+   In case requested image type is not present in the image
+   the function will return an error.
+
+  .. code-block:: c
+
+    int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
+                                 IN  uint32_t igsc_oprom_type oprom_type,
+                                 IN  struct igsc_oprom_image *img,
+                                 IN  igsc_progress_func_t progress_f,
+                                 IN  void *ctx);
   *Example 1:*
 
     .. code-block:: c
