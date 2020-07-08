@@ -39,12 +39,14 @@ int mock_oprom_update(const char *image_path, const char *device_path,
 int mock_oprom_image_version(const char *image_path,
                              enum igsc_oprom_type igsc_oprom_type);
 
-int firmware_update(const char *device_path,
-                           const char *image_path,
-                           bool allow_downgrade)
+void mock_progress_func(uint32_t done, uint32_t total, void *ctx);
+
+int firmware_update(const char *device_path, const char *image_path,
+                    bool allow_downgrade)
 {
     return mock_firmware_update(device_path, image_path, allow_downgrade);
 }
+
 
 int firmware_version(const char *device_path)
 {
@@ -957,6 +959,35 @@ static void test_oprom_code_version_bad_3(void **state)
     assert_true(ret != EXIT_SUCCESS);
 }
 
+/**
+ * test: progress_bar
+ */
+static void test_progress_bar(void **state)
+{
+    (void)state;
+    uint32_t done = 0;
+    uint32_t total = 100;
+
+    for (done = 0; done <= total; done++)
+    {
+        mock_progress_func(done, total, NULL);
+    }
+    printf("\n");
+}
+
+static void test_progress_bar_2(void **state)
+{
+    (void)state;
+    uint32_t done = 0;
+    uint32_t total = 90;
+
+    for (done = 0; done <= total; done += 2)
+    {
+        mock_progress_func(done, total, NULL);
+    }
+    printf("\n");
+}
+
 
 /**
  * igsc fw version --image <image>
@@ -1008,5 +1039,11 @@ int main(void)
         cmocka_unit_test(test_oprom_code_version_bad_3),
     };
 
+    const struct CMUnitTest progress_bar_tests[] = {
+        cmocka_unit_test(test_progress_bar),
+        cmocka_unit_test(test_progress_bar_2),
+    };
+
+    cmocka_run_group_tests(progress_bar_tests, NULL, NULL);
     return cmocka_run_group_tests(tests, group_setup, group_teardown);
 }

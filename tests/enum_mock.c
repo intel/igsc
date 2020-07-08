@@ -62,6 +62,11 @@ int __wrap_igsc_device_iterator_next(struct igsc_device_iterator *iter,
     return IGSC_SUCCESS;
 }
 
+void mock_progress_func(uint32_t done, uint32_t total, void *ctx)
+{
+    progress_func(done, total, ctx);
+}
+
 int mock_args_parse(const char *exe_name, int *argc, char **argv[],
                       const struct gsc_op **op, bool *display_help)
 {
