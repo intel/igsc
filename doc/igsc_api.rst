@@ -223,12 +223,16 @@ The structure represents the device firmware version.
 
 2. OPROM Type
 
+  OPROM type bitmask.
+
+  An OPROM update image might be of type data or code or both.
+
   .. code-block:: c
 
     enum igsc_oprom_type {
-      IGSC_OPROM_DATA = 0,
-      IGSC_OPROM_CODE = 1,
-      IGSC_OPROM_MAX
+      IGSC_OPROM_NONE = 0x0,
+      IGSC_OPROM_DATA = 0x1,
+      IGSC_OPROM_CODE = 0x2,
     };
 
 
@@ -273,14 +277,19 @@ information.
                                 IN  uint32_t buffer_len);
 
   b. The function retrieve OPROM version from the OPROM image
-     associated with the image handle `img`
+     associated with the image handle `img`. The OPROM image type
+     has to be specified to fetch the version from the correct
+     partition. If the image doesn't support specified partition
+     `IGSC_ERROR_NOT_SUPPORTED` is returned.
 
     .. code-block:: c
 
-      int igsc_image_oprom_version(IN struct igsc_oprom_image *img,
+      int igsc_image_oprom_version(IN  struct igsc_oprom_image *img,
+                                   IN  uint32_t igsc_oprom_type,
                                    OUT struct igsc_oprom_version *version);
 
   c. The function retrieves the type of the OPROM image associated with `img`.
+     The function will place a bitmask into type of all supported OPROM images.
 
     .. code-block:: c
 
