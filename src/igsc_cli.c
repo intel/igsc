@@ -259,7 +259,7 @@ static void progress_func(uint32_t done, uint32_t total, void *ctx)
 
     buffer[PERCENT_100] = '\0';
 
-    printf("\b%c[2K\rProgress %d/%d:%2d%%:[%s]\n", 27, done, total, percent, buffer);
+    printf("\b%c[2K\rProgress %d/%d:%2d%%:[%s]", 27, done, total, percent, buffer);
     fflush(stdout);
 }
 
