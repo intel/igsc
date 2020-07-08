@@ -28,6 +28,8 @@ set(COMPILE_OPTIONS_NX
     -Wstack-protector
     -Winit-self
     -Wstrict-prototypes
+    -Wconversion
+    -Woverflow
     -fPIC
     "$<$<CONFIG:DEBUG>:-O0;-g3;-ggdb>"
     "$<$<BOOL:${ENABLE_WERROR}>:-Werror>"

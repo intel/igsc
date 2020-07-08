@@ -21,7 +21,8 @@ add_project_arguments('-DIGSC_VERSION="' + ver_str + '"', language : 'c')
 warning_flags = [
   '-Wno-unused-command-line-argument',
   '-Wsign-compare',
-  '-Wformat-security',
+  '-Wconversion',
+  '-Woverflow',
   '-Wstack-protector',
   '-Winit-self',
   '-Wstrict-prototypes',
