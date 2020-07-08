@@ -78,6 +78,7 @@ function(ADD_CMOCKA_TEST _TARGET_NAME)
         SOURCES
         COMPILE_OPTIONS
         LINK_LIBRARIES
+	INCLUDE_DIRECTORIES
         LINK_OPTIONS
     )
 
@@ -105,6 +106,13 @@ function(ADD_CMOCKA_TEST _TARGET_NAME)
             PRIVATE ${_add_cmocka_test_LINK_LIBRARIES}
         )
     endif()
+
+    if (DEFINED _add_cmocka_test_INCLUDE_DIRECTORIES)
+	target_include_directories(${_TARGET_NAME}
+		PRIVATE ${_add_cmocka_test_INCLUDE_DIRECTORIES}
+	)
+    endif()
+
 
     if (DEFINED _add_cmocka_test_LINK_OPTIONS)
         set_target_properties(${_TARGET_NAME}
