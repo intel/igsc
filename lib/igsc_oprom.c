@@ -506,9 +506,9 @@ static uint32_t image_oprom_count_devices(struct igsc_oprom_image *img)
     if (img->cpd_img.dev_ext)
     {
         gsc_debug("extension_length %u\n", img->cpd_img.dev_ext->extension_length);
-        count = (img->cpd_img.dev_ext->extension_length -
-                  sizeof(struct mft_oprom_device_type_ext)) /
-                  sizeof(struct oprom_subsystem_device_id);
+        count = (uint32_t)(img->cpd_img.dev_ext->extension_length -
+                           sizeof(struct mft_oprom_device_type_ext)) /
+                         sizeof(struct oprom_subsystem_device_id);
     }
 
     return count;

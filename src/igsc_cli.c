@@ -170,7 +170,7 @@ static struct img *image_read_from_file(const char *p_path)
         goto exit;
     }
 
-    img = (struct img *)malloc(file_size + sizeof(*img));
+    img = (struct img *)malloc((size_t)file_size + sizeof(*img));
     if (img == NULL)
     {
         fwupd_strerror(errno, err_msg, sizeof(err_msg));
@@ -178,15 +178,15 @@ static struct img *image_read_from_file(const char *p_path)
         goto exit;
     }
 
-    if (fread(img->blob, 1, file_size, fp) != (size_t)file_size)
+    if (fread(img->blob, 1, (size_t)file_size, fp) != (size_t)file_size)
     {
         fwupd_strerror(errno, err_msg, sizeof(err_msg));
         fwupd_verbose("Failed to read file %s : %s\n",
                       p_path, err_msg);
         goto exit;
     }
-
-    img->size = file_size;
+    /* note: the size was already checked it ifts to 32bit */
+    img->size = (uint32_t)file_size;
 
     fclose(fp);
 

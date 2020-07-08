@@ -54,7 +54,7 @@ static double to_seconds(struct gsc_perf_cnt *ctx, struct timeval from, struct t
     (void)ctx;
 
     timersub(&to, &from, &_res);
-    return _res.tv_sec + (double)_res.tv_usec / 1000000;
+    return (double)_res.tv_sec + (double)_res.tv_usec / 1000000;
 }
 
 void gsc_pref_cnt_init(struct gsc_perf_cnt *ctx)

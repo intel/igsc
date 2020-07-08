@@ -70,7 +70,7 @@ struct gsc_fwu_img_layout {
     struct gsc_fwu_img_entry table[FWU_FPT_ENTRY_NUM];
 };
 
-#define ENTRY_ID_TO_BITMASK(entry_id) (1 << (entry_id))
+#define ENTRY_ID_TO_BITMASK(entry_id) (1U << (entry_id))
 
 #define MANDATORY_ENTRY_BITMASK \
        (ENTRY_ID_TO_BITMASK(FWU_FPT_ENTRY_IMAGE_INFO) | \
@@ -579,7 +579,7 @@ static int gsc_fwu_get_version(struct igsc_lib_ctx *lib_ctx,
 
     struct gsc_fwu_heci_version_resp *resp;
     struct gsc_fwu_heci_version_req *req;
-    enum gsc_fwu_heci_command_id command_id = GSC_FWU_HECI_COMMAND_ID_GET_IP_VERSION;
+    uint8_t command_id = GSC_FWU_HECI_COMMAND_ID_GET_IP_VERSION;
 
     if (version == NULL)
     {
@@ -685,7 +685,7 @@ static int gsc_fwu_start(struct igsc_lib_ctx *lib_ctx, uint32_t payload_type)
 
     struct gsc_fwu_heci_start_req  *req;
     struct gsc_fwu_heci_start_resp *resp;
-    enum gsc_fwu_heci_command_id command_id = GSC_FWU_HECI_COMMAND_ID_START;
+    uint8_t command_id = GSC_FWU_HECI_COMMAND_ID_START;
 
     req = (struct gsc_fwu_heci_start_req *)lib_ctx->working_buffer;
     request_len = sizeof(*req);
@@ -767,7 +767,7 @@ static int gsc_fwu_data(struct igsc_lib_ctx *lib_ctx,
 
     struct gsc_fwu_heci_data_req  *req;
     struct gsc_fwu_heci_data_resp *resp;
-    enum gsc_fwu_heci_command_id command_id = GSC_FWU_HECI_COMMAND_ID_DATA;
+    uint8_t command_id = GSC_FWU_HECI_COMMAND_ID_DATA;
 
     req = (struct gsc_fwu_heci_data_req *)lib_ctx->working_buffer;
     request_len = sizeof(*req) + length;
@@ -833,7 +833,7 @@ static int gsc_fwu_end(struct igsc_lib_ctx *lib_ctx)
     size_t    request_len;
 
     struct gsc_fwu_heci_end_req *req;
-    enum   gsc_fwu_heci_command_id command_id = GSC_FWU_HECI_COMMAND_ID_END;
+    uint8_t command_id = GSC_FWU_HECI_COMMAND_ID_END;
 
     req = (struct gsc_fwu_heci_end_req *)lib_ctx->working_buffer;
     request_len = sizeof(*req);
