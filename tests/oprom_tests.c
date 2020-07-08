@@ -85,8 +85,8 @@ static void test_params_image_oprom_match_device(void **state)
 {
     struct igsc_oprom_image *img = *state;
 
-    assert_int_equal(igsc_image_oprom_match_device(NULL, NULL), IGSC_ERROR_INVALID_PARAMETER);
-    assert_int_equal(igsc_image_oprom_match_device(img, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_image_oprom_match_device(NULL, IGSC_OPROM_NONE, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_image_oprom_match_device(img, IGSC_OPROM_NONE, NULL), IGSC_ERROR_INVALID_PARAMETER);
 }
 
 static void test_params_image_oprom_iterator_reset(void **state)

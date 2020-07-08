@@ -846,9 +846,18 @@ int igsc_image_oprom_type(IN struct igsc_oprom_image *img,
 
 int igsc_image_oprom_iterator_reset(IN struct igsc_oprom_image *img)
 {
+    enum igsc_oprom_type img_type;
+
     if (img == NULL)
     {
         return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    /* If image has no data partition the itertor is not supported */
+    img_type = image_oprom_get_type(img);
+    if ((img_type & IGSC_OPROM_DATA) == 0)
+    {
+        return IGSC_ERROR_NOT_SUPPORTED;
     }
 
     img->cur_device_pos = 0;
@@ -859,9 +868,19 @@ int igsc_image_oprom_iterator_reset(IN struct igsc_oprom_image *img)
 int igsc_image_oprom_iterator_next(IN struct igsc_oprom_image *img,
                                    OUT struct igsc_oprom_device_info *device)
 {
+    enum igsc_oprom_type img_type;
+
     if (img == NULL || device == NULL)
     {
         return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+
+    /* If image has no data partition the itertor is not supported */
+    img_type = image_oprom_get_type(img);
+    if ((img_type & IGSC_OPROM_DATA) == 0)
+    {
+        return IGSC_ERROR_NOT_SUPPORTED;
     }
 
     return image_oprom_get_next(img, device);
@@ -871,9 +890,18 @@ int igsc_image_oprom_count_devices(IN struct igsc_oprom_image *img,
                                    OUT uint32_t *count)
 
 {
+    enum igsc_oprom_type img_type;
+
     if (img == NULL || count == NULL)
     {
         return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    /* If image has no data partition the itertor is not supported */
+    img_type = image_oprom_get_type(img);
+    if ((img_type & IGSC_OPROM_DATA) == 0)
+    {
+        return IGSC_ERROR_NOT_SUPPORTED;
     }
 
     *count = image_oprom_count_devices(img);
@@ -887,10 +915,18 @@ int igsc_image_oprom_supported_devices(IN struct igsc_oprom_image *img,
 {
     int ret;
     uint32_t pos = 0;
+    enum igsc_oprom_type img_type;
 
     if (img == NULL || device == NULL || count == NULL || *count == 0)
     {
         return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    /* If image has no data partition the itertor is not supported */
+    img_type = image_oprom_get_type(img);
+    if ((img_type & IGSC_OPROM_DATA) == 0)
+    {
+        return IGSC_ERROR_NOT_SUPPORTED;
     }
 
     while (((ret = image_oprom_get_next(img, &device[pos++])) == IGSC_SUCCESS) && (pos <= *count))
@@ -907,25 +943,68 @@ int igsc_image_oprom_supported_devices(IN struct igsc_oprom_image *img,
 }
 
 int igsc_image_oprom_match_device(IN struct igsc_oprom_image *img,
+                                  IN enum igsc_oprom_type request_type,
                                   IN struct igsc_device_info *device)
 
 {
+    enum igsc_oprom_type img_type;
     struct igsc_oprom_device_info oprom_device;
     int ret;
+    uint32_t count = 0;
 
     if (img == NULL || device == NULL)
     {
-        return IGSC_ERROR_INVALID_PARAMETER;
+        ret = IGSC_ERROR_INVALID_PARAMETER;
+        goto exit;
     }
 
+    if (request_type != IGSC_OPROM_CODE && request_type != IGSC_OPROM_DATA)
+    {
+        ret = IGSC_ERROR_INVALID_PARAMETER;
+        goto exit;
+    }
+
+    ret = IGSC_ERROR_NOT_SUPPORTED;
+
+    /* check that there is a match between request type and image type */
+    img_type = image_oprom_get_type(img);
+    if ((request_type & img_type) == 0)
+    {
+        goto exit;
+    }
+
+    /*
+     * The Code partition of OPROM is always supposed to match
+     * it the same across all derivatives .
+     */
+    if (request_type == IGSC_OPROM_CODE)
+    {
+        ret = IGSC_SUCCESS;
+        goto exit;
+    }
+
+    /* A special case - device has no sub vendor */
+    if (device->subsys_device_id == 0 && device->subsys_vendor_id == 0)
+    {
+        /* empty device list is ok here */
+        igsc_image_oprom_count_devices(img, &count);
+        if (count == 0)
+        {
+            ret = IGSC_SUCCESS;
+            goto exit;
+        }
+    }
+    /* search the device list for a match */
     while ((ret = image_oprom_get_next(img, &oprom_device)) == IGSC_SUCCESS)
     {
         if(oprom_match_dev(device, &oprom_device))
         {
-            return IGSC_SUCCESS;
+            ret = IGSC_SUCCESS;
+            goto exit;
         }
     }
 
+exit:
     return ret;
 }
 

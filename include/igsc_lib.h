@@ -372,6 +372,7 @@ int igsc_image_oprom_supported_devices(IN struct igsc_oprom_image *img,
  *  @brief check if oprom image can be applied on the device.
  *
  *  @param img OPROM image handle
+ *  @param request_type type of oprom device to match
  *  @param device physical device info
  *
  *  @return
@@ -380,6 +381,7 @@ int igsc_image_oprom_supported_devices(IN struct igsc_oprom_image *img,
  */
 IGSC_EXPORT
 int igsc_image_oprom_match_device(IN struct igsc_oprom_image *img,
+                                  IN enum igsc_oprom_type request_type,
                                   IN struct igsc_device_info *device);
 /**
  *  @brief reset the iterator over supported devices
