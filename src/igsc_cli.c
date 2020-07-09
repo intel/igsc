@@ -361,6 +361,8 @@ mockable_static int firmware_update(const char *device_path,
 
     ret = igsc_device_fw_update(&handle, img->blob, img->size,
                                  progress_func, NULL);
+    /* new line after progress bar */
+    printf("\n");
     if (ret)
     {
         fwupd_error("Update process failed\n");
@@ -777,6 +779,8 @@ mockable_static int oprom_update(const char *image_path, const char *device_path
     }
 
     ret = igsc_device_oprom_update(&handle, type, oimg, progress_func, NULL);
+    /* new line after progress bar */
+    printf("\n");
     if (ret)
     {
         fwupd_error("OPROM update failed\n");
