@@ -197,8 +197,8 @@ struct mdf_module_attr_ext {
 };
 
 struct oprom_subsystem_device_id {
-    uint16_t vendor_id;
-    uint16_t device_id;
+    uint16_t subsys_vendor_id;
+    uint16_t subsys_device_id;
 };
 
 struct mft_oprom_device_type_ext {

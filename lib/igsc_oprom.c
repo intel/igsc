@@ -103,7 +103,8 @@ static void debug_print_device_type_ext(struct mft_oprom_device_type_ext *ext)
     gsc_debug("type %u len %u\n", ext->extension_type, ext->extension_length);
     for (; len < ext->extension_length; len += sizeof(*dev))
     {
-        gsc_debug("vid 0x%x did 0x%x\n", dev->vendor_id, dev->device_id);
+        gsc_debug("vid 0x%x did 0x%x\n",
+                  dev->subsys_vendor_id, dev->subsys_device_id);
         dev++;
     }
 }
@@ -689,10 +690,11 @@ static int image_oprom_get_next(struct igsc_oprom_image *img,
     }
     img->cur_device_pos++;
 
-    gsc_debug("vid 0x%x did 0x%x\n",  _device.vendor_id, _device.device_id);
+    gsc_debug("vid 0x%x did 0x%x\n",
+              _device.subsys_vendor_id, _device.subsys_device_id);
 
-    device->subsys_vendor_id = _device.vendor_id;
-    device->subsys_device_id = _device.device_id;
+    device->subsys_vendor_id = _device.subsys_vendor_id;
+    device->subsys_device_id = _device.subsys_device_id;
 
     return IGSC_SUCCESS;
 }
