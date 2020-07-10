@@ -31,8 +31,6 @@ void *__wrap__test_malloc(size_t nmemb, size_t size)
 {
     int fail = mock_type(int);
 
-    fprintf(stderr, "malloc %d", fail);
-
     if (fail)
     {
         return NULL;
@@ -43,6 +41,12 @@ void *__wrap__test_malloc(size_t nmemb, size_t size)
     }
 }
 
+int __real_image_oprom_parse(struct igsc_oprom_image *img);
+
+int __wrap_image_oprom_parse(struct igsc_oprom_image *img)
+{
+    return IGSC_SUCCESS;
+}
 
 /**
  * @brief A test to check if calloc() in igsc_device_init() returned NULL

@@ -7,7 +7,8 @@ endif
 
 srcs = [
   'igsc_lib.c',
-  'igsc_oprom.c',
+  'oprom.c',
+  'oprom_parser.c',
   'enum/igsc_enum_udev.c',
 ]
 

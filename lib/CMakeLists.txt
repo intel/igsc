@@ -13,7 +13,8 @@ endif()
 
 set(LIBSOURCES
     igsc_lib.c
-    igsc_oprom.c
+    oprom.c
+    oprom_parser.c
     $<$<BOOL:${UNIX}>:enum/igsc_enum_udev.c>
     $<$<BOOL:${WIN32}>:enum/igsc_enum_windows.c>
     $<$<BOOL:${ENABLE_PERF}>:igsc_perf.c>

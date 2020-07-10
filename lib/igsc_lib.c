@@ -11,21 +11,12 @@
 #include <string.h>
 
 #include "msvc/config.h"
+#include "gcc/config.h"
 
 #include "igsc_system.h"
 #include "igsc_heci.h"
 
 #include <metee.h>
-
-#ifdef UNIT_TESTING
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
-#include <cmocka.h>
-#define  mockable_static __attribute__((weak))
-#else
-#define  mockable_static static
-#endif
 
 #include "igsc_lib.h"
 #include "igsc_oprom.h"

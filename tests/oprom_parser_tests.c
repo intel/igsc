@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <cmocka.h>
 
-#include "../lib/igsc_oprom.c"
+#include "oprom_parser.c"
 
 #define IMAGE_SIZE 2048
 

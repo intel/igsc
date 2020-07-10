@@ -7,17 +7,28 @@
 #include <cmocka.h>
 
 #include "igsc_lib.h"
-#include "igsc_oprom.c"
 
+int __real_image_oprom_parse(struct igsc_oprom_image *img);
 
-uint8_t buf[sizeof(struct oprom_header_ext_v2) + 1];
+int __wrap_image_oprom_parse(struct igsc_oprom_image *img)
+{
+    return IGSC_SUCCESS;
+}
+
+enum igsc_oprom_type __real_image_oprom_get_type(struct igsc_oprom_image *img);
+enum igsc_oprom_type __wrap_image_oprom_get_type(struct igsc_oprom_image *img)
+{
+    return mock_type(enum igsc_oprom_type);
+}
+
+uint8_t buf[1024];
 
 static int group_setup(void **state)
 {
-    struct igsc_oprom_image *img;
+    struct igsc_oprom_image *img = NULL;
     int ret;
 
-    ret = image_oprom_alloc_handle(&img, buf, sizeof(buf));
+    ret = igsc_image_oprom_init(&img, buf, sizeof(buf));
     if (ret != IGSC_SUCCESS)
     {
         return -1;
@@ -94,7 +105,16 @@ static void test_params_image_oprom_iterator_reset(void **state)
     struct igsc_oprom_image *img = *state;
 
     assert_int_equal(igsc_image_oprom_iterator_reset(NULL), IGSC_ERROR_INVALID_PARAMETER);
+
+    will_return(__wrap_image_oprom_get_type, IGSC_OPROM_NONE);
+    assert_int_equal(igsc_image_oprom_iterator_reset(img), IGSC_ERROR_NOT_SUPPORTED);
+
+    will_return(__wrap_image_oprom_get_type, IGSC_OPROM_CODE);
+    assert_int_equal(igsc_image_oprom_iterator_reset(img), IGSC_ERROR_NOT_SUPPORTED);
+
+    will_return(__wrap_image_oprom_get_type, IGSC_OPROM_DATA);
     assert_int_equal(igsc_image_oprom_iterator_reset(img), IGSC_SUCCESS);
+
 }
 
 static void test_params_image_oprom_iterator_next(void **state)
