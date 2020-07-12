@@ -49,8 +49,12 @@ struct img {
     uint8_t blob[0];
 };
 
+
 #ifdef __linux__
+#ifndef igsc_strdup
 #define igsc_strdup strdup
+#endif /* igsc_strdup */
+
 static inline int fopen_s(FILE **fp, const char *pathname, const char *mode)
 {
     if (!fp)
@@ -73,8 +77,9 @@ static void fwupd_strerror(int errnum, char *buf, size_t buflen)
     }
 }
 #elif defined(WIN32)
+#ifndef igsc_strdup
 #define igsc_strdup _strdup
-
+#endif /* igsc_strdup */
 static void fwupd_strerror(int errnum, char *buf, size_t buflen)
 {
     if (strerror_s(buf, buflen, errnum) != 0)
@@ -208,6 +213,25 @@ exit:
     return NULL;
 }
 
+mockable_static
+int get_first_device_info(struct igsc_device_info *dev_info)
+{
+    struct igsc_device_iterator *iter;
+    int ret;
+
+    ret = igsc_device_iterator_create(&iter);
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Cannot create device iterator\n");
+        return EXIT_FAILURE;
+    }
+
+    ret = igsc_device_iterator_next(iter, dev_info);
+    igsc_device_iterator_destroy(iter);
+
+    return ret;
+}
+
 static int get_first_device(char **device_path)
 {
     struct igsc_device_iterator *iter;
@@ -306,9 +330,10 @@ struct gsc_op {
     const char  *help;  /* help */
 };
 
-mockable_static int firmware_update(const char *device_path,
-                                    const char *image_path,
-                                    bool allow_downgrade)
+mockable_static
+int firmware_update(const char *device_path,
+                    const char *image_path,
+                    bool allow_downgrade)
 {
     struct img *img = NULL;
     struct igsc_device_handle handle;
@@ -384,7 +409,8 @@ exit:
     return ret;
 }
 
-mockable_static int firmware_version(const char *device_path)
+mockable_static
+int firmware_version(const char *device_path)
 {
     struct igsc_device_handle handle;
     struct igsc_fw_version fw_version;
@@ -410,7 +436,8 @@ exit:
     return ret;
 }
 
-mockable_static int image_version(const char *image_path)
+mockable_static
+int image_version(const char *image_path)
 {
     struct img *img = NULL;
     struct igsc_fw_version fw_version;
@@ -553,7 +580,8 @@ static int do_firmware(int argc, char *argv[])
     return ERROR_BAD_ARGUMENT;
 }
 
-mockable_static int oprom_device_version(const char *device_path,
+mockable_static
+int oprom_device_version(const char *device_path,
                                          enum igsc_oprom_type igsc_oprom_type)
 {
     struct igsc_oprom_version oprom_version;
@@ -686,13 +714,13 @@ static int oprom_version_compare(struct igsc_oprom_version new,
     return 1;
 }
 
-mockable_static int oprom_update(const char *image_path, const char *device_path,
-                                 char *device_path_found, enum igsc_oprom_type type,
-                                 bool allow_downgrade)
+mockable_static
+int oprom_update(const char *image_path,
+                 struct igsc_device_handle *handle, struct igsc_device_info *dev_info,
+                 enum igsc_oprom_type type, bool allow_downgrade)
 {
     struct img *img = NULL;
     struct igsc_oprom_image *oimg = NULL;
-    struct igsc_device_handle handle;
     struct igsc_oprom_version dev_version;
     struct igsc_oprom_version img_version;
     uint32_t img_type;
@@ -746,20 +774,35 @@ mockable_static int oprom_update(const char *image_path, const char *device_path
     }
     print_oprom_version(type, &img_version);
 
-    ret = igsc_device_init_by_device(&handle, device_path);
-    if (ret)
-    {
-        fwupd_error("Cannot initialize device: %s\n", device_path);
-        goto exit;
-    }
-
-    ret = igsc_device_oprom_version(&handle, type, &dev_version);
+    ret = igsc_device_oprom_version(handle, type, &dev_version);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Cannot initialize device: %s\n", device_path);
+        fwupd_error("Cannot initialize device: %s\n", dev_info->name);
         goto exit;
     }
     print_oprom_version(type, &dev_version);
+
+    ret = igsc_image_oprom_match_device(oimg, type, dev_info);
+    if (ret == IGSC_SUCCESS)
+    {
+        update = true;
+    }
+    else if (ret == IGSC_ERROR_NOT_SUPPORTED)
+    {
+        update = allow_downgrade;
+    }
+    else
+    {
+        fwupd_error("Intenral error\n");
+        goto exit;
+    }
+
+    if (!update)
+    {
+        fwupd_msg("In order to update run with -a | --allow-downgrade\n");
+        ret = EXIT_FAILURE;
+        goto exit;
+    }
 
     cmp = oprom_version_compare(img_version, dev_version);
     if (cmp > 0)
@@ -778,7 +821,7 @@ mockable_static int oprom_update(const char *image_path, const char *device_path
         goto exit;
     }
 
-    ret = igsc_device_oprom_update(&handle, type, oimg, progress_func, NULL);
+    ret = igsc_device_oprom_update(handle, type, oimg, progress_func, NULL);
     /* new line after progress bar */
     printf("\n");
     if (ret)
@@ -786,7 +829,7 @@ mockable_static int oprom_update(const char *image_path, const char *device_path
         fwupd_error("OPROM update failed\n");
     }
 
-    ret = igsc_device_oprom_version(&handle, type, &dev_version);
+    ret = igsc_device_oprom_version(handle, type, &dev_version);
     if (ret != IGSC_SUCCESS)
     {
         goto exit;
@@ -795,9 +838,9 @@ mockable_static int oprom_update(const char *image_path, const char *device_path
 
 exit:
     igsc_image_oprom_release(oimg);
-    (void)igsc_device_close(&handle);
+    (void)igsc_device_close(handle);
     free(img);
-    free(device_path_found);
+
     return ret;
 }
 
@@ -806,7 +849,12 @@ static int do_oprom_update(int argc, char *argv[], enum igsc_oprom_type type)
     bool allow_downgrade = false;
     const char *image_path = NULL;
     const char *device_path = NULL;
-    char *device_path_found = NULL;
+    struct igsc_device_info dev_info;
+    struct igsc_device_handle handle;
+    int ret;
+
+    memset(&dev_info, 0, sizeof(dev_info));
+    memset(&handle, 0, sizeof(handle));
 
     if (argc <= 0)
     {
@@ -848,23 +896,52 @@ static int do_oprom_update(int argc, char *argv[], enum igsc_oprom_type type)
 
     if (!device_path)
     {
-        if (get_first_device(&device_path_found))
+        if (get_first_device_info(&dev_info))
         {
+            ret = EXIT_FAILURE;
             fwupd_error("No device to update\n");
-            return EXIT_FAILURE;
+            goto out;
         }
-        device_path = device_path_found;
-    }
 
-    if (image_path)
+        ret = igsc_device_init_by_device_info(&handle, &dev_info);
+        if (ret)
+        {
+            ret = EXIT_FAILURE;
+            fwupd_error("Cannot initialize device: %s\n", dev_info.name);
+            goto out;
+        }
+    }
+    else
     {
-        return oprom_update(image_path, device_path, device_path_found, type, allow_downgrade);
+        ret = igsc_device_init_by_device(&handle, device_path);
+        if (ret != IGSC_SUCCESS)
+        {
+            ret = EXIT_FAILURE;
+            fwupd_error("Cannot initialize device: %s\n", dev_info.name);
+            goto out;
+        }
+
+        ret = igsc_device_get_device_info(&handle, &dev_info);
+        if (ret != IGSC_SUCCESS)
+        {
+            ret = EXIT_FAILURE;
+            fwupd_error("No device to update\n");
+            goto out;
+        }
     }
 
-    free(device_path_found);
+    if (image_path == NULL)
+    {
+        ret = ERROR_BAD_ARGUMENT;
+        fwupd_error("No image to update\n");
+        goto out;
+    }
 
-    fwupd_error("No image to update\n");
-    return ERROR_BAD_ARGUMENT;
+    ret = oprom_update(image_path, &handle, &dev_info, type, allow_downgrade);
+
+out:
+    igsc_device_close(&handle);
+    return ret;
 }
 
 static int do_oprom_data(int argc, char *argv[])
@@ -1253,7 +1330,7 @@ char *prog_name(const char *exe_path)
         p++;
     }
 
-    return strdup(p);
+    return igsc_strdup(p);
 }
 #else
 char *prog_name(const char *exe_path)
@@ -1280,7 +1357,6 @@ char *prog_name(const char *exe_path)
 }
 #endif
 
-#ifndef UNIT_TESTING
 int main(int argc, char* argv[])
 {
     char *exe_name = prog_name(argv[0]);
@@ -1311,4 +1387,3 @@ out:
     free(exe_name);
     return (ret) ? EXIT_FAILURE : EXIT_SUCCESS;
 }
-#endif /* UNIT_TESTING */

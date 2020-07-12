@@ -8,74 +8,6 @@
 #include <string.h>
 #include <cmocka.h>
 
-#include "igsc_lib.h"
-#include "dev_info_mock.c"
-
-typedef int (*gsc_op)(int argc, char *argv[]);
-
-struct gsc_op {
-    const char *name;
-    gsc_op    op;
-    const char  *usage; /* usage title */
-    const char  *help;  /* help */
-};
-
-int mock_args_parse(const char *exe_name, int *argc, char **argv[],
-                      const struct gsc_op **op, bool *display_help);
-
-int mock_firmware_update(const char *device_path,
-                           const char *image_path,
-                           bool allow_downgrade);
-
-int mock_firmware_version(const char *device_path);
-
-int mock_image_version(const char *device_path);
-
-int mock_oprom_device_version(const char *device_path,
-                              enum igsc_oprom_type igsc_oprom_type);
-
-int mock_oprom_update(const char *image_path, const char *device_path,
-                      char *device_path_found, enum igsc_oprom_type type);
-
-int mock_oprom_image_version(const char *image_path,
-                             enum igsc_oprom_type igsc_oprom_type);
-
-void mock_progress_func(uint32_t done, uint32_t total, void *ctx);
-
-int firmware_update(const char *device_path, const char *image_path,
-                    bool allow_downgrade)
-{
-    return mock_firmware_update(device_path, image_path, allow_downgrade);
-}
-
-
-int firmware_version(const char *device_path)
-{
-    return mock_firmware_version(device_path);
-}
-
-int image_version(const char *device_path)
-{
-    return mock_image_version(device_path);
-}
-
-int oprom_device_version(const char *device_path,
-                         enum igsc_oprom_type igsc_oprom_type)
-{
-    return mock_oprom_device_version(device_path, igsc_oprom_type);
-}
-
-int oprom_update(const char *image_path, const char *device_path,
-                 char *device_path_found, enum igsc_oprom_type type)
-{
-    return mock_oprom_update(image_path, device_path, device_path_found, type);
-}
-
-int oprom_image_version(const char *image_path, enum igsc_oprom_type igsc_oprom_type)
-{
-    return mock_oprom_image_version(image_path, igsc_oprom_type);
-}
-
 static char *test_strdup(const char *str)
 {
     char *new_str = malloc(strlen(str) + 1);
@@ -87,9 +19,13 @@ static char *test_strdup(const char *str)
     return new_str;
 }
 
+#include "igsc_lib.h"
+#include "dev_info_mock.c"
+#include "../src/igsc_cli.c"
+
 static void test_arg_free(int argc, char *argv[])
 {
-    for (int i = 0; i < argc; i++)
+    for (int i = 1; i < argc; i++)
     {
         free(argv[i]);
     }
@@ -105,6 +41,8 @@ static int group_setup(void **state)
         return -1;
     }
 
+    argv[0] = test_strdup("igsc");
+
     *state = argv;
 
     return 0;
@@ -112,34 +50,11 @@ static int group_setup(void **state)
 
 static int group_teardown(void **state)
 {
-    free(*state);
+    char **argv = *state;
+    free(argv[0]);
+    free(argv);
+    *state = NULL;
     return 0;
-}
-
-static int __main(int argc, char *argv[])
-{
-    const char *exec_name = "igsc";
-    const struct gsc_op *op = NULL;
-    bool display_help = false;
-    int ret;
-
-    ret = mock_args_parse(exec_name, &argc, &argv, &op, &display_help);
-    if (ret)
-    {
-        return EXIT_FAILURE;
-    }
-
-    if (display_help)
-    {
-        return EXIT_SUCCESS;
-    }
-
-    if (op == NULL)
-    {
-         return EXIT_FAILURE;
-    }
-
-    return op->op(argc, argv);
 }
 
 /**
@@ -149,11 +64,15 @@ static void test_help_error(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
-    assert_true(ret != EXIT_SUCCESS);
+    fprintf(stderr, "RET = %d\n", ret);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret == EXIT_FAILURE);
 }
 
 /**
@@ -163,11 +82,11 @@ static void test_help_short(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("-h");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -181,11 +100,11 @@ static void test_help_long(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("--help");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -199,11 +118,11 @@ static void test_help(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("help");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -217,12 +136,12 @@ static void test_fw_help(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("-h");
     argv[argc++] = test_strdup("fw");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -236,12 +155,12 @@ static void test_oprom_code_help(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-code");
     argv[argc++] = test_strdup("--help");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -255,7 +174,7 @@ static void test_fw_update_1(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("fw");
     argv[argc++] = test_strdup("update");
@@ -264,7 +183,7 @@ static void test_fw_update_1(void **state)
     argv[argc++] = test_strdup("--device");
     argv[argc++] = test_strdup("/dev/mei0");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -278,7 +197,7 @@ static void test_fw_update_2(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("fw");
     argv[argc++] = test_strdup("update");
@@ -287,7 +206,7 @@ static void test_fw_update_2(void **state)
     argv[argc++] = test_strdup("--image");
     argv[argc++] = test_strdup("fw.img");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -301,14 +220,14 @@ static void test_fw_update_3(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("fw");
     argv[argc++] = test_strdup("update");
     argv[argc++] = test_strdup("--image");
     argv[argc++] = test_strdup("fw.img");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -322,12 +241,12 @@ static void test_fw_update_bad_1(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("fw");
     argv[argc++] = test_strdup("update");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -341,13 +260,13 @@ static void test_fw_update_bad_2(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("fw");
     argv[argc++] = test_strdup("update");
     argv[argc++] = test_strdup("--image");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -361,13 +280,13 @@ static void test_fw_update_bad_3(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("fw");
     argv[argc++] = test_strdup("update");
     argv[argc++] = test_strdup("fw.img");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -381,14 +300,14 @@ static void test_fw_version_1(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("fw");
     argv[argc++] = test_strdup("version");
     argv[argc++] = test_strdup("--image");
     argv[argc++] = test_strdup("fw.img");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -402,14 +321,14 @@ static void test_fw_version_2(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("fw");
     argv[argc++] = test_strdup("version");
     argv[argc++] = test_strdup("--device");
     argv[argc++] = test_strdup("/dev/mei0");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -423,13 +342,13 @@ static void test_fw_version_bad_1(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("fw");
     argv[argc++] = test_strdup("version");
     argv[argc++] = test_strdup("fw.img");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -443,13 +362,13 @@ static void test_fw_version_bad_2(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("fw");
     argv[argc++] = test_strdup("version");
     argv[argc++] = test_strdup("--device");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -463,14 +382,14 @@ static void test_oprom_data_update_1(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-data");
     argv[argc++] = test_strdup("update");
     argv[argc++] = test_strdup("--image");
     argv[argc++] = test_strdup("oprom.img");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -484,7 +403,7 @@ static void test_oprom_data_update_2(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-data");
     argv[argc++] = test_strdup("update");
@@ -493,7 +412,7 @@ static void test_oprom_data_update_2(void **state)
     argv[argc++] = test_strdup("--image");
     argv[argc++] = test_strdup("oprom.img");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -507,7 +426,7 @@ static void test_oprom_data_update_3(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-data");
     argv[argc++] = test_strdup("update");
@@ -517,7 +436,7 @@ static void test_oprom_data_update_3(void **state)
     argv[argc++] = test_strdup("--image");
     argv[argc++] = test_strdup("oprom.img");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -531,7 +450,7 @@ static void test_oprom_data_update_4(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-data");
     argv[argc++] = test_strdup("update");
@@ -540,7 +459,7 @@ static void test_oprom_data_update_4(void **state)
     argv[argc++] = test_strdup("-d");
     argv[argc++] = test_strdup("/dev/mei0");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -554,12 +473,12 @@ static void test_oprom_data_update_bad_1(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-data");
     argv[argc++] = test_strdup("update");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -573,14 +492,14 @@ static void test_oprom_data_update_bad_2(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-data");
     argv[argc++] = test_strdup("update");
     argv[argc++] = test_strdup("--device");
     argv[argc++] = test_strdup("/dev/mei0");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -594,14 +513,14 @@ static void test_oprom_data_version_1(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-data");
     argv[argc++] = test_strdup("version");
     argv[argc++] = test_strdup("--device");
     argv[argc++] = test_strdup("/dev/mei0");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -615,14 +534,14 @@ static void test_oprom_data_version_2(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-data");
     argv[argc++] = test_strdup("version");
     argv[argc++] = test_strdup("--image");
     argv[argc++] = test_strdup("oprom.img");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -636,12 +555,12 @@ static void test_oprom_data_version_3(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-data");
     argv[argc++] = test_strdup("version");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -655,13 +574,13 @@ static void test_oprom_data_version_bad_1(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-data");
     argv[argc++] = test_strdup("version");
     argv[argc++] = test_strdup("--image");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -675,13 +594,13 @@ static void test_oprom_data_version_bad_2(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-data");
     argv[argc++] = test_strdup("version");
     argv[argc++] = test_strdup("--device");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -695,13 +614,13 @@ static void test_oprom_data_version_bad_3(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-data");
     argv[argc++] = test_strdup("version");
     argv[argc++] = test_strdup("oprom.img");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -715,14 +634,14 @@ static void test_oprom_code_update_1(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-code");
     argv[argc++] = test_strdup("update");
     argv[argc++] = test_strdup("--image");
     argv[argc++] = test_strdup("oprom.img");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -736,7 +655,7 @@ static void test_oprom_code_update_2(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-code");
     argv[argc++] = test_strdup("update");
@@ -745,7 +664,7 @@ static void test_oprom_code_update_2(void **state)
     argv[argc++] = test_strdup("--image");
     argv[argc++] = test_strdup("oprom.img");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -759,7 +678,7 @@ static void test_oprom_code_update_3(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-code");
     argv[argc++] = test_strdup("update");
@@ -769,7 +688,7 @@ static void test_oprom_code_update_3(void **state)
     argv[argc++] = test_strdup("--image");
     argv[argc++] = test_strdup("oprom.img");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -783,7 +702,7 @@ static void test_oprom_code_update_4(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-code");
     argv[argc++] = test_strdup("update");
@@ -792,7 +711,7 @@ static void test_oprom_code_update_4(void **state)
     argv[argc++] = test_strdup("-d");
     argv[argc++] = test_strdup("/dev/mei0");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -806,12 +725,12 @@ static void test_oprom_code_update_bad_1(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-code");
     argv[argc++] = test_strdup("update");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -825,14 +744,14 @@ static void test_oprom_code_update_bad_2(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-code");
     argv[argc++] = test_strdup("update");
     argv[argc++] = test_strdup("--device");
     argv[argc++] = test_strdup("/dev/mei0");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -846,14 +765,14 @@ static void test_oprom_code_version_1(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-code");
     argv[argc++] = test_strdup("version");
     argv[argc++] = test_strdup("--device");
     argv[argc++] = test_strdup("/dev/mei0");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -867,14 +786,14 @@ static void test_oprom_code_version_2(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-code");
     argv[argc++] = test_strdup("version");
     argv[argc++] = test_strdup("--image");
     argv[argc++] = test_strdup("oprom.img");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -888,12 +807,12 @@ static void test_oprom_code_version_3(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-code");
     argv[argc++] = test_strdup("version");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -907,13 +826,13 @@ static void test_oprom_code_version_bad_1(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-code");
     argv[argc++] = test_strdup("version");
     argv[argc++] = test_strdup("--image");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -927,13 +846,13 @@ static void test_oprom_code_version_bad_2(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-code");
     argv[argc++] = test_strdup("version");
     argv[argc++] = test_strdup("--device");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -947,13 +866,13 @@ static void test_oprom_code_version_bad_3(void **state)
 {
     int ret;
     char **argv = *state;
-    int argc = 0;
+    int argc = 1;
 
     argv[argc++] = test_strdup("oprom-code");
     argv[argc++] = test_strdup("version");
     argv[argc++] = test_strdup("oprom.img");
 
-    ret = __main(argc, argv);
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
@@ -971,7 +890,7 @@ static void test_progress_bar(void **state)
 
     for (done = 0; done <= total; done++)
     {
-        mock_progress_func(done, total, NULL);
+        progress_func(done, total, NULL);
     }
     printf("\n");
 }
@@ -984,7 +903,7 @@ static void test_progress_bar_2(void **state)
 
     for (done = 0; done <= total; done += 2)
     {
-        mock_progress_func(done, total, NULL);
+        progress_func(done, total, NULL);
     }
     printf("\n");
 }
@@ -995,8 +914,11 @@ static void test_progress_bar_2(void **state)
  * igsc fw update --image <image>
  */
 
+#undef main
 int main(void)
 {
+    int status = 0;
+
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_help_error),
         cmocka_unit_test(test_help_short),
@@ -1045,6 +967,8 @@ int main(void)
         cmocka_unit_test(test_progress_bar_2),
     };
 
-    cmocka_run_group_tests(progress_bar_tests, NULL, NULL);
-    return cmocka_run_group_tests(tests, group_setup, group_teardown);
+    //status += cmocka_run_group_tests(progress_bar_tests, NULL, NULL);
+    status += cmocka_run_group_tests(tests, group_setup, group_teardown);
+
+    return status;
 }

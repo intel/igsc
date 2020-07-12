@@ -33,8 +33,13 @@ int igsc_image_oprom_init(OUT struct igsc_oprom_image **img,
        return ret;
     }
 
-    return image_oprom_parse(*img);
-
+    ret = image_oprom_parse(*img);
+    if (ret != IGSC_SUCCESS)
+    {
+        image_oprom_free_handle(*img);
+        *img = NULL;
+    }
+    return ret;
 }
 
 int igsc_image_oprom_version(IN struct igsc_oprom_image *img,
@@ -79,7 +84,7 @@ int igsc_image_oprom_iterator_reset(IN struct igsc_oprom_image *img)
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
-    /* If image has no data partition the itertor is not supported */
+    /* If image has no data partition the iterator is not supported */
     img_type = image_oprom_get_type(img);
     if ((img_type & IGSC_OPROM_DATA) == 0)
     {
@@ -102,7 +107,7 @@ int igsc_image_oprom_iterator_next(IN struct igsc_oprom_image *img,
     }
 
 
-    /* If image has no data partition the itertor is not supported */
+    /* If image has no data partition the iterator is not supported */
     img_type = image_oprom_get_type(img);
     if ((img_type & IGSC_OPROM_DATA) == 0)
     {
@@ -123,7 +128,7 @@ int igsc_image_oprom_count_devices(IN struct igsc_oprom_image *img,
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
-    /* If image has no data partition the itertor is not supported */
+    /* If image has no data partition the iterator is not supported */
     img_type = image_oprom_get_type(img);
     if ((img_type & IGSC_OPROM_DATA) == 0)
     {
@@ -148,7 +153,7 @@ int igsc_image_oprom_supported_devices(IN struct igsc_oprom_image *img,
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
-    /* If image has no data partition the itertor is not supported */
+    /* If image has no data partition the iterator is not supported */
     img_type = image_oprom_get_type(img);
     if ((img_type & IGSC_OPROM_DATA) == 0)
     {

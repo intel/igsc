@@ -12,7 +12,7 @@
 #include <stdbool.h>
 
 #include "igsc_lib.h"
-#include "igsc_cli.c"
+//#include "igsc_cli.c"
 
 struct igsc_device_iterator
 {
@@ -62,48 +62,45 @@ int __wrap_igsc_device_iterator_next(struct igsc_device_iterator *iter,
     return IGSC_SUCCESS;
 }
 
-void mock_progress_func(uint32_t done, uint32_t total, void *ctx)
-{
-    progress_func(done, total, ctx);
-}
 
-int mock_args_parse(const char *exe_name, int *argc, char **argv[],
-                      const struct gsc_op **op, bool *display_help)
+int firmware_update(const char *device_path,
+                    const char *image_path,
+                    bool allow_downgrade)
 {
-    return args_parse(exe_name, argc, argv, op, display_help);
-}
-
-int mock_firmware_update(const char *device_path,
-                         const char *image_path,
-                         bool allow_downgrade)
-{
+    fprintf(stderr, "mock %s\n", __func__);
     return EXIT_SUCCESS;
 }
 
-int mock_firmware_version(const char *device_path)
+int firmware_version(const char *device_path)
 {
+    fprintf(stderr, "mock %s\n", __func__);
     return EXIT_SUCCESS;
 }
 
-int mock_image_version(const char *device_path)
+int image_version(const char *device_path)
 {
+    fprintf(stderr, "mock %s\n", __func__);
     return EXIT_SUCCESS;
 }
 
-int mock_oprom_device_version(const char *device_path,
+int oprom_update(const char *image_path,
+                 struct igsc_device_handle *handle, struct igsc_device_info *dev_info,
+                 enum igsc_oprom_type type, bool allow_downgrade)
+{
+    fprintf(stderr, "mock %s\n", __func__);
+    return EXIT_SUCCESS;
+}
+
+int oprom_device_version(const char *device_path,
                              enum igsc_oprom_type igsc_oprom_type)
 {
+    fprintf(stderr, "mock %s\n", __func__);
     return EXIT_SUCCESS;
 }
 
-int mock_oprom_update(const char *image_path, const char *device_path,
-                      char *device_path_found, enum igsc_oprom_type type)
-{
-    return EXIT_SUCCESS;
-}
-
-int mock_oprom_image_version(const char *image_path,
+int oprom_image_version(const char *image_path,
                              enum igsc_oprom_type igsc_oprom_type)
 {
+    fprintf(stderr, "mock %s\n", __func__);
     return EXIT_SUCCESS;
 }
