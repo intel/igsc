@@ -140,8 +140,8 @@ image.
 
 .. code-block:: c
 
-    int igsc_device_info(IN  struct igsc_device_handle *handle,
-                         OUT struct igsc_info_device *info, size_t *info_size);
+    int igsc_device_get_device_info(IN  struct igsc_device_handle *handle,
+                                    OUT struct igsc_info_device *info);
 
 2.4 GSC Firmware Update
 ~~~~~~~~~~~~~~~~~~~~~~~~
