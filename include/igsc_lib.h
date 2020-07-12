@@ -185,6 +185,18 @@ int igsc_device_init_by_device_info(IN OUT struct igsc_device_handle *handle,
                                     IN const struct igsc_device_info *dev_info);
 
 /**
+ *  @brief Retrieve device information from the system
+ *
+ *  @param handle An initialized handle to the device.
+ *  @param dev_info A device info structure
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_device_get_device_info(IN  struct igsc_device_handle *handle,
+                                OUT struct igsc_device_info *dev_info);
+
+/**
  *  @brief Closes a GSC Firmware Update device.
  *
  *  @param handle A handle to the device.
@@ -406,6 +418,11 @@ int igsc_image_oprom_release(IN struct igsc_oprom_image *img);
  */
 
 /**
+ * @addtogroup enumeration
+ * @{
+ */
+
+/**
  *  @brief Create iterator for devices capable of FW update.
  *
  *  @param iter pointer to return the iterator pointer
@@ -436,6 +453,10 @@ int igsc_device_iterator_next(struct igsc_device_iterator *iter,
  */
 IGSC_EXPORT
 void igsc_device_iterator_destroy(struct igsc_device_iterator *iter);
+
+/**
+ * @}
+ */
 
 #ifdef __cplusplus
 }

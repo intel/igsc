@@ -193,6 +193,8 @@ static int gsc_get_property(const PWCHAR deviceInterfaceList,
 int igsc_device_iterator_next(struct igsc_device_iterator *iter,
                               struct igsc_device_info *info)
 {
+    int ret;
+
     if (iter == NULL)
     {
         gsc_error("Bad parameters\n");
@@ -207,8 +209,23 @@ int igsc_device_iterator_next(struct igsc_device_iterator *iter,
     ZeroMemory(info, sizeof(*info));
     wcstombs_s(NULL, info->name, IGCS_INFO_NAME_SIZE - 1,
                iter->deviceInterface, IGCS_INFO_NAME_SIZE - 1);
-    gsc_get_property(iter->deviceInterface, info);
+    ret = gsc_get_property(iter->deviceInterface, info);
     iter->deviceInterface += wcslen(iter->deviceInterface) + 1;
 
-    return IGSC_SUCCESS;
+    return ret;
+}
+
+int get_device_info_by_devpath(const char *devpath, struct igsc_device_info *info)
+{
+
+    WCHAR deviceInterface[IGCS_INFO_NAME_SIZE];
+    errno_t err;
+
+    err = mbstowcs_s(NULL, deviceInterface, IGCS_INFO_NAME_SIZE, devpath, IGCS_INFO_NAME_SIZE - 1);
+    if (err)
+    {
+        return IGSC_ERROR_INTERNAL;
+    }
+
+    return gsc_get_property(deviceInterface, info);
 }

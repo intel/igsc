@@ -58,4 +58,6 @@ static inline void gsc_msleep(uint32_t msecs)
 }
 #endif
 
+int get_device_info_by_devpath(const char *devpath,  struct igsc_device_info *info);
+
 #endif /* __IGSC_UTIL_H__ */

@@ -7,6 +7,7 @@
 #include <cmocka.h>
 
 #include "igsc_lib.h"
+#include "dev_info_mock.c"
 
 void *__real__test_calloc(size_t nmemb, size_t size,
                           const char* file, const int line);
@@ -41,6 +42,7 @@ void *__wrap__test_malloc(size_t nmemb, size_t size)
         return __real__test_calloc(nmemb, size, __FILE__, __LINE__);
     }
 }
+
 
 /**
  * @brief A test to check if calloc() in igsc_device_init() returned NULL

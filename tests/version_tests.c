@@ -13,6 +13,7 @@
 
 #include "igsc_lib.h"
 #include "igsc_heci.h"
+#include "dev_info_mock.c"
 
 typedef void (*respons_genartor_f)(struct gsc_fwu_heci_version_resp *);
 

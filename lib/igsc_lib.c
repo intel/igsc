@@ -1040,6 +1040,24 @@ int igsc_device_init_by_device_info(IN OUT struct igsc_device_handle *handle,
     return igsc_device_init_by_device(handle, dev_info->name);
 }
 
+int igsc_device_get_device_info(IN  struct igsc_device_handle *handle,
+                                OUT struct igsc_device_info *dev_info)
+{
+    if (handle == NULL || dev_info == NULL)
+    {
+        gsc_error("Bad parameters\n");
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    if (handle->ctx == NULL || handle->ctx->device_path == NULL)
+    {
+        gsc_error("Bad parameters\n");
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    return get_device_info_by_devpath(handle->ctx->device_path, dev_info);
+}
+
 int igsc_device_close(IN OUT struct igsc_device_handle *handle)
 {
 

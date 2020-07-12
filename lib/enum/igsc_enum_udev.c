@@ -2,13 +2,17 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (C) 2019-2020 Intel Corporation
  */
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <limits.h>
+#include <unistd.h>
 #include <string.h>
 #include <libudev.h>
-#include <linux/limits.h>
-#include <unistd.h>
+
 
 #include "igsc_lib.h"
 #include "igsc_log.h"
@@ -80,15 +84,53 @@ void igsc_device_iterator_destroy(struct igsc_device_iterator *iter)
     free(iter);
 }
 
+static int get_device_info(struct udev_device *dev,
+                           struct igsc_device_info *info)
+{
+
+    struct udev_device *parent;
+    struct udev_device *gparent;
+    const char *prop;
+
+    /* parent is mei-gsc platform device, grand parent is i915 card*/
+    parent = udev_device_get_parent(dev);
+    if (parent == NULL)
+    {
+        gsc_error("Can't find device parent for '%s'\n",
+                  udev_device_get_sysname(dev));
+        return IGSC_ERROR_INTERNAL;
+    }
+
+    gparent = udev_device_get_parent(parent);
+    if (gparent == NULL)
+    {
+        gsc_error("Can't find device grand parent for '%s'\n",
+                  udev_device_get_sysname(dev));
+    }
+
+    prop = udev_device_get_property_value(gparent, "PCI_ID");
+    if (prop)
+    {
+        sscanf(prop, "%hx:%hx", &info->vendor_id, &info->device_id);
+    }
+    prop = udev_device_get_property_value(gparent, "PCI_SUBSYS_ID");
+    if (prop)
+    {
+        sscanf(prop, "%hx:%hx",
+               &info->subsys_vendor_id,
+               &info->subsys_device_id);
+    }
+    return IGSC_SUCCESS;
+}
+
 int igsc_device_iterator_next(struct igsc_device_iterator *iter,
                               struct igsc_device_info *info)
 {
     struct udev_device *dev;
     struct udev_device *mei;
-    struct udev_device *parent;
-    struct udev_device *gparent;
     char buf[PATH_MAX];
     const char *prop;
+    int ret;
 
     if (iter == NULL)
     {
@@ -118,36 +160,10 @@ int igsc_device_iterator_next(struct igsc_device_iterator *iter,
         return IGSC_ERROR_INTERNAL; 
     }
 
-    /* parent is mei-gsc platform device, grand parent is i915 card*/
-    parent = udev_device_get_parent(dev);
-    if (parent)
+    ret = get_device_info(dev, info);
+    if (ret != IGSC_SUCCESS)
     {
-        gparent = udev_device_get_parent(parent);
-        if (gparent)
-        {
-            prop = udev_device_get_property_value(gparent, "PCI_ID");
-            if (prop)
-            {
-                sscanf(prop, "%hx:%hx",
-                       &info->vendor_id, &info->device_id);
-            }
-            prop = udev_device_get_property_value(gparent, "PCI_SUBSYS_ID");
-            if (prop)
-            {
-                sscanf(prop, "%hx:%hx",
-                       &info->subsys_vendor_id, &info->subsys_device_id);
-            }
-        }
-        else
-        {
-            gsc_error("Can't find device grand parent for '%s'\n",
-                      udev_list_entry_get_name(iter->entry));
-        }
-    }
-    else
-    {
-        gsc_error("Can't find device parent for '%s'\n",
-                  udev_list_entry_get_name(iter->entry));
+        return ret;
     }
 
     /* link to associated char device */
@@ -167,4 +183,38 @@ int igsc_device_iterator_next(struct igsc_device_iterator *iter,
     udev_device_unref(dev);
 
     return IGSC_SUCCESS;
+}
+
+ int get_device_info_by_devpath(const char *devpath,  struct igsc_device_info *info)
+{
+    struct udev *udev = NULL;
+    struct udev_device *dev = NULL;
+    struct stat st;
+    int ret;
+
+    udev = udev_new();
+    if (udev == NULL)
+    {
+        return IGSC_ERROR_NOMEM;
+    }
+
+    if (lstat(devpath, &st) < 0)
+    {
+        ret = IGSC_ERROR_INTERNAL;
+        goto out;
+    }
+
+    dev = udev_device_new_from_devnum(udev, 'c', st.st_rdev);
+    if (dev == NULL)
+    {
+        ret = IGSC_ERROR_INTERNAL;
+        goto out;
+    }
+
+    ret = get_device_info(dev, info);
+
+out:
+    udev_device_unref(dev);
+    udev_unref(udev);
+    return ret;
 }

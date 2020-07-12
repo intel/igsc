@@ -7,6 +7,7 @@
 #include <cmocka.h>
 
 #include "../lib/igsc_lib.c"
+#include "dev_info_mock.c"
 
 static int group_setup(void **state)
 {

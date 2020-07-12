@@ -9,6 +9,7 @@
 #include <cmocka.h>
 
 #include "igsc_lib.h"
+#include "dev_info_mock.c"
 
 typedef int (*gsc_op)(int argc, char *argv[]);
 
