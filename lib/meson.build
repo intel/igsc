@@ -57,12 +57,12 @@ igsc_static = static_library(
 
 igsc_dep = declare_dependency(
   link_with : igsc_shared,
-  include_directories : include_directories('.'),
+  include_directories : inc_dirs,
   dependencies : deps
 )
 
 igsc_dep_static = declare_dependency(
   link_with : igsc_static,
-  include_directories : include_directories('.'),
+  include_directories : inc_dirs,
   dependencies : deps
 )
