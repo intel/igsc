@@ -149,7 +149,14 @@ int driver_init(struct igsc_lib_ctx *lib_ctx)
     TEESTATUS tee_status;
     int status;
 
-    tee_status = TeeInit(&lib_ctx->driver_handle, &GUID_METEE_FWU, lib_ctx->device_path);
+    if (lib_ctx->dev_handle == IGSC_INVALID_DEVICE_HANDLE)
+    {
+        tee_status = TeeInit(&lib_ctx->driver_handle, &GUID_METEE_FWU, lib_ctx->device_path);
+    }
+    else
+    {
+        tee_status = TeeInitHandle(&lib_ctx->driver_handle, &GUID_METEE_FWU, lib_ctx->dev_handle);
+    }
     if (!TEE_IS_SUCCESS(tee_status))
     {
         gsc_error("Error in HECI init (%d)\n", tee_status);
@@ -980,6 +987,7 @@ int igsc_device_init_by_device(IN OUT struct igsc_device_handle *handle,
         gsc_error("Context Allocation failed\n");
         return IGSC_ERROR_NOMEM;
     }
+    handle->ctx->dev_handle = IGSC_INVALID_DEVICE_HANDLE;
 
     handle->ctx->device_path = gsc_strdup(device_path);
     if (handle->ctx->device_path == NULL)
@@ -996,13 +1004,12 @@ int igsc_device_init_by_device(IN OUT struct igsc_device_handle *handle,
 int igsc_device_init_by_handle(IN OUT struct igsc_device_handle *handle,
                                IN igsc_handle_t dev_handle)
 {
-    if (handle == NULL || dev_handle == 0)
+    if (handle == NULL || dev_handle == IGSC_INVALID_DEVICE_HANDLE)
     {
         gsc_error("Bad parameters\n");
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
-#if 0
     handle->ctx = calloc(1, sizeof(*handle->ctx));
     if (handle->ctx == NULL)
     {
@@ -1012,11 +1019,6 @@ int igsc_device_init_by_handle(IN OUT struct igsc_device_handle *handle,
     handle->ctx->dev_handle = dev_handle;
 
     return IGSC_SUCCESS;
-#else
-    /* TODO not supported by MeTee */
-    return IGSC_ERROR_NOT_SUPPORTED;
-
-#endif /* 0 */
 }
 
 int igsc_device_init_by_device_info(IN OUT struct igsc_device_handle *handle,

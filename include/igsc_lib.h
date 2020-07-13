@@ -37,8 +37,10 @@ extern "C" {
  */
 #ifdef __linux__
 typedef int igsc_handle_t;
+#define IGSC_INVALID_DEVICE_HANDLE (-1)
 #else /* __linux__ */
 typedef void *igsc_handle_t;
+#define IGSC_INVALID_DEVICE_HANDLE ((void *)0)
 #endif /* __linux__ */
 
 /**
