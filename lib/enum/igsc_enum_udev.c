@@ -174,8 +174,8 @@ int igsc_device_iterator_next(struct igsc_device_iterator *iter,
         prop = udev_device_get_property_value(mei, "DEVNAME");
         if (prop)
         {
-            strncpy(info->name, prop, IGCS_INFO_NAME_SIZE - 1);
-            info->name[IGCS_INFO_NAME_SIZE - 1] = '\0';
+            strncpy(info->name, prop, IGSC_INFO_NAME_SIZE - 1);
+            info->name[IGSC_INFO_NAME_SIZE - 1] = '\0';
         }
         udev_device_unref(mei);
     }

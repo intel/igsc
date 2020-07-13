@@ -93,13 +93,13 @@ struct igsc_device_iterator;
 /**
  * A device node path (Linux) or device instance path (Windows) Length
  */
-#define IGCS_INFO_NAME_SIZE 256
+#define IGSC_INFO_NAME_SIZE 256
 
 /**
  * Structure to store GSC device info
  */
 struct igsc_device_info {
-    char name[IGCS_INFO_NAME_SIZE];  /**<  the device node path */
+    char name[IGSC_INFO_NAME_SIZE];  /**<  the device node path */
 
     uint16_t domain;                 /**< pci domain (Linux only) */
     uint8_t  bus;                    /**< pci bus number for GFX device */
@@ -113,7 +113,7 @@ struct igsc_device_info {
 };
 
 /**
- * @name IGCS_ERRORS
+ * @name IGSC_ERRORS
  *     The Library return codes
  * @addtogroup IGSC_ERRORS
  * @{

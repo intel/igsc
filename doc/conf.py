@@ -161,7 +161,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'igcs_fu', 'Graphics System Controller Firmware Interface Documentation',
+    (master_doc, 'igsc', 'Graphics System Controller Firmware Interface Documentation',
      [author], 1)
 ]
 

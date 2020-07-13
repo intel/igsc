@@ -207,8 +207,8 @@ int igsc_device_iterator_next(struct igsc_device_iterator *iter,
     }
 
     ZeroMemory(info, sizeof(*info));
-    wcstombs_s(NULL, info->name, IGCS_INFO_NAME_SIZE - 1,
-               iter->deviceInterface, IGCS_INFO_NAME_SIZE - 1);
+    wcstombs_s(NULL, info->name, IGSC_INFO_NAME_SIZE - 1,
+               iter->deviceInterface, IGSC_INFO_NAME_SIZE - 1);
     ret = gsc_get_property(iter->deviceInterface, info);
     iter->deviceInterface += wcslen(iter->deviceInterface) + 1;
 
@@ -218,10 +218,10 @@ int igsc_device_iterator_next(struct igsc_device_iterator *iter,
 int get_device_info_by_devpath(const char *devpath, struct igsc_device_info *info)
 {
 
-    WCHAR deviceInterface[IGCS_INFO_NAME_SIZE];
+    WCHAR deviceInterface[IGSC_INFO_NAME_SIZE];
     errno_t err;
 
-    err = mbstowcs_s(NULL, deviceInterface, IGCS_INFO_NAME_SIZE, devpath, IGCS_INFO_NAME_SIZE - 1);
+    err = mbstowcs_s(NULL, deviceInterface, IGSC_INFO_NAME_SIZE, devpath, IGSC_INFO_NAME_SIZE - 1);
     if (err)
     {
         return IGSC_ERROR_INTERNAL;
