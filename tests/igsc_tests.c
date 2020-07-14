@@ -4,7 +4,20 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <cmocka.h>
+
+char *test_strdup(const char *s)
+{
+    size_t len = strlen(s);
+    char *d = calloc(1, len + 1);
+    if (d == NULL)
+    {
+        return NULL;
+    }
+    memcpy(d, s, len + 1);
+    return d;
+}
 
 #include "igsc_lib.h"
 #include "dev_info_mock.c"
@@ -49,7 +62,8 @@ int __wrap_image_oprom_parse(struct igsc_oprom_image *img)
 }
 
 /**
- * @brief A test to check if calloc() in igsc_device_init() returned NULL
+ * @brief A test to check if calloc() in igsc_device_init_by_device()
+ *        returned NULL.
  *
  * @param state unit testing state
  */
@@ -61,27 +75,34 @@ static void test_device_init_calloc_ok(void **state)
     will_return(__wrap__test_calloc, 0);
     will_return(__wrap__test_calloc, 0);
 
-    assert_int_not_equal(igsc_device_init_by_device(&handle, " "), IGSC_ERROR_NOMEM);
+    ret = igsc_device_init_by_device(&handle, " ");
+
+    assert_int_not_equal(ret, IGSC_ERROR_NOMEM);
     igsc_device_close(&handle);
 }
 
 /**
- * @brief A test to check if calloc() in igsc_device_init() returned NULL
+ * @brief A test to check if calloc() in igsc_device_init_by_device()
+ *        returned NULL.
  *
  * @param state unit testing state
  */
 static void test_device_init_calloc_fail_1(void **state)
 {
     struct igsc_device_handle handle;
+    int ret;
 
     will_return(__wrap__test_calloc, 1);
 
-    assert_int_equal(igsc_device_init_by_device(&handle, ""), IGSC_ERROR_NOMEM);
+    ret = igsc_device_init_by_device(&handle, "");
+
+    assert_int_equal(ret, IGSC_ERROR_NOMEM);
     igsc_device_close(&handle);
 }
 
 /**
- * @brief A test to check if calloc() in igsc_device_init() returned NULL
+ * @brief A test to check if calloc() in igsc_device_init_by_device()
+ *        returned NULL.
  *
  * @param state unit testing state
  */
@@ -93,23 +114,32 @@ static void test_device_init_calloc_fail_2(void **state)
     will_return(__wrap__test_calloc, 0);
     will_return(__wrap__test_calloc, 1); /* strdup */
 
-    assert_int_equal(igsc_device_init_by_device(&handle, " "), IGSC_ERROR_NOMEM);
+    ret = igsc_device_init_by_device(&handle, " ");
+
+    assert_int_equal(ret, IGSC_ERROR_NOMEM);
+
     igsc_device_close(&handle);
 }
 
 /**
- * @brief A test to check if igsc_device_init return error when NULL handle is send
+ * @brief A test to check if igsc_device_init_by_device() return error when
+ *        NULL handle is send.
  *
  * @param state unit testing state
  */
 static void test_device_init_null_1(void **state)
 {
-    assert_int_equal(igsc_device_init_by_device(NULL, " "), IGSC_ERROR_INVALID_PARAMETER);
+    int ret;
+
+    ret = igsc_device_init_by_device(NULL, " ");
+
+    assert_int_equal(ret, IGSC_ERROR_INVALID_PARAMETER);
+
     igsc_device_close(NULL);
 }
 
 /**
- * @brief A test to check if igsc_device_init return error when NULL handle is send
+ * @brief A test to check if igsc_device_init_by_device return error when NULL handle is send
  *
  * @param state unit testing state
  */
@@ -117,8 +147,12 @@ static void test_device_init_null_2(void **state)
 {
 
     struct igsc_device_handle handle;
+    int ret;
 
-    assert_int_equal(igsc_device_init_by_device(&handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    ret = igsc_device_init_by_device(&handle, NULL);
+
+    assert_int_equal(ret, IGSC_ERROR_INVALID_PARAMETER);
+
     igsc_device_close(NULL);
 }
 
@@ -130,9 +164,87 @@ static void test_device_init_null_2(void **state)
 static void test_device_close_null(void **state)
 {
     struct igsc_device_handle handle;
+    int ret;
 
-    assert_int_equal(igsc_device_close(NULL), IGSC_ERROR_INVALID_PARAMETER);
+    ret = igsc_device_close(NULL);
+
+    assert_int_equal(ret, IGSC_ERROR_INVALID_PARAMETER);
 }
+
+/**
+ * @brief A test to check if calloc() in igsc_device_init_by_handle() returned NULL
+ *
+ * @param state unit testing state
+ */
+static void test_device_init_by_handle_calloc_ok(void **state)
+{
+    struct igsc_device_handle handle;
+    int ret;
+
+    will_return(__wrap__test_calloc, 0);
+
+    ret = igsc_device_init_by_handle(&handle, (igsc_handle_t)1);
+
+    assert_int_not_equal(ret, IGSC_ERROR_NOMEM);
+
+    igsc_device_close(&handle);
+}
+
+/**
+ * @brief A test to check if calloc() in igsc_device_init_by_handle() returned NULL
+ *
+ * @param state unit testing state
+ */
+static void test_device_init_by_handle_calloc_fail_1(void **state)
+{
+    struct igsc_device_handle handle;
+    int ret;
+
+    will_return(__wrap__test_calloc, 1);
+
+    ret = igsc_device_init_by_handle(&handle, (igsc_handle_t)1);
+
+    assert_int_equal(ret, IGSC_ERROR_NOMEM);
+
+    igsc_device_close(&handle);
+}
+
+/**
+ * @brief A test to check if igsc_device_init_by_handle() return error when
+ *        NULL handle is send.
+ *
+ * @param state unit testing state
+ */
+static void test_device_init_by_handle_null(void **state)
+{
+    int ret;
+
+    ret = igsc_device_init_by_handle(NULL, (igsc_handle_t)1);
+
+    assert_int_equal(ret, IGSC_ERROR_INVALID_PARAMETER);
+
+    igsc_device_close(NULL);
+}
+
+/**
+ * @brief A test to check if igsc_device_init_by_handle() return error
+ *        when handle is invalid.
+ *
+ * @param state unit testing state
+ */
+static void test_device_init_by_handle_invalid(void **state)
+{
+
+    struct igsc_device_handle handle;
+    int ret;
+
+    ret = igsc_device_init_by_handle(&handle, IGSC_INVALID_DEVICE_HANDLE);
+
+    assert_int_equal(ret, IGSC_ERROR_INVALID_PARAMETER);
+
+    igsc_device_close(NULL);
+}
+
 
 static void test_image_oprom_init_calloc_fail(void **status)
 {
@@ -152,6 +264,7 @@ static void test_image_oprom_init_calloc_fail(void **status)
     igsc_image_oprom_release(img);
 }
 
+
 int main(void)
 {
     const struct CMUnitTest tests[] = {
@@ -161,6 +274,10 @@ int main(void)
         cmocka_unit_test(test_device_init_null_1),
         cmocka_unit_test(test_device_init_null_2),
         cmocka_unit_test(test_device_close_null),
+        cmocka_unit_test(test_device_init_by_handle_calloc_ok),
+        cmocka_unit_test(test_device_init_by_handle_calloc_fail_1),
+        cmocka_unit_test(test_device_init_by_handle_null),
+        cmocka_unit_test(test_device_init_by_handle_invalid),
         cmocka_unit_test(test_image_oprom_init_calloc_fail),
     };
 

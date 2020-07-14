@@ -11,6 +11,18 @@
 #include <string.h>
 #include <cmocka.h>
 
+char *test_strdup(const char *s)
+{
+    size_t len = strlen(s);
+    char *d = calloc(1, len + 1);
+    if (d == NULL)
+    {
+        return NULL;
+    }
+    memcpy(d, s, len + 1);
+    return d;
+}
+
 #include "igsc_lib.h"
 #include "igsc_heci.h"
 #include "dev_info_mock.c"

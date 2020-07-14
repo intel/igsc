@@ -11,9 +11,9 @@ message("cmocka lib  ${CMOCKA_LIBRARIES}")
 get_target_property(IGCS_INCLUDE_DIRS igsc INCLUDE_DIRECTORIES)
 
 add_cmocka_test(igsc_tests
-                SOURCES igsc_tests.c ../lib/igsc_lib.c ../lib/oprom.c ../lib/oprom_parser.c
+                SOURCES ../lib/igsc_lib.c ../lib/oprom.c ../lib/oprom_parser.c igsc_tests.c
                 LINK_LIBRARIES ${CMOCKA_LIBRARIES} LIBMETEE
-                COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS} -DUNIT_TESTING=1
+                COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS} -Digsc_strdup=test_strdup -DUNIT_TESTING=1
                 INCLUDE_DIRECTORIES ${IGCS_INCLUDE_DIRS} ${CMOCKA_INCLUDE_DIR}
                 LINK_OPTIONS  "-Wl,--wrap=_test_calloc -Wl,--wrap=_test_malloc -Wl,--wrap=image_oprom_parse")
 add_cmocka_test_environment(igsc_tests)
@@ -29,7 +29,7 @@ add_cmocka_test(version_tests
                 SOURCES version_tests.c tee_mock.c ../lib/oprom.c ../lib/oprom_parser.c
                 LINK_LIBRARIES ${CMOCKA_LIBRARIES} LIBMETEE
                 INCLUDE_DIRECTORIES ${IGCS_INCLUDE_DIRS} ${CMOCKA_INCLUDE_DIR}
-                COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS} -DUNIT_TESTING=1)
+                COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS} -Digsc_strdup=test_strdup -DUNIT_TESTING=1)
 add_cmocka_test_environment(version_tests)
 
 add_cmocka_test(oprom_tests

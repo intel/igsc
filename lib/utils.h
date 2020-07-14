@@ -14,6 +14,8 @@
 #define _countof(a) (sizeof(a)/sizeof(*(a)))
 #endif /* __linux__ */
 
+char *igsc_strdup(const char *s);
+
 #ifdef __linux__
 #include <limits.h>
 #define RSIZE_MAX LONG_MAX
@@ -45,6 +47,9 @@ static inline void gsc_msleep(uint32_t msecs)
 {
     usleep(msecs * 10);
 }
+#ifndef igsc_strdup
+#define igsc_strdup strdup
+#endif
 #elif WIN32
 static inline int gsc_memcpy_s(void *dest, size_t dest_size,
                                const void *src, size_t count)
@@ -56,6 +61,9 @@ static inline void gsc_msleep(uint32_t msecs)
 {
     Sleep(msecs);
 }
+#ifndef igsc_strdup
+#define igsc_strdup _strdup
+#endif
 #endif
 
 int get_device_info_by_devpath(const char *devpath,  struct igsc_device_info *info);

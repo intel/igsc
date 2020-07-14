@@ -26,21 +26,6 @@
 
 #include "utils.h"
 
-/*
- * FIXME: cmocka cannot track strudp allocation need to craft our own
- */
-char *gsc_strdup(const char *s)
-{
-    size_t len = strlen(s);
-    char *d = calloc(1, len + 1);
-    if (d == NULL)
-    {
-        return NULL;
-    }
-    gsc_memcpy_s(d, len + 1, s, len + 1);
-    return d;
-}
-
 DEFINE_GUID(GUID_METEE_FWU, 0x87d90ca5, 0x3495, 0x4559,
             0x81, 0x05, 0x3f, 0xbf, 0xa3, 0x7b, 0x8b, 0x79);
 
@@ -989,7 +974,7 @@ int igsc_device_init_by_device(IN OUT struct igsc_device_handle *handle,
     }
     handle->ctx->dev_handle = IGSC_INVALID_DEVICE_HANDLE;
 
-    handle->ctx->device_path = gsc_strdup(device_path);
+    handle->ctx->device_path = igsc_strdup(device_path);
     if (handle->ctx->device_path == NULL)
     {
         gsc_error("Path Allocation failed\n");

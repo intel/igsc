@@ -8,7 +8,7 @@
 #include <string.h>
 #include <cmocka.h>
 
-static char *test_strdup(const char *str)
+char *test_strdup(const char *str)
 {
     char *new_str = malloc(strlen(str) + 1);
     if (new_str)
