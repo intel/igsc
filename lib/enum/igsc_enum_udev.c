@@ -12,7 +12,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <libudev.h>
-
+#include <inttypes.h>
 
 #include "igsc_lib.h"
 #include "igsc_log.h"
@@ -114,6 +114,14 @@ static int get_device_info(struct udev_device *dev,
         sscanf(prop, "%hx:%hx",
                &info->subsys_vendor_id,
                &info->subsys_device_id);
+    }
+    prop = udev_device_get_sysname(parent);
+    if (prop)
+    {
+        sscanf(prop, "%*4d:%2" SCNu8 ":%2" SCNu8 ".%2" SCNu8,
+               &info->bus,
+               &info->dev,
+               &info->func);
     }
     return IGSC_SUCCESS;
 }
