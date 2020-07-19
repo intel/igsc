@@ -1104,11 +1104,12 @@ static int do_list_devices(int argc, char *argv[])
     info.name[0] = '\0';
     while((ret = igsc_device_iterator_next(iter, &info)) == IGSC_SUCCESS)
     {
-        printf("Device [%d] '%s': %04hx:%04hx %04hx:%04hx\n",
+        printf("Device [%d] '%s': %04hx:%04hx %04hx:%04hx %02u:%02u:%02u\n",
                ndevices,
                info.name,
                info.vendor_id, info.device_id,
-               info.subsys_vendor_id, info.subsys_device_id);
+               info.subsys_vendor_id, info.subsys_device_id,
+               info.bus, info.dev, info.func);
 
         ndevices++;
 
