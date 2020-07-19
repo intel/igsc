@@ -35,7 +35,7 @@ int igsc_device_iterator_create(struct igsc_device_iterator **iter)
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
-    it = malloc(sizeof(*it));
+    it = calloc(1, sizeof(*it));
     if (it == NULL)
     {
         gsc_error("Can't allocate iterator\n");
@@ -43,7 +43,7 @@ int igsc_device_iterator_create(struct igsc_device_iterator **iter)
     }
 
     it->udev = udev_new();
-    if (!it->udev)
+    if (it->udev == NULL)
     {
         gsc_error("Cannot create udev\n");
         ret = IGSC_ERROR_INTERNAL;
@@ -57,9 +57,8 @@ int igsc_device_iterator_create(struct igsc_device_iterator **iter)
         ret = IGSC_ERROR_INTERNAL;
         goto clean_udev;
     }
-    udev_enumerate_add_match_property(it->enumerate,
-                                      "MEI_CL_UUID",
-                                      "87d90ca5-3495-4559-8105-3fbfa37b8b79");
+
+    udev_enumerate_add_match_sysattr(it->enumerate, "kind", "gscfi");
     udev_enumerate_scan_devices(it->enumerate);
     it->entry = NULL;
     *iter = it;
@@ -89,11 +88,14 @@ static int get_device_info(struct udev_device *dev,
 {
 
     struct udev_device *parent;
-    struct udev_device *gparent;
     const char *prop;
 
-    /* parent is mei-gsc platform device, grand parent is i915 card*/
-    parent = udev_device_get_parent(dev);
+    strncpy(info->name, udev_device_get_sysname(dev),
+            IGSC_INFO_NAME_SIZE - 1);
+    info->name[IGSC_INFO_NAME_SIZE - 1] = '\0';
+
+    /* Look for the GFX PCI parent */
+    parent = udev_device_get_parent_with_subsystem_devtype(dev, "pci", NULL);
     if (parent == NULL)
     {
         gsc_error("Can't find device parent for '%s'\n",
@@ -101,19 +103,12 @@ static int get_device_info(struct udev_device *dev,
         return IGSC_ERROR_INTERNAL;
     }
 
-    gparent = udev_device_get_parent(parent);
-    if (gparent == NULL)
-    {
-        gsc_error("Can't find device grand parent for '%s'\n",
-                  udev_device_get_sysname(dev));
-    }
-
-    prop = udev_device_get_property_value(gparent, "PCI_ID");
+    prop = udev_device_get_property_value(parent, "PCI_ID");
     if (prop)
     {
         sscanf(prop, "%hx:%hx", &info->vendor_id, &info->device_id);
     }
-    prop = udev_device_get_property_value(gparent, "PCI_SUBSYS_ID");
+    prop = udev_device_get_property_value(parent, "PCI_SUBSYS_ID");
     if (prop)
     {
         sscanf(prop, "%hx:%hx",
@@ -127,9 +122,6 @@ int igsc_device_iterator_next(struct igsc_device_iterator *iter,
                               struct igsc_device_info *info)
 {
     struct udev_device *dev;
-    struct udev_device *mei;
-    char buf[PATH_MAX];
-    const char *prop;
     int ret;
 
     if (iter == NULL)
@@ -153,7 +145,7 @@ int igsc_device_iterator_next(struct igsc_device_iterator *iter,
 
     dev = udev_device_new_from_syspath(udev_enumerate_get_udev(iter->enumerate),
                                        udev_list_entry_get_name(iter->entry));
-    if (!dev)
+    if (dev == NULL)
     {
         gsc_error("Can't find device at '%s'\n",
                   udev_list_entry_get_name(iter->entry));
@@ -166,26 +158,13 @@ int igsc_device_iterator_next(struct igsc_device_iterator *iter,
         return ret;
     }
 
-    /* link to associated char device */
-    snprintf(buf, PATH_MAX, "%s/mei", udev_device_get_syspath(dev));
-    mei = udev_device_new_from_syspath(iter->udev, buf);
-    if (mei)
-    {
-        prop = udev_device_get_property_value(mei, "DEVNAME");
-        if (prop)
-        {
-            strncpy(info->name, prop, IGSC_INFO_NAME_SIZE - 1);
-            info->name[IGSC_INFO_NAME_SIZE - 1] = '\0';
-        }
-        udev_device_unref(mei);
-    }
-
     udev_device_unref(dev);
 
     return IGSC_SUCCESS;
 }
 
- int get_device_info_by_devpath(const char *devpath,  struct igsc_device_info *info)
+int get_device_info_by_devpath(const char *devpath,
+			       struct igsc_device_info *info)
 {
     struct udev *udev = NULL;
     struct udev_device *dev = NULL;
