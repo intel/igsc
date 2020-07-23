@@ -273,7 +273,8 @@ static void progress_bar_func(uint32_t done, uint32_t total, void *ctx)
 
     (void)ctx; /* unused */
 
-    memset(buffer, 0, sizeof(buffer));
+    memset(buffer, ' ', sizeof(buffer));
+    printf("\r                       %s", buffer);
 
     if (percent > PERCENT_100)
     {
@@ -292,7 +293,7 @@ static void progress_bar_func(uint32_t done, uint32_t total, void *ctx)
 
     buffer[PERCENT_100] = '\0';
 
-    printf("\b%c[2K\rProgress %d/%d:%2d%%:[%s]", 27, done, total, percent, buffer);
+    printf("\rProgress %d/%d:%2d%%:[%s]", done, total, percent, buffer);
     fflush(stdout);
 }
 
