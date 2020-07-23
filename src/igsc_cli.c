@@ -22,6 +22,7 @@
 
 bool verbose = false;
 bool quiet = false;
+bool use_progress_bar = false;
 
 #define fwupd_verbose(fmt, ...) do {          \
     if (verbose && !quiet)                    \
@@ -297,6 +298,23 @@ static void progress_bar_func(uint32_t done, uint32_t total, void *ctx)
     fflush(stdout);
 }
 
+static void progress_percentage_func(uint32_t done, uint32_t total, void *ctx)
+{
+    uint32_t percent = (done * PERCENT_100) / total;
+
+   (void)ctx; /* unused */
+
+    if (percent > PERCENT_100)
+    {
+        percent = PERCENT_100;
+    }
+
+    printf("\r                    ");
+    printf("\rProgress %d/%d:%2d%%", done, total, percent);
+    fflush(stdout);
+}
+
+
 #define ERROR_BAD_ARGUMENT (-1)
 
 static bool arg_is_token(const char *arg, const char *token)
@@ -455,7 +473,14 @@ int firmware_update(const char *device_path,
 
     if (!quiet)
     {
-        progress_func = progress_bar_func;
+        if (use_progress_bar)
+        {
+            progress_func = progress_bar_func;
+        }
+        else
+        {
+            progress_func = progress_percentage_func;
+        }
     }
 
     ret = igsc_device_fw_update(&handle, img->blob, img->size,
