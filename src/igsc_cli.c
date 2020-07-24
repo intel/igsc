@@ -596,6 +596,7 @@ int oprom_device_version(const char *device_path,
     ret = igsc_device_init_by_device(&handle, device_path);
     if (ret != IGSC_SUCCESS)
     {
+        fwupd_error("Failed to initialize device: %s\n", device_path);
         goto exit;
     }
 
@@ -603,6 +604,8 @@ int oprom_device_version(const char *device_path,
     ret = igsc_device_oprom_version(&handle, igsc_oprom_type, &oprom_version);
     if (ret != IGSC_SUCCESS)
     {
+        fwupd_error("Failed to get oprom version from device: %s\n",
+                    device_path);
         goto exit;
     }
 
@@ -631,13 +634,14 @@ mockable_static int oprom_image_version(const char *image_path, enum igsc_oprom_
     ret = igsc_image_oprom_init(&oimg, img->blob, img->size);
     if (ret == IGSC_ERROR_BAD_IMAGE)
     {
-        fwupd_error("Invalid image format: %s", image_path);
+        fwupd_error("Invalid image format: %s\n", image_path);
         ret = EXIT_FAILURE;
         goto out;
     }
 
     if (ret != IGSC_SUCCESS)
     {
+        fwupd_error("Failed to parse image: %s\n", image_path);
         ret = EXIT_FAILURE;
         goto out;
     }
@@ -645,6 +649,8 @@ mockable_static int oprom_image_version(const char *image_path, enum igsc_oprom_
     ret = igsc_image_oprom_type(oimg, &img_type);
     if (ret != IGSC_SUCCESS)
     {
+        fwupd_error("Failed to parse oprom type from image: %s\n",
+                    image_path);
         ret = EXIT_FAILURE;
         goto out;
     }
@@ -662,6 +668,10 @@ mockable_static int oprom_image_version(const char *image_path, enum igsc_oprom_
     if (ret == IGSC_SUCCESS)
     {
         print_oprom_version(type, &oprom_version);
+    }
+    else
+    {
+        fwupd_error("Failed to get oprom bersion from image: %s\n", image_path);
     }
 
 out:
@@ -752,6 +762,7 @@ int oprom_update(const char *image_path,
 
     if (ret != IGSC_SUCCESS)
     {
+        fwupd_error("Failed to parse image: %s\n", image_path);
         ret = EXIT_FAILURE;
         goto exit;
     }
@@ -759,7 +770,8 @@ int oprom_update(const char *image_path,
     ret = igsc_image_oprom_type(oimg, &img_type);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Invalid image format: %s\n", image_path);
+        fwupd_error("Failed to parse oprom type in image: %s\n",
+                    image_path);
         goto exit;
     }
 
@@ -775,7 +787,7 @@ int oprom_update(const char *image_path,
     ret = igsc_image_oprom_version(oimg, type, &img_version);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Invalid image format: %s\n", image_path);
+        fwupd_error("Failed to get oprom version from image: %s\n", image_path);
         goto exit;
     }
     print_oprom_version(type, &img_version);
@@ -838,6 +850,7 @@ int oprom_update(const char *image_path,
     ret = igsc_device_oprom_version(handle, type, &dev_version);
     if (ret != IGSC_SUCCESS)
     {
+        fwupd_error("Failed to get oprom version after update\n");
         goto exit;
     }
     print_oprom_version(type, &dev_version);
@@ -1038,6 +1051,7 @@ static int do_list_devices(int argc, char *argv[])
     /* Should be no more args */
     if (arg_next(&argc, &argv))
     {
+        fwupd_verbose("Too many arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
 
