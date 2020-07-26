@@ -21,18 +21,21 @@
 #include "igsc_lib.h"
 
 bool verbose = false;
+bool quiet = false;
 
 #define fwupd_verbose(fmt, ...) do {          \
-    if (verbose)                              \
+    if (verbose && !quiet)                    \
         fprintf(stderr, fmt, ##__VA_ARGS__);  \
 } while (0)
 
-#define fwupd_error(fmt, ...) do {                 \
-    fprintf(stderr, "Error: " fmt, ##__VA_ARGS__); \
+#define fwupd_error(fmt, ...) do {                     \
+    if (!quiet)                                        \
+        fprintf(stderr, "Error: " fmt, ##__VA_ARGS__); \
 } while (0)
 
-#define fwupd_msg(fmt, ...) do {           \
-    fprintf(stdout, fmt, ##__VA_ARGS__);   \
+#define fwupd_msg(fmt, ...) do {               \
+    if (!quiet)                                \
+        fprintf(stdout, fmt, ##__VA_ARGS__);   \
 } while (0)
 
 #ifdef UNIT_TESTING
@@ -257,7 +260,7 @@ static int get_first_device(char **device_path)
 }
 
 #define PERCENT_100 100
-static void progress_func(uint32_t done, uint32_t total, void *ctx)
+static void progress_bar_func(uint32_t done, uint32_t total, void *ctx)
 {
     char buffer[PERCENT_100 + 1];
     uint32_t percent = (done * PERCENT_100) / total;
@@ -339,6 +342,7 @@ int firmware_update(const char *device_path,
     struct igsc_device_handle handle;
     struct igsc_fw_version fw_version;
     char *device_path_found = NULL;
+    igsc_progress_func_t progress_func = NULL;
     int ret;
 
     /* FIXME */
@@ -386,10 +390,19 @@ int firmware_update(const char *device_path,
     }
     print_fw_version(&fw_version);
 
+    if (!quiet)
+    {
+        progress_func = progress_bar_func;
+    }
+
     ret = igsc_device_fw_update(&handle, img->blob, img->size,
-                                 progress_func, NULL);
+                                progress_func, NULL);
+
     /* new line after progress bar */
-    printf("\n");
+    if (!quiet)
+    {
+        printf("\n");
+    }
     if (ret)
     {
         fwupd_error("Update process failed\n");
@@ -520,6 +533,11 @@ static int do_firmware_update(int argc, char *argv[])
         if (arg_is_token(argv[0], "--allow-downgrade") || arg_is_token(argv[0], "-a"))
         {
             allow_downgrade = true;
+            continue;
+        }
+        if (arg_is_token(argv[0], "--quiet") || arg_is_token(argv[0], "-q"))
+        {
+            quiet = true;
             continue;
         }
         if (arg_is_token(argv[0], "--device") || arg_is_token(argv[0], "-d"))
@@ -681,6 +699,12 @@ out:
     return ret;
 }
 
+static bool arg_is_quiet(const char *arg)
+{
+    return arg_is_token(arg, "-q") ||
+           arg_is_token(arg, "--quiet");
+}
+
 static int do_oprom_version(int argc, char *argv[], enum igsc_oprom_type type)
 {
     char *device_path_found = NULL;
@@ -739,6 +763,7 @@ int oprom_update(const char *image_path,
     struct igsc_oprom_image *oimg = NULL;
     struct igsc_oprom_version dev_version;
     struct igsc_oprom_version img_version;
+    igsc_progress_func_t progress_func = NULL;
     uint32_t img_type;
     int cmp;
     bool update = false;
@@ -811,7 +836,7 @@ int oprom_update(const char *image_path,
     }
     else
     {
-        fwupd_error("Intenral error\n");
+        fwupd_error("Internal error\n");
         goto exit;
     }
 
@@ -839,9 +864,18 @@ int oprom_update(const char *image_path,
         goto exit;
     }
 
+    if (!quiet)
+    {
+        progress_func = progress_bar_func;
+    }
+   
     ret = igsc_device_oprom_update(handle, type, oimg, progress_func, NULL);
+
     /* new line after progress bar */
-    printf("\n");
+    if (!quiet)
+    {
+        printf("\n");
+    }
     if (ret)
     {
         fwupd_error("OPROM update failed\n");
@@ -886,6 +920,11 @@ static int do_oprom_update(int argc, char *argv[], enum igsc_oprom_type type)
         if (arg_is_token(argv[0], "--allow-downgrade") || arg_is_token(argv[0], "-a"))
         {
             allow_downgrade = true;
+            continue;
+        }
+        if (arg_is_quiet(argv[0]))
+        {
+            quiet = true;
             continue;
         }
         if (arg_is_token(argv[0], "--device") || arg_is_token(argv[0], "-d"))
@@ -1224,6 +1263,7 @@ static void help(const char *exe_name)
     printf("\n");
     printf("    %s -V/--version: display version\n", exe_name);
     printf("    %s -v/--verbose: runs in verbose mode\n", exe_name);
+    printf("    %s -q/--quiet: runs in quiet mode\n", exe_name);
     printf("    %s help : shows this help\n", exe_name);
     printf("    %s help <command>: shows detailed help\n", exe_name);
 }
@@ -1242,6 +1282,7 @@ static void usage(const char *exe_name)
     printf("\n");
     printf("    %s -V/--version: display version\n", exe_name);
     printf("    %s -v/--verbose: runs in verbose mode\n", exe_name);
+    printf("    %s -q/--quiet: runs in quiet mode\n", exe_name);
     printf("    %s help : shows this help\n", exe_name);
     printf("    %s help <command>: shows detailed help\n", exe_name);
 }
@@ -1307,6 +1348,15 @@ static int args_parse(const char *exe_name, int *argc, char **argv[],
             goto out;
         }
         verbose = true;
+    }
+
+    if (arg_is_quiet(*argv[0]))
+    {
+        if (!arg_next(argc, argv))
+        {
+            goto out;
+        }
+        quiet = true;
     }
 
     for (i = 0; g_ops[i].name; i++)

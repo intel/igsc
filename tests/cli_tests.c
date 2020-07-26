@@ -890,7 +890,7 @@ static void test_progress_bar(void **state)
 
     for (done = 0; done <= total; done++)
     {
-        progress_func(done, total, NULL);
+        progress_bar_func(done, total, NULL);
     }
     printf("\n");
 }
@@ -903,7 +903,7 @@ static void test_progress_bar_2(void **state)
 
     for (done = 0; done <= total; done += 2)
     {
-        progress_func(done, total, NULL);
+        progress_bar_func(done, total, NULL);
     }
     printf("\n");
 }
