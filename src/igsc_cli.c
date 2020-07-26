@@ -362,6 +362,7 @@ int firmware_update(const char *device_path,
         goto exit;
     }
 
+    memset(&fw_version, 0, sizeof(fw_version));
     ret = igsc_image_fw_version(img->blob, img->size, &fw_version);
     if (ret != IGSC_SUCCESS)
     {
@@ -370,6 +371,7 @@ int firmware_update(const char *device_path,
 
     print_fw_version(&fw_version);
 
+    memset(&handle, 0, sizeof(handle));
     ret = igsc_device_init_by_device(&handle, device_path);
     if (ret)
     {
@@ -416,12 +418,14 @@ int firmware_version(const char *device_path)
     struct igsc_fw_version fw_version;
     int ret;
 
+    memset(&handle, 0, sizeof(handle));
     ret = igsc_device_init_by_device(&handle, device_path);
     if (ret != IGSC_SUCCESS)
     {
         goto exit;
     }
 
+    memset(&fw_version, 0, sizeof(fw_version));
     ret = igsc_device_fw_version(&handle, &fw_version);
     if (ret != IGSC_SUCCESS)
     {
@@ -588,12 +592,14 @@ int oprom_device_version(const char *device_path,
     struct igsc_device_handle handle;
     int ret;
 
+    memset(&handle, 0, sizeof(handle));
     ret = igsc_device_init_by_device(&handle, device_path);
     if (ret != IGSC_SUCCESS)
     {
         goto exit;
     }
 
+    memset(&oprom_version, 0, sizeof(oprom_version));
     ret = igsc_device_oprom_version(&handle, igsc_oprom_type, &oprom_version);
     if (ret != IGSC_SUCCESS)
     {
@@ -1011,6 +1017,10 @@ static int do_list_devices(int argc, char *argv[])
     struct igsc_oprom_version oprom_version;
     bool do_info = false;
     unsigned int ndevices = 0;
+
+    memset(&handle, 0, sizeof(handle));
+    memset(&fw_version, 0, sizeof(fw_version));
+    memset(&oprom_version, 0, sizeof(oprom_version));
 
     if (argc >= 1)
     {
