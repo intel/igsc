@@ -170,7 +170,7 @@ int igsc_image_oprom_supported_devices(IN struct igsc_oprom_image *img,
         return IGSC_ERROR_NOT_SUPPORTED;
     }
 
-    while (((ret = image_oprom_get_next(img, &device[pos++])) == IGSC_SUCCESS) && (pos <= *count))
+    while (((ret = image_oprom_get_next(img, &device[pos++])) == IGSC_SUCCESS) && (pos < *count))
     {
         /* empty */
     }
