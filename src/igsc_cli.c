@@ -130,6 +130,12 @@ static void print_oprom_version(enum igsc_oprom_type type,
            oprom_version->version[7]);
 }
 
+static void print_device_info(struct igsc_oprom_device_info *info)
+{
+    printf("Vendor Id: %04X Device Id: %04X\n",
+           info->subsys_vendor_id, info->subsys_device_id);
+}
+
 static inline void print_oprom_code_version(const struct igsc_oprom_version *oprom_version)
 {
     print_oprom_version(IGSC_OPROM_CODE, oprom_version);
@@ -300,6 +306,12 @@ static bool arg_is_token(const char *arg, const char *token)
     return (arg_len == token_len) && !strncmp(arg, token, token_len);
 }
 
+static bool arg_is_quiet(const char *arg)
+{
+    return arg_is_token(arg, "-q") ||
+           arg_is_token(arg, "--quiet");
+}
+
 /* prevent optimization
  * FIXME: try to use:
  *   __attribute__((optimize("O0")))
@@ -329,7 +341,7 @@ typedef int (*gsc_op)(int argc, char *argv[]);
 struct gsc_op {
     const char *name;
     gsc_op    op;
-    const char *usage[3]; /* up to 2 subcommands*/
+    const char *usage[4]; /* up to 3 subcommands*/
     const char  *help;  /* help */
 };
 
@@ -604,7 +616,7 @@ static int do_firmware(int argc, char *argv[])
 
 mockable_static
 int oprom_device_version(const char *device_path,
-                                         enum igsc_oprom_type igsc_oprom_type)
+                         enum igsc_oprom_type igsc_oprom_type)
 {
     struct igsc_oprom_version oprom_version;
     struct igsc_device_handle handle;
@@ -634,7 +646,8 @@ exit:
     return ret;
 }
 
-mockable_static int oprom_image_version(const char *image_path, enum igsc_oprom_type type)
+mockable_static
+int oprom_image_version(const char *image_path, enum igsc_oprom_type type)
 {
     struct img *img = NULL;
     struct igsc_oprom_image *oimg = NULL;
@@ -699,10 +712,118 @@ out:
     return ret;
 }
 
-static bool arg_is_quiet(const char *arg)
+
+mockable_static
+int oprom_data_image_supported_devices(const char *image_path)
 {
-    return arg_is_token(arg, "-q") ||
-           arg_is_token(arg, "--quiet");
+    struct img *img = NULL;
+    struct igsc_oprom_image *oimg = NULL;
+    uint32_t img_type;
+    int ret;
+    unsigned int i;
+    uint32_t count;
+    struct igsc_oprom_device_info *devices = NULL;
+
+    img = image_read_from_file(image_path);
+    if (img == NULL)
+    {
+        fwupd_error("Failed to read :%s\n", image_path);
+        return EXIT_FAILURE;
+    }
+
+    ret = igsc_image_oprom_init(&oimg, img->blob, img->size);
+    if (ret == IGSC_ERROR_BAD_IMAGE)
+    {
+        fwupd_error("Invalid image format: %s\n", image_path);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Failed to parse image: %s\n", image_path);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    ret = igsc_image_oprom_type(oimg, &img_type);
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Failed to get oprom type from image: %s\n", image_path);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    if ((IGSC_OPROM_DATA & img_type) == 0)
+    {
+        fwupd_error("Image type is %s expecting %s\n",
+                    oprom_type_to_str(img_type),
+                    oprom_type_to_str(IGSC_OPROM_DATA));
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    ret = igsc_image_oprom_count_devices(oimg, &count);
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Failed to count supported devices on image: %s\n",
+                    image_path);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+    fwupd_verbose("Found %d supported devices in image %s\n", count, image_path);
+
+    if (count == 0)
+    {
+       fwupd_msg("Image %s does not include supported devices data\n", image_path);
+       ret = EXIT_SUCCESS;
+       goto out;
+    }
+
+    devices = calloc(count, sizeof(struct igsc_oprom_device_info));
+    if (devices == NULL) {
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    ret = igsc_image_oprom_supported_devices(oimg, devices, &count);
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Failed to get %d supported devices from image: %s\n",
+                    count, image_path);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+    fwupd_verbose("Retrieved %d supported devices in image %s\n", count, image_path);
+
+    fwupd_msg("OPROM Data supported devices:\n");
+    for (i = 0; i < count; i++)
+    {
+         print_device_info(&devices[i]);
+    }
+
+out:
+    igsc_image_oprom_release(oimg);
+    free(img);
+    free(devices);
+
+    return ret;
+}
+
+static int do_oprom_data_supported_devices(int argc, char *argv[])
+{
+    if (argc == 2)
+    {
+        if (arg_is_token(argv[0], "--image") || arg_is_token(argv[0], "-i"))
+        {
+            return oprom_data_image_supported_devices(argv[1]);
+        }
+        fwupd_error("Wrong argument %s\n", argv[0]);
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    fwupd_error("Wrong number of arguments\n");
+    return ERROR_BAD_ARGUMENT;
 }
 
 static int do_oprom_version(int argc, char *argv[], enum igsc_oprom_type type)
@@ -1023,6 +1144,11 @@ static int do_oprom_data(int argc, char *argv[])
         return do_oprom_update(argc, argv, IGSC_OPROM_DATA);
     }
 
+    if (arg_is_token(sub_command, "supported-devices"))
+    {
+        return do_oprom_data_supported_devices(argc, argv);
+    }
+
     fwupd_error("Wrong argument %s\n", sub_command);
 
     return ERROR_BAD_ARGUMENT;
@@ -1174,8 +1300,11 @@ static const struct gsc_op g_ops[] = {
         .op    = do_oprom_data,
         .usage = {"update [options] [--device <dev>] --image  <image>",
                   "version [--device <dev>] | --image <file>",
+                  "supported-devices --image <file>",
                   NULL},
-        .help  = "Update oprom data partition or retrieve version from the devices or the supplied image\n"
+        .help  = "Update oprom data partition\n"
+                 "or retrieve version from the devices or the supplied image\n"
+                 "or retrieve list of supported devices from the supplied image\n"
                  "\nOPTIONS:\n\n"
                  "    -a | --allow-downgrade\n"
                  "            allow downgrade or override the same version\n"
