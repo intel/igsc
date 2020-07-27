@@ -20,6 +20,16 @@
 #include "oprom_parser.h"
 #include "utils.h"
 
+#pragma pack(1)
+struct compare_version {
+        uint16_t  major;
+        uint16_t  minor;
+        uint16_t  hotfix;
+        uint16_t  build;
+};
+#pragma pack()
+
+
 int igsc_image_oprom_init(OUT struct igsc_oprom_image **img,
                           IN  const uint8_t *buffer,
                           IN  uint32_t buffer_len)
@@ -252,4 +262,31 @@ int igsc_image_oprom_release(IN struct igsc_oprom_image *img)
     image_oprom_free_handle(img);
 
     return IGSC_SUCCESS;
+}
+
+uint8_t igsc_oprom_version_compare(const struct igsc_oprom_version *image_ver,
+                                   const struct igsc_oprom_version *device_ver)
+{
+    struct compare_version *img_ver = (struct compare_version *)image_ver;
+    struct compare_version *dev_ver = (struct compare_version *)device_ver;
+
+    if (image_ver == NULL || device_ver == NULL)
+    {
+        return IGSC_VERSION_ERROR;
+    }
+
+    if (img_ver->major != dev_ver->major)
+        return IGSC_VERSION_NOT_COMPATIBLE;
+
+    if (img_ver->minor < dev_ver->minor)
+        return IGSC_VERSION_OLDER;
+
+    if (img_ver->minor > dev_ver->minor)
+        return IGSC_VERSION_NEWER;
+
+    /* Build needs only to be different, does not have to be bigger */
+    if (img_ver->build != dev_ver->build)
+        return IGSC_VERSION_NEWER;
+
+    return IGSC_VERSION_EQUAL;
 }

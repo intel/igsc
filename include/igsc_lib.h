@@ -53,6 +53,18 @@ struct igsc_fw_version {
 };
 
 /**
+ * versions comparison results
+ */
+enum igsc_version_compare_result {
+    IGSC_VERSION_ERROR = 0,          /**< An internal error during comparison */
+    IGSC_VERSION_NOT_COMPATIBLE = 1, /**< cannot compare, the update image is for a different platform */
+    IGSC_VERSION_NEWER = 2,          /**< update image version is newer than the one on the device */
+    IGSC_VERSION_EQUAL = 3,          /**< update image version is equal to the one on the device */
+    IGSC_VERSION_OLDER = 4,          /**< update image version is older than the one on the device */
+};
+
+
+/**
  * OPROM partition version size in bytes
  */
 #define IGSC_OPROM_VER_SIZE 8
@@ -417,6 +429,23 @@ int igsc_image_oprom_iterator_next(IN struct igsc_oprom_image *img,
  */
 IGSC_EXPORT
 int igsc_image_oprom_release(IN struct igsc_oprom_image *img);
+
+/**
+ *  @brief Compares input oprom version to the flash one
+ *
+ *  @param image_ver pointer to the update image OPROM version
+ *  @param device_ver pointer to the device OPROM version
+ *
+ *  @return
+ *  * IGSC_VERSION_NOT_COMPATIBLE if update image is for a different platform
+ *  * IGSC_VERSION_NEWER          if update image version is newer than the one on the device
+ *  * IGSC_VERSION_EQUAL          if update image version is equal to the one on the device
+ *  * IGSC_VERSION_OLDER          if update image version is older than the one on the device
+ *  * IGSC_VERSION_ERROR          if NULL parameters were provided
+ */
+IGSC_EXPORT
+uint8_t igsc_oprom_version_compare(const struct igsc_oprom_version *image_ver,
+                                   const struct igsc_oprom_version *device_ver);
 /**
  * @}
  */
