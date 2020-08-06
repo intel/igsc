@@ -63,7 +63,6 @@ enum igsc_version_compare_result {
     IGSC_VERSION_OLDER = 4,          /**< update image version is older than the one on the device */
 };
 
-
 /**
  * OPROM partition version size in bytes
  */
@@ -274,6 +273,23 @@ igsc_device_fw_update(IN  struct igsc_device_handle *handle,
                       IN  const uint32_t buffer_len,
                       IN  igsc_progress_func_t progress_f,
                       IN  void *ctx);
+
+/**
+ *  @brief Compares input fw version to the flash one
+ *
+ *  @param image_ver pointer to the update image OPROM version
+ *  @param device_ver pointer to the device OPROM version
+ *
+ *  @return
+ *  * IGSC_VERSION_NOT_COMPATIBLE if update image is for a different platform
+ *  * IGSC_VERSION_NEWER          if update image version is newer than the one on the device
+ *  * IGSC_VERSION_EQUAL          if update image version is equal to the one on the device
+ *  * IGSC_VERSION_OLDER          if update image version is older than the one on the device
+ *  * IGSC_VERSION_ERROR          if NULL parameters were provided
+ */
+IGSC_EXPORT
+uint8_t igsc_fw_version_compare(IN struct igsc_fw_version *image_ver,
+                                IN struct igsc_fw_version *device_ver);
 
 /**
  *  @brief Retrieves the GSC OPROM version from the device.

@@ -657,6 +657,7 @@ static int gsc_fwu_get_oprom_version(struct igsc_lib_ctx *lib_ctx,
                                (uint8_t *)version, sizeof(*version));
 }
 
+
 static int gsc_fwu_start(struct igsc_lib_ctx *lib_ctx, uint32_t payload_type)
 {
     int status;
@@ -1296,6 +1297,37 @@ exit:
 
     return ret;
 }
+
+uint8_t igsc_fw_version_compare(IN struct igsc_fw_version *image_version,
+                                IN struct igsc_fw_version *device_version)
+{
+
+    if (image_version == NULL || device_version == NULL)
+    {
+        return IGSC_VERSION_ERROR;
+    }
+
+    if (memcmp(image_version->project, device_version->project,
+               sizeof(image_version->project)))
+    {
+        return IGSC_VERSION_NOT_COMPATIBLE;
+    }
+
+    if (image_version->hotfix < device_version->hotfix)
+        return IGSC_VERSION_OLDER;
+
+    if (image_version->hotfix > device_version->hotfix)
+        return IGSC_VERSION_NEWER;
+
+    if (image_version->build < device_version->build)
+       return IGSC_VERSION_OLDER;
+
+    if (image_version->build > device_version->build)
+       return IGSC_VERSION_NEWER;
+
+    return IGSC_VERSION_EQUAL;
+}
+
 
 /* OPROM API */
 int igsc_device_oprom_version(IN struct igsc_device_handle *handle,
