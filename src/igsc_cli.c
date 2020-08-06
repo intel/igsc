@@ -376,13 +376,12 @@ int firmware_update(const char *device_path,
 {
     struct img *img = NULL;
     struct igsc_device_handle handle;
-    struct igsc_fw_version fw_version;
+    struct igsc_fw_version device_fw_version;
+    struct igsc_fw_version image_fw_version;
     char *device_path_found = NULL;
     igsc_progress_func_t progress_func = NULL;
     int ret;
-
-    /* FIXME */
-    (void)allow_downgrade;
+    uint8_t cmp;
 
     if (!device_path)
     {
@@ -402,14 +401,14 @@ int firmware_update(const char *device_path,
         goto exit;
     }
 
-    memset(&fw_version, 0, sizeof(fw_version));
-    ret = igsc_image_fw_version(img->blob, img->size, &fw_version);
+    memset(&image_fw_version, 0, sizeof(image_fw_version));
+    ret = igsc_image_fw_version(img->blob, img->size, &image_fw_version);
     if (ret != IGSC_SUCCESS)
     {
         goto exit;
     }
 
-    print_fw_version(&fw_version);
+    print_fw_version(&image_fw_version);
 
     memset(&handle, 0, sizeof(handle));
     ret = igsc_device_init_by_device(&handle, device_path);
@@ -419,12 +418,39 @@ int firmware_update(const char *device_path,
         goto exit;
     }
 
-    ret = igsc_device_fw_version(&handle, &fw_version);
+    memset(&device_fw_version, 0, sizeof(device_fw_version));
+    ret = igsc_device_fw_version(&handle, &device_fw_version);
     if (ret != IGSC_SUCCESS)
     {
         goto exit;
     }
-    print_fw_version(&fw_version);
+    print_fw_version(&device_fw_version);
+
+    cmp = igsc_fw_version_compare(&image_fw_version,
+                                             &device_fw_version);
+    switch (cmp)
+    {
+    case IGSC_VERSION_NEWER:
+        break;
+    case IGSC_VERSION_NOT_COMPATIBLE:
+        fwupd_error("Firmware version is not compatible with the installed one\n");
+        ret = EXIT_FAILURE;
+        goto exit;
+    case IGSC_VERSION_OLDER:
+        /* fall through */
+    case IGSC_VERSION_EQUAL:
+        if (!allow_downgrade)
+        {
+            fwupd_error("In order to update run with -a | --allow-downgrade\n");
+            ret = IGSC_ERROR_BAD_IMAGE;
+            goto exit;
+        }
+        break;
+    default:
+        fwupd_error("Firmware version error in comparison\n");
+        ret = EXIT_FAILURE;
+        goto exit;
+    }
 
     if (!quiet)
     {
@@ -444,13 +470,13 @@ int firmware_update(const char *device_path,
         fwupd_error("Update process failed\n");
     }
 
-    ret = igsc_device_fw_version(&handle, &fw_version);
+    ret = igsc_device_fw_version(&handle, &device_fw_version);
     if (ret != IGSC_SUCCESS)
     {
         fwupd_error("Cannot retrieve the version\n");
         goto exit;
     }
-    print_fw_version(&fw_version);
+    print_fw_version(&device_fw_version);
 
 exit:
     (void)igsc_device_close(&handle);
