@@ -740,20 +740,6 @@ static int do_oprom_version(int argc, char *argv[], enum igsc_oprom_type type)
     return ERROR_BAD_ARGUMENT;
 }
 
-/**
- * Compare oprom version
- */
-static int oprom_version_compare(struct igsc_oprom_version new,
-                                 struct igsc_oprom_version old)
-{
-    if (memcmp(&new, &old, sizeof(new)) == 0)
-    {
-        return 0;
-    }
-
-    return 1;
-}
-
 mockable_static
 int oprom_update(const char *image_path,
                  struct igsc_device_handle *handle, struct igsc_device_info *dev_info,
@@ -765,7 +751,7 @@ int oprom_update(const char *image_path,
     struct igsc_oprom_version img_version;
     igsc_progress_func_t progress_func = NULL;
     uint32_t img_type;
-    int cmp;
+    uint8_t cmp;
     bool update = false;
     int ret;
 
@@ -847,15 +833,26 @@ int oprom_update(const char *image_path,
         goto exit;
     }
 
-    cmp = oprom_version_compare(img_version, dev_version);
-    if (cmp > 0)
+    cmp = igsc_oprom_version_compare(&img_version, &dev_version);
+    switch (cmp)
     {
+    case IGSC_VERSION_NEWER:
         update = true;
-    }
-    else
-    {
+        break;
+    case IGSC_VERSION_OLDER:
+        /* fall through */
+    case IGSC_VERSION_EQUAL:
         fwupd_msg("Installed version is newer or equal\n");
         update = allow_downgrade;
+        break;
+    case IGSC_VERSION_NOT_COMPATIBLE:
+        fwupd_error("OPROM version is not compatible with the installed one\n");
+        ret = EXIT_FAILURE;
+        goto exit;
+    default:
+        fwupd_error("OPROM version error in comparison\n");
+        ret = EXIT_FAILURE;
+        goto exit;
     }
 
     if (!update)
