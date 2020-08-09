@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <cmocka.h>
 
 #include "igsc_lib.h"
@@ -132,6 +133,88 @@ static void test_params_image_oprom_release(void **state)
     assert_int_equal(igsc_image_oprom_release(NULL), IGSC_SUCCESS);
 }
 
+#pragma pack(1)
+struct compare_version {
+        uint16_t  major;
+        uint16_t  minor;
+        uint16_t  hotfix;
+        uint16_t  build;
+};
+#pragma pack()
+
+static void test_params_version_null(void **state)
+{
+    struct igsc_oprom_version ver;
+    memset(&ver, 0, sizeof(ver));
+
+    assert_int_equal(igsc_oprom_version_compare(NULL, NULL), IGSC_VERSION_ERROR);
+    assert_int_equal(igsc_oprom_version_compare(NULL, &ver), IGSC_VERSION_ERROR);
+    assert_int_equal(igsc_oprom_version_compare(&ver, NULL), IGSC_VERSION_ERROR);
+}
+
+static void test_params_version_non_compatible(void **state)
+{
+    struct compare_version img_ver;
+    struct compare_version dev_ver;
+
+    memset(&img_ver, 0, sizeof(img_ver));
+    memset(&dev_ver, 0, sizeof(dev_ver));
+
+    img_ver.major = 20;
+    dev_ver.major = 19;
+    assert_int_equal(igsc_oprom_version_compare((const struct igsc_oprom_version *)&img_ver,
+                                                (const struct igsc_oprom_version *)&dev_ver),
+                     IGSC_VERSION_NOT_COMPATIBLE);
+}
+
+
+static void test_params_version_compare(void **state)
+{
+    struct compare_version img_ver;
+    struct compare_version dev_ver;
+
+    memset(&img_ver, 0, sizeof(img_ver));
+    memset(&dev_ver, 0, sizeof(dev_ver));
+
+    img_ver.major = 19;
+    dev_ver.major = 19;
+
+    img_ver.minor = 1;
+    dev_ver.minor = 2;
+    assert_int_equal(igsc_oprom_version_compare((const struct igsc_oprom_version *)&img_ver,
+                                                (const struct igsc_oprom_version *)&dev_ver),
+                     IGSC_VERSION_OLDER);
+
+    img_ver.minor = 3;
+    dev_ver.minor = 2;
+    assert_int_equal(igsc_oprom_version_compare((const struct igsc_oprom_version *)&img_ver,
+                                                (const struct igsc_oprom_version *)&dev_ver),
+                     IGSC_VERSION_NEWER);
+
+    img_ver.minor = 2;
+    dev_ver.minor = 2;
+    img_ver.build = 10;
+    dev_ver.build = 12;
+    assert_int_equal(igsc_oprom_version_compare((const struct igsc_oprom_version *)&img_ver,
+                                                (const struct igsc_oprom_version *)&dev_ver),
+                     IGSC_VERSION_NEWER);
+
+    img_ver.minor = 2;
+    dev_ver.minor = 2;
+    img_ver.build = 10;
+    dev_ver.build = 12;
+    assert_int_equal(igsc_oprom_version_compare((const struct igsc_oprom_version *)&img_ver,
+                                                (const struct igsc_oprom_version *)&dev_ver),
+                     IGSC_VERSION_NEWER);
+
+    img_ver.minor = 2;
+    dev_ver.minor = 2;
+    img_ver.build = 10;
+    dev_ver.build = 10;
+    assert_int_equal(igsc_oprom_version_compare((const struct igsc_oprom_version *)&img_ver,
+                                                (const struct igsc_oprom_version *)&dev_ver),
+                     IGSC_VERSION_EQUAL);
+}
 int main(void)
 {
     const struct CMUnitTest tests[] = {
@@ -146,5 +229,14 @@ int main(void)
         cmocka_unit_test(test_params_image_oprom_release)
     };
 
-    return cmocka_run_group_tests(tests, group_setup, group_teardown);
+    const struct CMUnitTest version_cmp_tests[] = {
+        cmocka_unit_test(test_params_version_null),
+        cmocka_unit_test(test_params_version_non_compatible),
+        cmocka_unit_test(test_params_version_compare),
+    };
+
+    int status = cmocka_run_group_tests(tests, group_setup, group_teardown);
+    status += cmocka_run_group_tests(version_cmp_tests, NULL, NULL);
+
+    return status;
 }
