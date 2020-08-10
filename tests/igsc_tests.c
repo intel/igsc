@@ -264,10 +264,120 @@ static void test_image_oprom_init_calloc_fail(void **status)
     igsc_image_oprom_release(img);
 }
 
+static void test_params_version_null(void **state)
+{
+    struct igsc_fw_version ver;
+    memset(&ver, 0, sizeof(ver));
+
+    assert_int_equal(igsc_fw_version_compare(NULL, NULL), IGSC_VERSION_ERROR);
+    assert_int_equal(igsc_fw_version_compare(NULL, &ver), IGSC_VERSION_ERROR);
+    assert_int_equal(igsc_fw_version_compare(&ver, NULL), IGSC_VERSION_ERROR);
+}
+
+static void test_params_version_non_compatible(void **state)
+{
+    struct igsc_fw_version img_ver;
+    struct igsc_fw_version dev_ver;
+
+    memset(&img_ver, 0, sizeof(img_ver));
+    memset(&dev_ver, 0, sizeof(dev_ver));
+
+    img_ver.project[0] = 20;
+    dev_ver.project[0] = 19;
+    assert_int_equal(igsc_fw_version_compare(&img_ver, &dev_ver),
+                     IGSC_VERSION_NOT_COMPATIBLE);
+}
+
+static void test_params_version_compare_older(void **state)
+{
+    struct igsc_fw_version img_ver;
+    struct igsc_fw_version dev_ver;
+
+    memset(&img_ver, 0, sizeof(img_ver));
+    memset(&dev_ver, 0, sizeof(dev_ver));
+
+    img_ver.project[0] = 19;
+    dev_ver.project[0] = 19;
+
+    img_ver.hotfix = 1;
+    dev_ver.hotfix = 2;
+    assert_int_equal(igsc_fw_version_compare(&img_ver, &dev_ver), IGSC_VERSION_OLDER);
+}
+
+static void test_params_version_compare_older2(void **state)
+{
+    struct igsc_fw_version img_ver;
+    struct igsc_fw_version dev_ver;
+
+    memset(&img_ver, 0, sizeof(img_ver));
+    memset(&dev_ver, 0, sizeof(dev_ver));
+
+    img_ver.project[0] = 19;
+    dev_ver.project[0] = 19;
+    img_ver.hotfix = 2;
+    dev_ver.hotfix = 2;
+    img_ver.build = 10;
+    dev_ver.build = 12;
+    assert_int_equal(igsc_fw_version_compare(&img_ver, &dev_ver), IGSC_VERSION_OLDER);
+}
+
+
+
+static void test_params_version_compare_newer(void **state)
+{
+    struct igsc_fw_version img_ver;
+    struct igsc_fw_version dev_ver;
+
+    memset(&img_ver, 0, sizeof(img_ver));
+    memset(&dev_ver, 0, sizeof(dev_ver));
+
+    img_ver.project[0] = 19;
+    dev_ver.project[0] = 19;
+    img_ver.hotfix = 3;
+    dev_ver.hotfix = 2;
+    assert_int_equal(igsc_fw_version_compare(&img_ver, &dev_ver), IGSC_VERSION_NEWER);
+}
+
+static void test_params_version_compare_newer2(void **state)
+{
+    struct igsc_fw_version img_ver;
+    struct igsc_fw_version dev_ver;
+
+    memset(&img_ver, 0, sizeof(img_ver));
+    memset(&dev_ver, 0, sizeof(dev_ver));
+
+    img_ver.project[0] = 19;
+    dev_ver.project[0] = 19;
+
+    img_ver.hotfix = 2;
+    dev_ver.hotfix = 2;
+    img_ver.build = 12;
+    dev_ver.build = 10;
+    assert_int_equal(igsc_fw_version_compare(&img_ver, &dev_ver), IGSC_VERSION_NEWER);
+}
+
+static void test_params_version_compare_equal(void **state)
+{
+    struct igsc_fw_version img_ver;
+    struct igsc_fw_version dev_ver;
+
+    memset(&img_ver, 0, sizeof(img_ver));
+    memset(&dev_ver, 0, sizeof(dev_ver));
+
+    img_ver.project[0] = 19;
+    dev_ver.project[0] = 19;
+
+
+    img_ver.hotfix = 2;
+    dev_ver.hotfix = 2;
+    img_ver.build = 10;
+    dev_ver.build = 10;
+    assert_int_equal(igsc_fw_version_compare(&img_ver, &dev_ver), IGSC_VERSION_EQUAL);
+}
 
 int main(void)
 {
-    const struct CMUnitTest tests[] = {
+    const struct CMUnitTest device_image_tests[] = {
         cmocka_unit_test(test_device_init_calloc_ok),
         cmocka_unit_test(test_device_init_calloc_fail_1),
         cmocka_unit_test(test_device_init_calloc_fail_2),
@@ -281,5 +391,18 @@ int main(void)
         cmocka_unit_test(test_image_oprom_init_calloc_fail),
     };
 
-    return cmocka_run_group_tests(tests, NULL, NULL);
+    const struct CMUnitTest version_cmp_tests[] = {
+        cmocka_unit_test(test_params_version_null),
+        cmocka_unit_test(test_params_version_non_compatible),
+        cmocka_unit_test(test_params_version_compare_older),
+        cmocka_unit_test(test_params_version_compare_older2),
+        cmocka_unit_test(test_params_version_compare_newer),
+        cmocka_unit_test(test_params_version_compare_newer2),
+        cmocka_unit_test(test_params_version_compare_equal),
+    };
+
+    int status = cmocka_run_group_tests(device_image_tests, NULL, NULL);
+    status += cmocka_run_group_tests(version_cmp_tests, NULL, NULL);
+
+    return status;
 }
