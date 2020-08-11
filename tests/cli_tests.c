@@ -628,6 +628,69 @@ static void test_oprom_data_version_bad_3(void **state)
 }
 
 /**
+ * test: igsc oprom-data supported-devices --image img
+ */
+static void test_oprom_data_supported_devices_good1(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("oprom-data");
+    argv[argc++] = test_strdup("supported-devices");
+    argv[argc++] = test_strdup("--image");
+    argv[argc++] = test_strdup("oprom.img");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret == EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc oprom-data supported-devices -i img
+ */
+static void test_oprom_data_supported_devices_good2(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("oprom-data");
+    argv[argc++] = test_strdup("supported-devices");
+    argv[argc++] = test_strdup("-i");
+    argv[argc++] = test_strdup("oprom.img");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret == EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc oprom-data supported-devices
+ */
+static void test_oprom_data_supported_devices_bad1(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("oprom-data");
+    argv[argc++] = test_strdup("supported-devices");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+
+
+/**
  * test: igsc oprom-code update --image oprom.img
  */
 static void test_oprom_code_update_1(void **state)
@@ -948,6 +1011,9 @@ int main(void)
         cmocka_unit_test(test_oprom_data_version_bad_1),
         cmocka_unit_test(test_oprom_data_version_bad_2),
         cmocka_unit_test(test_oprom_data_version_bad_3),
+        cmocka_unit_test(test_oprom_data_supported_devices_good1),
+        cmocka_unit_test(test_oprom_data_supported_devices_good2),
+        cmocka_unit_test(test_oprom_data_supported_devices_bad1),
         cmocka_unit_test(test_oprom_code_update_1),
         cmocka_unit_test(test_oprom_code_update_2),
         cmocka_unit_test(test_oprom_code_update_3),
@@ -967,7 +1033,7 @@ int main(void)
         cmocka_unit_test(test_progress_bar_2),
     };
 
-    //status += cmocka_run_group_tests(progress_bar_tests, NULL, NULL);
+    status += cmocka_run_group_tests(progress_bar_tests, NULL, NULL);
     status += cmocka_run_group_tests(tests, group_setup, group_teardown);
 
     return status;

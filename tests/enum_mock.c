@@ -92,14 +92,20 @@ int oprom_update(const char *image_path,
 }
 
 int oprom_device_version(const char *device_path,
-                             enum igsc_oprom_type igsc_oprom_type)
+                         enum igsc_oprom_type igsc_oprom_type)
 {
     fprintf(stderr, "mock %s\n", __func__);
     return EXIT_SUCCESS;
 }
 
 int oprom_image_version(const char *image_path,
-                             enum igsc_oprom_type igsc_oprom_type)
+                        enum igsc_oprom_type igsc_oprom_type)
+{
+    fprintf(stderr, "mock %s\n", __func__);
+    return EXIT_SUCCESS;
+}
+
+int oprom_data_image_supported_devices(const char *image_path)
 {
     fprintf(stderr, "mock %s\n", __func__);
     return EXIT_SUCCESS;
