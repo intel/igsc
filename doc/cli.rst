@@ -82,14 +82,21 @@ usage of the library.
 
     igsc oprom-code update [options] [--device <device>]  --image <oprom file>
 
-5. Retrieve OPROM code (GOP) partition version from the device, in case the device is
+5. Retrieve list of supported devices from the supplied OPROM data image,
+   in form of subvendor and subdevice pci list.
+
+.. code-block:: sh
+
+    igsc oprom-code supported-devices --image <oprom file>
+
+6. Retrieve OPROM code (GOP) partition version from the device, in case the device is
    not supplied the tool will use the first available device.
 
 .. code-block:: sh
 
     igsc oprom-code version [--device <device>]
 
-6. Retrieve OPROM code partition version from the supplied data image file
+7. Retrieve OPROM code partition version from the supplied data image file
 
 .. code-block:: sh
 
