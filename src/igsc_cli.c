@@ -312,6 +312,30 @@ static bool arg_is_quiet(const char *arg)
            arg_is_token(arg, "--quiet");
 }
 
+static bool arg_is_image(const char *arg)
+{
+    return arg_is_token(arg, "-i") ||
+           arg_is_token(arg, "--image");
+}
+
+static bool arg_is_device(const char *arg)
+{
+    return arg_is_token(arg, "-d") ||
+           arg_is_token(arg, "--device");
+}
+
+static bool arg_is_allow(const char *arg)
+{
+    return arg_is_token(arg, "-a") ||
+           arg_is_token(arg, "--allow-downgrade");
+}
+
+static bool arg_is_info(const char *arg)
+{
+    return arg_is_token(arg, "-i") ||
+           arg_is_token(arg, "--info");
+}
+
 /* prevent optimization
  * FIXME: try to use:
  *   __attribute__((optimize("O0")))
@@ -499,11 +523,11 @@ static int do_firmware_version(int argc, char *argv[])
 
     if (argc == 2)
     {
-        if (arg_is_token(argv[0], "--device") || arg_is_token(argv[0], "-d"))
+        if (arg_is_device(argv[0]))
         {
             return firmware_version(argv[1]);
         }
-        if (arg_is_token(argv[0], "--image") || arg_is_token(argv[0], "-i"))
+        if (arg_is_image(argv[0]))
         {
             return image_version(argv[1]);
         }
@@ -542,17 +566,17 @@ static int do_firmware_update(int argc, char *argv[])
 
     do
     {
-        if (arg_is_token(argv[0], "--allow-downgrade") || arg_is_token(argv[0], "-a"))
+        if (arg_is_allow(argv[0]))
         {
             allow_downgrade = true;
             continue;
         }
-        if (arg_is_token(argv[0], "--quiet") || arg_is_token(argv[0], "-q"))
+        if (arg_is_quiet(argv[0]))
         {
             quiet = true;
             continue;
         }
-        if (arg_is_token(argv[0], "--device") || arg_is_token(argv[0], "-d"))
+        if (arg_is_device(argv[0]))
         {
             if (!arg_next(&argc, &argv))
             {
@@ -561,7 +585,7 @@ static int do_firmware_update(int argc, char *argv[])
             }
             device_path = argv[0];
         }
-        else if (arg_is_token(argv[0], "--image") || arg_is_token(argv[0], "-i"))
+        else if (arg_is_image(argv[0]))
         {
             if (!arg_next(&argc, &argv))
             {
@@ -814,7 +838,7 @@ static int do_oprom_data_supported_devices(int argc, char *argv[])
 {
     if (argc == 2)
     {
-        if (arg_is_token(argv[0], "--image") || arg_is_token(argv[0], "-i"))
+        if (arg_is_image(argv[0]))
         {
             return oprom_data_image_supported_devices(argv[1]);
         }
@@ -832,11 +856,11 @@ static int do_oprom_version(int argc, char *argv[], enum igsc_oprom_type type)
 
     if (argc == 2)
     {
-        if (arg_is_token(argv[0], "--device") || arg_is_token(argv[0], "-d"))
+        if (arg_is_device(argv[0]))
         {
             return oprom_device_version(argv[1], type);
         }
-        if (arg_is_token(argv[0], "--image") || arg_is_token(argv[0], "-i"))
+        if (arg_is_image(argv[0]))
         {
             return oprom_image_version(argv[1], type);
         }
@@ -1035,7 +1059,7 @@ static int do_oprom_update(int argc, char *argv[], enum igsc_oprom_type type)
 
     do
     {
-        if (arg_is_token(argv[0], "--allow-downgrade") || arg_is_token(argv[0], "-a"))
+        if (arg_is_allow(argv[0]))
         {
             allow_downgrade = true;
             continue;
@@ -1045,7 +1069,7 @@ static int do_oprom_update(int argc, char *argv[], enum igsc_oprom_type type)
             quiet = true;
             continue;
         }
-        if (arg_is_token(argv[0], "--device") || arg_is_token(argv[0], "-d"))
+        if (arg_is_device(argv[0]))
         {
             if (!arg_next(&argc, &argv))
             {
@@ -1054,7 +1078,7 @@ static int do_oprom_update(int argc, char *argv[], enum igsc_oprom_type type)
             }
             device_path = argv[0];
         }
-        else if (arg_is_token(argv[0], "--image") || arg_is_token(argv[0], "-i"))
+        else if (arg_is_image(argv[0]))
         {
             if (!arg_next(&argc, &argv))
             {
@@ -1199,7 +1223,7 @@ static int do_list_devices(int argc, char *argv[])
 
     if (argc >= 1)
     {
-        if (arg_is_token(argv[0], "--info") || arg_is_token(argv[0], "-i"))
+        if (arg_is_info(argv[0]))
         {
             do_info = true;
         }
