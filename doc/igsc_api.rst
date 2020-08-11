@@ -91,6 +91,18 @@ image.
          uint8_t    data[TBD];
    }
 
+4. Version comparison return values
+
+.. code-block:: c
+
+    enum igsc_version_compare_result {
+        IGSC_VERSION_ERROR = 0,          /**< An internal error during comparison */
+        IGSC_VERSION_NOT_COMPATIBLE = 1, /**< cannot compare, the update image is for a different platform */
+        IGSC_VERSION_NEWER = 2,          /**< update image version is newer than the one on the device */
+        IGSC_VERSION_EQUAL = 3,          /**< update image version is equal to the one on the device */
+        IGSC_VERSION_OLDER = 4,          /**< update image version is older than the one on the device */
+    };
+
 2.3 Device Access:
 ~~~~~~~~~~~~~~~~~~
 
@@ -150,8 +162,6 @@ image.
 
 The structure represents the device firmware version.
 
-`TBD:` define how to compare the version
-
 .. code-block:: c
 
     struct igsc_fw_version {
@@ -159,6 +169,22 @@ The structure represents the device firmware version.
         uint16_t   Hotfix;
         uint16_t   Build;
     };
+
+
+**Version comaprison logic is**
+
+
+.. code-block:: c
+
+    if (Image Project != Device Hotfix Project)
+        Incompatible Image
+
+    if ((Image Hotfix version == Device Hotfix version) &&
+        (Image Build version <= Device Build version)) ||
+       (Image Hotfix version < Device Hotfix version):
+        Downgrade()
+    else
+        Upgrade()
 
 
 2. Retrieve the firmware version from the device:
@@ -203,6 +229,14 @@ The structure represents the device firmware version.
                               IN  const uint32_t buffer_len,
                               IN  igsc_progress_func_t progress_f,
                               IN  void *ctx);
+
+6. Function that implements version comparison logic, it returns
+   one of values of `enum igsc_version_compare_result`
+
+.. code-block:: c
+
+   uint8_t igsc_fw_version_compare(IN struct igsc_fw_version *image_ver,
+                                   IN struct igsc_fw_version *device_ver);
 
 
 2.5 OPROM Update API:
