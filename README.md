@@ -23,15 +23,30 @@ Both cmake and meson build framework are supported.
 *Linux:*
 
 ```sh
-    cmake -DSYSLOG:BOOL=OFF -G Ninja -S . -B builddir
+    cmake -G Ninja -S . -B builddir
     ninja -v -C buildir
 ```
+
+*Linux Debug version:*
+
+```sh
+    cmake -DSYSLOG:BOOL=OFF -DCMAKE_BUILD_TYPE=Debug -G Ninja -S . -B builddir
+    ninja -v -C buildir
+```
+
 
 *Windows:*
 
 ```sh
     cmake -G "Visual Studio 15 2017" -S . -B buildir
     cmake --build builddir --config Release
+```
+
+*Windows Debug version:*
+
+```sh
+    cmake -G "Visual Studio 15 2017" -S . -B buildir
+    cmake --build builddir --config Debug
 ```
 
 ### meson
