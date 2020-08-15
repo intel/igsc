@@ -1523,7 +1523,8 @@ static int args_parse(const char *exe_name, int *argc, char **argv[],
     {
         if (!arg_next(argc, argv))
         {
-            goto out;
+            usage(exe_name);
+            return EXIT_FAILURE;
         }
         verbose = true;
     }
@@ -1532,7 +1533,8 @@ static int args_parse(const char *exe_name, int *argc, char **argv[],
     {
         if (!arg_next(argc, argv))
         {
-            goto out;
+            usage(exe_name);
+            return EXIT_FAILURE;
         }
         quiet = true;
     }
