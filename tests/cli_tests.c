@@ -60,7 +60,7 @@ static int group_teardown(void **state)
 /**
  * test case: ./igsc
  */
-static void test_help_error(void **state)
+static void test_empty(void **state)
 {
     int ret;
     char **argv = *state;
@@ -68,12 +68,47 @@ static void test_help_error(void **state)
 
     ret = ut_main(argc, argv);
 
-    fprintf(stderr, "RET = %d\n", ret);
+    test_arg_free(argc, argv);
+
+    assert_true(ret == EXIT_FAILURE);
+}
+
+/**
+ * test case: ./igsc -q
+ */
+static void test_quite(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("-q");
+
+    ret = ut_main(argc, argv);
 
     test_arg_free(argc, argv);
 
     assert_true(ret == EXIT_FAILURE);
 }
+
+/**
+ * test case: ./igsc -v
+ */
+static void test_verbose(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("-v");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret == EXIT_FAILURE);
+}
+
 
 /**
  * test case: igsc -h
@@ -983,7 +1018,9 @@ int main(void)
     int status = 0;
 
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_help_error),
+        cmocka_unit_test(test_empty),
+        cmocka_unit_test(test_quite),
+        cmocka_unit_test(test_verbose),
         cmocka_unit_test(test_help_short),
         cmocka_unit_test(test_help_long),
         cmocka_unit_test(test_help),
