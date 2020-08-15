@@ -1006,6 +1006,32 @@ static void test_progress_bar_2(void **state)
     printf("\n");
 }
 
+static void test_progress_percent(void **state)
+{
+    (void)state;
+    uint32_t done = 0;
+    uint32_t total = 100;
+
+    for (done = 0; done <= total; done++)
+    {
+        progress_percentage_func(done, total, NULL);
+    }
+    printf("\n");
+}
+
+static void test_progress_percent_2(void **state)
+{
+    (void)state;
+    uint32_t done = 0;
+    uint32_t total = 90;
+
+    for (done = 0; done <= total; done += 2)
+    {
+        progress_percentage_func(done, total, NULL);
+    }
+    printf("\n");
+}
+
 
 /**
  * igsc fw version --image <image>
@@ -1068,6 +1094,8 @@ int main(void)
     const struct CMUnitTest progress_bar_tests[] = {
         cmocka_unit_test(test_progress_bar),
         cmocka_unit_test(test_progress_bar_2),
+        cmocka_unit_test(test_progress_percent),
+        cmocka_unit_test(test_progress_percent_2),
     };
 
     status += cmocka_run_group_tests(progress_bar_tests, NULL, NULL);
