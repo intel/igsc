@@ -123,6 +123,7 @@ vscode16:
                 VS_CODE: "Visual Studio 16 2019"
                 COMPILE_TARGET: package
         artifacts:
+                name:  igsc-win64.zip
                 paths:
                         - build\igsc-*.zip
 
