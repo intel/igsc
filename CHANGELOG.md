@@ -1,5 +1,29 @@
 # IGSC FUL
 
+## [v0.1.0] - 2020-08-16
+
+### Added
+
+1. cli: Add progress function with percentage only
+2. cli: Add --quiet option.
+3. cli: Add more error messages.
+4. cli: list devices supported by the OPROM image data
+5. lib: Add firmware version comparison.
+6. lib: Add oprom version comparison
+7. lib: Retrieve BDF of the device
+6. lib: Update udev matching to new driver API.
+
+### Fixed
+
+1. cli: print usage if there is no command after -q or -v option
+3. cli: fix a progress bar issue
+2. README: specify debug and release configurations
+
+### Changed
+
+1. Unit tests improvements.
+2. Simplify token matching in cli
+
 ## [v0.0.9] - 2020-07-15
 
 Enable update from a combined OPROM image
