@@ -89,9 +89,14 @@ static int get_device_info(struct udev_device *dev,
 
     struct udev_device *parent;
     const char *prop;
+    int ret;
 
-    strncpy(info->name, udev_device_get_sysname(dev),
-            IGSC_INFO_NAME_SIZE - 1);
+    ret = snprintf(info->name, IGSC_INFO_NAME_SIZE, "/dev/%s",
+                   udev_device_get_sysname(dev));
+    if (ret < 0 || ret >= IGSC_INFO_NAME_SIZE)
+    {
+        return IGSC_ERROR_INTERNAL;
+    }
     info->name[IGSC_INFO_NAME_SIZE - 1] = '\0';
 
     /* Look for the GFX PCI parent */
