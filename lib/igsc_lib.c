@@ -1048,8 +1048,7 @@ int igsc_device_close(IN OUT struct igsc_device_handle *handle)
 
     if (handle->ctx)
     {
-        if (handle->ctx->device_path)
-            free(handle->ctx->device_path);
+        free(handle->ctx->device_path);
         free(handle->ctx);
         handle->ctx = NULL;
     }
