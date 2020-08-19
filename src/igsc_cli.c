@@ -704,7 +704,7 @@ int oprom_device_version(const char *device_path,
     if (ret != IGSC_SUCCESS)
     {
         fwupd_error("Failed to initialize device: %s\n", device_path);
-        goto exit;
+        return ret;
     }
 
     memset(&oprom_version, 0, sizeof(oprom_version));
@@ -1086,7 +1086,6 @@ int oprom_update(const char *image_path,
 
 exit:
     igsc_image_oprom_release(oimg);
-    (void)igsc_device_close(handle);
     free(img);
 
     return ret;
