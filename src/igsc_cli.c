@@ -402,6 +402,8 @@ int firmware_update(const char *device_path,
     int ret;
     uint8_t cmp;
 
+    memset(&handle, 0, sizeof(handle));
+
     if (!device_path)
     {
         if (get_first_device(&device_path_found))
@@ -429,7 +431,6 @@ int firmware_update(const char *device_path,
 
     print_fw_version(&image_fw_version);
 
-    memset(&handle, 0, sizeof(handle));
     ret = igsc_device_init_by_device(&handle, device_path);
     if (ret)
     {
