@@ -1061,7 +1061,14 @@ int oprom_update(const char *image_path,
 
     if (!quiet)
     {
-        progress_func = progress_bar_func;
+        if (use_progress_bar)
+        {
+            progress_func = progress_bar_func;
+        }
+        else
+        {
+            progress_func = progress_percentage_func;
+        }
     }
    
     ret = igsc_device_oprom_update(handle, type, oimg, progress_func, NULL);
