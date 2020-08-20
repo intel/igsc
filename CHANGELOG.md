@@ -1,5 +1,19 @@
 # IGSC FUL
 
+## [v0.1.1] - 2020-08-20
+
+### Added
+
+### Fixed
+
+1. cli: fix segmentation fault in firmware update with broken image
+2. cli: change progress bar in oprom to display percentage only
+
+### Changed
+
+1. Unit tests improvements.
+2. Simplify token matching in cli
+
 ## [v0.1.0] - 2020-08-16
 
 ### Added
