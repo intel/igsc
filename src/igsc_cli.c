@@ -1636,6 +1636,10 @@ char *prog_name(const char *exe_path)
 
    str_len = strlen(fname) + strlen(ext) + 2;
    str = calloc(1, str_len);
+   if (str == NULL)
+   {
+       return NULL;
+   }
    strcat_s(str, str_len, fname);
    strcat_s(str, str_len, ext);
 
