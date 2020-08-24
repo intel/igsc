@@ -1,5 +1,15 @@
 # IGSC FUL
 
+## [v0.1.2] - 2020-08-24
+
+### Added
+
+### Fixed
+
+1. cli: check for NULL returned from calloc()
+
+### Changed
+
 ## [v0.1.1] - 2020-08-20
 
 ### Added
