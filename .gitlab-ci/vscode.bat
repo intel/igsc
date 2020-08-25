@@ -6,4 +6,5 @@ set VS_CODE="Visual Studio 16 2019"
 set CMAKE_ARGS="-DLIBMETEE_REPO=ssh://git@gitlab.devtools.intel.com:29418/mesw/metee.git"
 cmake %CMAKE_ARGS% -G %VS_CODE% -S . -B build
 cmake --build build --config Release -t package
-xcopy /y build\igsc-*-win64.zip build\igsc-win64.zip
+FOR %%F in (build\igsc-*-win64.zip) DO set pkgversioned=%%F
+copy /b /y /v %pkgversioned% build\igsc-win64.zip
