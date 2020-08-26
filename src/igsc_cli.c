@@ -426,6 +426,7 @@ int firmware_update(const char *device_path,
     ret = igsc_image_fw_version(img->blob, img->size, &image_fw_version);
     if (ret != IGSC_SUCCESS)
     {
+        fwupd_error("Cannot retrieve firmware version from image: %s\n", image_path);
         goto exit;
     }
 
@@ -442,6 +443,7 @@ int firmware_update(const char *device_path,
     ret = igsc_device_fw_version(&handle, &device_fw_version);
     if (ret != IGSC_SUCCESS)
     {
+        fwupd_error("Cannot retrieve firmware version from device: %s\n", device_path);
         goto exit;
     }
     print_fw_version(&device_fw_version);
@@ -500,7 +502,7 @@ int firmware_update(const char *device_path,
     ret = igsc_device_fw_version(&handle, &device_fw_version);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Cannot retrieve the version\n");
+        fwupd_error("Cannot retrieve firmware version from device: %s\n", device_path);
         goto exit;
     }
     print_fw_version(&device_fw_version);
@@ -524,6 +526,7 @@ int firmware_version(const char *device_path)
     ret = igsc_device_init_by_device(&handle, device_path);
     if (ret != IGSC_SUCCESS)
     {
+        fwupd_error("Cannot initialize device: %s\n", device_path);
         goto exit;
     }
 
@@ -531,7 +534,7 @@ int firmware_version(const char *device_path)
     ret = igsc_device_fw_version(&handle, &fw_version);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Cannot retrieve the version\n");
+        fwupd_error("Cannot retrieve firmware version from device: %s\n", device_path);
         goto exit;
     }
 
@@ -560,7 +563,7 @@ int image_version(const char *image_path)
     ret = igsc_image_fw_version(img->blob, img->size, &fw_version);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Cannot retrieve the version\n");
+        fwupd_error("Cannot retrieve firmware version from image: %s\n", image_path);
         goto exit;
     }
     print_fw_version(&fw_version);
@@ -859,6 +862,7 @@ int oprom_data_image_supported_devices(const char *image_path)
 
     devices = calloc(count, sizeof(struct igsc_oprom_device_info));
     if (devices == NULL) {
+        fwupd_error("Out of memory\n");
         ret = EXIT_FAILURE;
         goto out;
     }
