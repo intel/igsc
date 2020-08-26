@@ -176,7 +176,7 @@ The structure represents the device firmware version.
 
 .. code-block:: c
 
-    if (Image Project != Device Hotfix Project)
+    if (Image Project != Device Project)
         Incompatible Image
 
     if ((Image Hotfix version == Device Hotfix version) &&
@@ -252,7 +252,28 @@ The structure represents the device firmware version.
 
   .. note::
 
-    `TBD:` Define version comaprision.
+**Version comaprison logic is**
+
+
+.. code-block:: c
+
+    struct compare_version {
+        uint16_t  major;
+        uint16_t  minor;
+        uint16_t  hotfix;
+        uint16_t  build;
+    };
+
+    if ((Image major version != Device major version) &&
+        (Device Major version != 0)):
+        Incompatible Image
+
+    if ((Image minor version == Device minor version) &&
+        (Image build version != Device build version)) ||
+       (Image minor version > Device minor version):
+        Upgrade()
+    else
+        Downgrade()
 
 
 2. OPROM Type
@@ -444,6 +465,14 @@ information.
 
          igsc_image_oprom_relese(img);
       }
+
+7. Function that implements version comparison logic, it returns
+   one of values of `enum igsc_version_compare_result`
+
+.. code-block:: c
+
+   uint8_t igsc_oprom_version_compare(const struct igsc_oprom_version *image_ver,
+                                      const struct igsc_oprom_version *device_ver);
 
 
 2.6 Device Enumeration API
