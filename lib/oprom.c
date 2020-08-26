@@ -275,7 +275,11 @@ uint8_t igsc_oprom_version_compare(const struct igsc_oprom_version *image_ver,
         return IGSC_VERSION_ERROR;
     }
 
-    if (img_ver->major != dev_ver->major)
+    /*
+     * Major numbers mus be the same, unless the device's major is zero,
+     * that's because some platforms may come originally with 0 major number.
+     */
+    if (img_ver->major != dev_ver->major && dev_ver->major != 0)
         return IGSC_VERSION_NOT_COMPATIBLE;
 
     if (img_ver->minor < dev_ver->minor)
