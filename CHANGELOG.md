@@ -1,5 +1,18 @@
 # IGSC FUL
 
+## [v0.1.3] - 2020-08-31
+
+### Added
+
+### Fixed
+
+1. cli: add more error messages
+2. oprom: allow update when device version's major is 0
+
+### Changed
+
+# IGSC FUL
+
 ## [v0.1.2] - 2020-08-24
 
 ### Added
