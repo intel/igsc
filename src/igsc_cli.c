@@ -406,7 +406,8 @@ int firmware_update(const char *device_path,
 
     if (!device_path)
     {
-        if (get_first_device(&device_path_found))
+        if (get_first_device(&device_path_found) != IGSC_SUCCESS ||
+            device_path_found == NULL)
         {
             fwupd_error("No device to update\n");
             return EXIT_FAILURE;
@@ -594,7 +595,8 @@ static int do_firmware_version(int argc, char *argv[])
     {
         int ret;
 
-        if (get_first_device(&device_path_found))
+        if (get_first_device(&device_path_found) != IGSC_SUCCESS ||
+            device_path_found == NULL)
         {
             fwupd_error("No device or image\n");
             return EXIT_FAILURE;
@@ -928,7 +930,8 @@ static int do_oprom_version(int argc, char *argv[], enum igsc_oprom_type type)
     {
         int ret;
 
-        if (get_first_device(&device_path_found))
+        if (get_first_device(&device_path_found) != IGSC_SUCCESS ||
+            device_path_found == NULL)
         {
             fwupd_error("No device or image\n");
             return EXIT_FAILURE;
