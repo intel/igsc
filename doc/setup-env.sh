@@ -12,4 +12,4 @@ fi
 [ -x py-sphinx/bin/activate ] || python3 -m venv py-sphinx --system-site-packages
 . py-sphinx/bin/activate
 pip install -q --upgrade pip
-pip install -q -r requirements.txt
+pip install -q -r requirements.pip
