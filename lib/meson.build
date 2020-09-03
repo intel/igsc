@@ -16,10 +16,9 @@ if get_option('enable_perf')
   add_project_arguments('-DIGSC_PERF', language : 'c')
   srcs += ['igsc_perf.c']
 endif
-
 cargs = []
-metee_proj = cmake.subproject('metee', required: true)
-metee_dep = metee_proj.dependency('metee')
+metee_proj = subproject('metee', required: true)
+metee_dep = metee_proj.get_variable('metee_dep_static')
 
 libudev_dep = dependency('libudev')
 

@@ -6,8 +6,6 @@ project('igsc', 'c',
   default_options : ['warning_level=2', 'c_std=gnu99', 'optimization=2'],
 )
 
-cmake = import('cmake')
-
 # versioning
 ver_str = meson.project_version()
 ver_list = ver_str.split('.')
