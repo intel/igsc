@@ -6,7 +6,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. csv-table:: High Level Security Requirements
-   :header: "Requirement Id", "Title"
+    :header: "Requirement Id", "Title"
 
     Req0001, "Test that input validation is done on all forms of input."
     Req0002, "Verify that errors and exceptions are securely handled."
@@ -16,3 +16,11 @@
     Req0006, "Verify that too-long or too-short parameters are detected."
     Req0007, "Test for integer overflow."
     Req0008, "Refuse overly-long, malformed, and non-printable characters unless required."
+
+
+6.2 Tests
+~~~~~~~~~
+
+.. csv-table:: Test coverage
+    :header: "Req ID", "Function", "Explanation", "File Name", "Test function name", "Parent Requirements"
+    :file: requirements.csv
