@@ -13,6 +13,7 @@
 
 #include "test_strdup.h"
 
+#include "igsc_system.h"
 #include "igsc_lib.h"
 #include "igsc_heci.h"
 #include "dev_info_mock.c"
@@ -216,6 +217,44 @@ static void test_fw_version_good(void **state)
     ret = igsc_device_fw_version(handle, &version);
 
     assert_true(ret == IGSC_SUCCESS);
+}
+
+static void test_fw_version_null_handle(void **state)
+{
+    int ret;
+
+    struct igsc_device_handle *handle = NULL;
+    struct igsc_fw_version version;
+
+    ret = igsc_device_fw_version(handle, &version);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
+static void test_fw_version_null_version(void **state)
+{
+    int ret;
+
+    struct igsc_device_handle *handle = *state;
+
+    ret = igsc_device_fw_version(handle, NULL);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
+static void test_fw_version_null_ctx(void **state)
+{
+    int ret;
+
+    struct igsc_device_handle *handle = malloc(sizeof(struct igsc_device_handle));
+    struct igsc_fw_version version;
+
+    handle->ctx = NULL;
+
+    ret = igsc_device_fw_version(handle, &version);
+    free(handle);
+
+    assert_true(ret != IGSC_SUCCESS);
 }
 
 static void test_fw_version_bad_response_size(void **state)
@@ -427,6 +466,31 @@ static void test_oprom_data_version_good(void **state)
     assert_true(ret == IGSC_SUCCESS);
 }
 
+
+static void test_oprom_data_version_null_handle(void **state)
+{
+    int ret;
+
+    struct igsc_device_handle *handle = NULL;
+    struct igsc_oprom_version version;
+
+    ret = igsc_device_oprom_version(handle, IGSC_OPROM_DATA, &version);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
+static void test_oprom_data_version_null_version(void **state)
+{
+    int ret;
+
+    struct igsc_device_handle *handle = *state;
+
+    ret = igsc_device_oprom_version(handle, IGSC_OPROM_DATA, NULL);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
+
 static void test_oprom_data_bad_response_size(void **state)
 {
     int ret;
@@ -635,6 +699,30 @@ static void test_oprom_code_version_good(void **state)
     assert_true(ret == IGSC_SUCCESS);
 }
 
+static void test_oprom_code_version_null_handle(void **state)
+{
+    int ret;
+
+    struct igsc_device_handle *handle = NULL;
+    struct igsc_oprom_version version;
+
+    ret = igsc_device_oprom_version(handle, IGSC_OPROM_CODE, &version);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
+static void test_oprom_code_version_null_version(void **state)
+{
+    int ret;
+
+    struct igsc_device_handle *handle = *state;
+
+    ret = igsc_device_oprom_version(handle, IGSC_OPROM_CODE, NULL);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
+
 static void test_oprom_code_bad_response_size(void **state)
 {
     int ret;
@@ -828,10 +916,71 @@ static void test_oprom_code_bad_command_param(void **state)
     assert_true(ret != IGSC_SUCCESS);
 }
 
+static void test_oprom_version_bad_type(void **state)
+{
+    int ret;
+
+    struct igsc_device_handle *handle = *state;
+    struct igsc_oprom_version version;
+
+    ret = igsc_device_oprom_version(handle, 0, &version);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
+
+static void test_image_fw_version_empty_buffer(void **state)
+{
+    struct igsc_fw_version version;
+    struct gsc_fwu_fpt_img *fpt = NULL;
+    uint32_t buffer_len;
+    int ret;
+
+    buffer_len = 1;
+
+    ret = igsc_image_fw_version((uint8_t *)fpt, buffer_len, &version);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
+static void test_image_fw_version_null_version(void **state)
+{
+    struct igsc_fw_version version;
+    struct gsc_fwu_fpt_img *fpt = (struct gsc_fwu_fpt_img *) malloc(sizeof(struct gsc_fwu_fpt_img));
+    uint32_t buffer_len;
+    int ret;
+
+    buffer_len = 1;
+
+    ret = igsc_image_fw_version((uint8_t *)fpt, buffer_len, NULL);
+
+    free(fpt);
+    assert_true(ret != IGSC_SUCCESS);
+}
+
+static void test_image_fw_version_zero_length(void **state)
+{
+    struct igsc_fw_version version;
+    struct gsc_fwu_fpt_img *fpt =(struct gsc_fwu_fpt_img *) malloc(sizeof(struct gsc_fwu_fpt_img));
+    uint32_t buffer_len;
+    int ret;
+
+    buffer_len = 0;
+
+    ret = igsc_image_fw_version((uint8_t *)fpt, buffer_len, &version);
+
+    free(fpt);
+    assert_true(ret != IGSC_SUCCESS);
+}
+
+
 int main(void)
 {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_fw_version_good),
+        cmocka_unit_test(test_fw_version_null_handle),
+        cmocka_unit_test(test_fw_version_null_version),
+        cmocka_unit_test(test_fw_version_null_ctx),
         cmocka_unit_test(test_fw_version_bad_response_size),
         cmocka_unit_test(test_fw_version_bad_command_id),
         cmocka_unit_test(test_fw_version_bad_response_is_response),
@@ -845,6 +994,8 @@ int main(void)
         cmocka_unit_test(test_fw_version_bad_heci_message),
         cmocka_unit_test(test_fw_version_bad_command_param),
         cmocka_unit_test(test_oprom_data_version_good),
+        cmocka_unit_test(test_oprom_data_version_null_handle),
+        cmocka_unit_test(test_oprom_data_version_null_version),
         cmocka_unit_test(test_oprom_data_bad_response_size),
         cmocka_unit_test(test_oprom_data_bad_command_id),
         cmocka_unit_test(test_oprom_data_bad_response_is_response),
@@ -858,6 +1009,8 @@ int main(void)
         cmocka_unit_test(test_oprom_data_bad_heci_message),
         cmocka_unit_test(test_oprom_data_bad_command_param),
         cmocka_unit_test(test_oprom_code_version_good),
+        cmocka_unit_test(test_oprom_code_version_null_handle),
+        cmocka_unit_test(test_oprom_code_version_null_version),
         cmocka_unit_test(test_oprom_code_bad_response_size),
         cmocka_unit_test(test_oprom_code_bad_command_id),
         cmocka_unit_test(test_oprom_code_bad_response_is_response),
@@ -870,6 +1023,10 @@ int main(void)
         cmocka_unit_test(test_oprom_code_status_oprom_section_not_exist),
         cmocka_unit_test(test_oprom_code_bad_heci_message),
         cmocka_unit_test(test_oprom_code_bad_command_param),
+        cmocka_unit_test(test_oprom_version_bad_type),
+        cmocka_unit_test(test_image_fw_version_empty_buffer),
+        cmocka_unit_test(test_image_fw_version_null_version),
+        cmocka_unit_test(test_image_fw_version_zero_length),
     };
 
     return cmocka_run_group_tests(tests, group_setup, group_teardown);

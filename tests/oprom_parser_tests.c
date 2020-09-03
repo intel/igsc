@@ -363,6 +363,22 @@ static void test_oprom_parse_bad_cpd_offset(void **state)
     assert_true(ret != IGSC_SUCCESS);
 }
 
+static void test_oprom_parse_bad_cpd_offset_2(void **state)
+{
+    int ret;
+
+    struct oprom_header_ext_v2 *header;
+    struct igsc_oprom_image *img = *state;
+
+    header = (struct oprom_header_ext_v2 *)img->buffer;
+    header->unofficial_payload_offset = 0xFFFFFFFF;
+
+    ret = image_oprom_parse(img);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
+
 static void test_oprom_parse_bad_cpd_size(void **state)
 {
     int ret;
@@ -432,6 +448,24 @@ static void test_oprom_parse_bad_manifest_offset(void **state)
 
     assert_true(ret != IGSC_SUCCESS);
 }
+
+static void test_oprom_parse_bad_manifest_offset_2(void **state)
+{
+    int ret;
+
+    struct igsc_oprom_image *img = *state;
+    struct oprom_header_ext_v2 *pci_header = (struct oprom_header_ext_v2 *)img->buffer;
+    struct code_partition_directory_header *dir_header =
+                      (struct code_partition_directory_header *)
+                      (img->buffer + pci_header->unofficial_payload_offset);
+
+    dir_header->entries[MANIFEST_INDEX].offset = 0xFFFFFFFF;
+
+    ret = image_oprom_parse(img);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
 
 static void test_oprom_parse_bad_public_key_offset(void **state)
 {
@@ -683,11 +717,13 @@ int main(void)
         cmocka_unit_test_setup(test_oprom_parse_bad_pci_code_type, test_setup),
         cmocka_unit_test_setup(test_oprom_parse_bad_pci_size, test_setup),
         cmocka_unit_test_setup(test_oprom_parse_bad_cpd_offset, test_setup),
+        cmocka_unit_test_setup(test_oprom_parse_bad_cpd_offset_2, test_setup),
         cmocka_unit_test_setup(test_oprom_parse_bad_cpd_size, test_setup),
         cmocka_unit_test_setup(test_oprom_parse_bad_cpd_num_of_entries, test_setup),
         cmocka_unit_test_setup(test_oprom_parse_bad_manifest_length, test_setup),
         cmocka_unit_test_setup(test_oprom_parse_bad_marker, test_setup),
         cmocka_unit_test_setup(test_oprom_parse_bad_manifest_offset, test_setup),
+        cmocka_unit_test_setup(test_oprom_parse_bad_manifest_offset_2, test_setup),
         cmocka_unit_test_setup(test_oprom_parse_bad_public_key_offset, test_setup),
         cmocka_unit_test_setup(test_oprom_parse_bad_signature_offset, test_setup),
         cmocka_unit_test_setup(test_oprom_parse_bad_manifest_size_length, test_setup),
