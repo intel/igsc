@@ -30,9 +30,15 @@ set(COMPILE_OPTIONS_NX
     -Wstrict-prototypes
     -Wconversion
     -Woverflow
+    -fwrapv
     -fPIC
     "$<$<CONFIG:DEBUG>:-O0;-g3;-ggdb>"
     "$<$<BOOL:${ENABLE_WERROR}>:-Werror>"
+)
+
+set(COMPILE_OPTIONS_GCC
+    -fno-strict-overflow
+    -fno-delete-null-pointer-checks
 )
 
 set(COMPILE_OPTIONS_WIN
@@ -50,9 +56,12 @@ set(LINK_EXE_OPTIONS_NX "-pie")
 set(LINK_OPTIONS_WIN "/NXCompat /DynamicBase /GUARD:CF")
 
 if(CMAKE_C_COMPILER_ID MATCHES Clang OR
-   CMAKE_C_COMPILER_ID MATCHES AppleClang OR
-   CMAKE_C_COMPILER_ID MATCHES GNU)
+   CMAKE_C_COMPILER_ID MATCHES AppleClang)
     set(COMPILE_OPTIONS ${COMPILE_OPTIONS_NX})
+    set(LINK_OPTIONS ${LINK_OPTIONS_NX})
+    set(LINX_EXE_OPTIONS ${LINK_EXE_OPTIONS_NX})
+elseif(CMAKE_C_COMPILER_ID MATCHES GNU)
+    set(COMPILE_OPTIONS ${COMPILE_OPTIONS_NX} ${COMPILE_OPTIONS_GCC})
     set(LINK_OPTIONS ${LINK_OPTIONS_NX})
     set(LINX_EXE_OPTIONS ${LINK_EXE_OPTIONS_NX})
 elseif(CMAKE_C_COMPILER_ID MATCHES MSVC)
