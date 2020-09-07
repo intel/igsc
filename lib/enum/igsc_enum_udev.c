@@ -137,7 +137,7 @@ int igsc_device_iterator_next(struct igsc_device_iterator *iter,
     struct udev_device *dev;
     int ret;
 
-    if (iter == NULL)
+    if (iter == NULL || info == NULL)
     {
         gsc_error("Bad parameters\n");
         return IGSC_ERROR_INVALID_PARAMETER;
