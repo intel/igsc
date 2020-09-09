@@ -371,7 +371,7 @@ static void test_oprom_parse_bad_cpd_offset_2(void **state)
     struct igsc_oprom_image *img = *state;
 
     header = (struct oprom_header_ext_v2 *)img->buffer;
-    header->unofficial_payload_offset = 0xFFFFFFFF;
+    header->unofficial_payload_offset = UINT16_MAX;
 
     ret = image_oprom_parse(img);
 
@@ -459,7 +459,7 @@ static void test_oprom_parse_bad_manifest_offset_2(void **state)
                       (struct code_partition_directory_header *)
                       (img->buffer + pci_header->unofficial_payload_offset);
 
-    dir_header->entries[MANIFEST_INDEX].offset = 0xFFFFFFFF;
+    dir_header->entries[MANIFEST_INDEX].offset = UINT16_MAX;
 
     ret = image_oprom_parse(img);
 

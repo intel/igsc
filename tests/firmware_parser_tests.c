@@ -11,7 +11,7 @@
 
 static int group_setup(void **state)
 {
-    *state = malloc(sizeof(struct gsc_fwu_fpt_img));
+    *state = malloc(sizeof(struct gsc_fwu_fpt_img) + sizeof(struct gsc_fwu_fpt_entry) * FWU_FPT_ENTRY_NUM);
     if (*state == NULL) {
         return -1;
     }
@@ -35,11 +35,17 @@ static int test_setup(void **state)
 {
     struct gsc_fwu_fpt_img *fpt = *state;
 
+    memset(*state, 0, sizeof(struct gsc_fwu_fpt_img) + sizeof(struct gsc_fwu_fpt_entry) * FWU_FPT_ENTRY_NUM);
+
     fpt->header.header_marker  = FPT_HEADER_MARKER;
     fpt->header.header_version = FPT_HEADER_VERSION;
     fpt->header.entry_version  = FPT_ENTRY_VERSION;
     fpt->header.num_of_entries = FWU_FPT_ENTRY_NUM;
     fpt->header.header_length  = FPT_HEADER_LENGTH;
+
+    fpt->entry[0].offset = sizeof(fpt->header) + fpt->header.num_of_entries * sizeof(struct gsc_fwu_fpt_entry);
+    fpt->entry[0].length = 0;
+    fpt->entry[0].partition_flags.entry_valid = 0xFE;
 
     return 0;
 }
@@ -346,6 +352,154 @@ static void test_layout_parser_header_bad_length(void **state)
     assert_true(ret != IGSC_SUCCESS);
 }
 
+/**
+ * @brief
+ * Test: fpt->entry[0]->reserved1 is not empty
+ *
+ * @param state test state
+ */
+static void test_layout_parser_entry_reserved_not_empty(void **state)
+{
+    struct gsc_fwu_img_layout layout;
+    struct gsc_fwu_fpt_img *fpt = *state;
+    uint32_t buffer_len;
+    int ret;
+
+    buffer_len = __buffer_len(fpt);
+    fpt->entry[0].reserved1[0]=1;
+
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
+/**
+ * @brief
+ * Test: fpt->entry[0]->offset < total_size
+ *
+ * @param state test state
+ */
+static void test_layout_parser_entry_offset_small(void **state)
+{
+    struct gsc_fwu_img_layout layout;
+    struct gsc_fwu_fpt_img *fpt = *state;
+    uint32_t buffer_len;
+    int ret;
+
+    fpt->entry[0].offset = 0;
+    buffer_len = __buffer_len(fpt);
+
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
+/**
+ * @brief
+ * Test: fpt->entry[0]->offset > buffer_len
+ *
+ * @param state test state
+ */
+static void test_layout_parser_entry_offset_big(void **state)
+{
+    struct gsc_fwu_img_layout layout;
+    struct gsc_fwu_fpt_img *fpt = *state;
+    uint32_t buffer_len;
+    int ret;
+
+    buffer_len = __buffer_len(fpt);
+    fpt->entry[0].offset= buffer_len + 1;
+
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
+/**
+ * @brief
+ * Test: fpt->entry[0]->length > buffer_len
+ *
+ * @param state test state
+ */
+static void test_layout_parser_entry_length_big(void **state)
+{
+    struct gsc_fwu_img_layout layout;
+    struct gsc_fwu_fpt_img *fpt = *state;
+    uint32_t buffer_len;
+    int ret;
+
+    buffer_len = __buffer_len(fpt);
+    fpt->entry[0].length = buffer_len + 1;
+
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
+/**
+ * @brief
+ * Test: entry->offset + entry->length > buffer_len
+ *
+ * @param state test state
+ */
+static void test_layout_parser_entry_length_and_offset_big(void **state)
+{
+    struct gsc_fwu_img_layout layout;
+    struct gsc_fwu_fpt_img *fpt = *state;
+    uint32_t buffer_len;
+    int ret;
+
+    buffer_len = __buffer_len(fpt);
+    fpt->entry[0].offset = buffer_len;
+    fpt->entry[0].length = buffer_len;
+
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
+/**
+ * @brief
+ * Test: entry->reserved2 is not empty
+ *
+ * @param state test state
+ */
+static void test_layout_parser_entry_reserved2_not_empty(void **state)
+{
+    struct gsc_fwu_img_layout layout;
+    struct gsc_fwu_fpt_img *fpt = *state;
+    uint32_t buffer_len;
+    int ret;
+
+    fpt->entry[0].reserved2[0]=1;
+    buffer_len = __buffer_len(fpt);
+
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
+/**
+ * @brief
+ * Test: entry->partition_flags.entry_valid = 0xFF
+ *
+ * @param state test state
+ */
+static void test_layout_parser_entry_bad_partition_flag(void **state)
+{
+    struct gsc_fwu_img_layout layout;
+    struct gsc_fwu_fpt_img *fpt = *state;
+    uint32_t buffer_len;
+    int ret;
+
+    buffer_len = __buffer_len(fpt);
+    fpt->entry[0].partition_flags.entry_valid = 0xFF;
+
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
 int main(void)
 {
     const struct CMUnitTest tests[] = {
@@ -363,7 +517,16 @@ int main(void)
         cmocka_unit_test_setup(test_layout_parse_header_entries_too_big, test_setup),
         cmocka_unit_test_setup(test_layout_parser_header_bad_version, test_setup),
         cmocka_unit_test_setup(test_layout_parser_header_entry_bad_version, test_setup),
-        cmocka_unit_test_setup(test_layout_parser_header_bad_length, test_setup)
+        cmocka_unit_test_setup(test_layout_parser_header_bad_length, test_setup),
+        cmocka_unit_test_setup(test_layout_parser_header_bad_length, test_setup),
+        cmocka_unit_test_setup(test_layout_parser_entry_reserved_not_empty, test_setup),
+        cmocka_unit_test_setup(test_layout_parser_entry_offset_small, test_setup),
+        cmocka_unit_test_setup(test_layout_parser_entry_offset_big, test_setup),
+        cmocka_unit_test_setup(test_layout_parser_entry_length_big, test_setup),
+        cmocka_unit_test_setup(test_layout_parser_entry_length_and_offset_big, test_setup),
+        cmocka_unit_test_setup(test_layout_parser_entry_reserved2_not_empty, test_setup),
+        cmocka_unit_test_setup(test_layout_parser_entry_bad_partition_flag, test_setup),
+
     };
 
     return cmocka_run_group_tests(tests, group_setup, group_teardown);

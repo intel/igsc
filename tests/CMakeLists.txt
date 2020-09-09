@@ -54,3 +54,10 @@ add_cmocka_test(cli_tests
                 INCLUDE_DIRECTORIES ${IGCS_INCLUDE_DIRS} ${CMOCKA_INCLUDE_DIR} ../src
                 LINK_OPTIONS  "-Wl,--wrap=igsc_device_iterator_next -Wl,--wrap=igsc_device_iterator_create -Wl,--wrap=igsc_device_iterator_destroy")
 add_cmocka_test_environment(cli_tests)
+
+add_cmocka_test(igsc_enum_tests
+                SOURCES igsc_enum_tests.c
+                LINK_LIBRARIES ${CMOCKA_LIBRARIES} LIBMETEE udev
+                COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS} -DUNIT_TESTING=1
+                INCLUDE_DIRECTORIES ${IGCS_INCLUDE_DIRS} ${CMOCKA_INCLUDE_DIR})
+add_cmocka_test_environment(igsc_enum_tests)
