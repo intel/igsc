@@ -19,6 +19,7 @@ option(ENABLE_PERF "Enable performance counters" OFF)
 option(ENABLE_DOCS "Enable docs build" OFF)
 option(ENABLE_TESTS "Perform unit tests after build" OFF)
 option(ENABLE_WERROR "Enable treat warnings as error" ON)
+option(ENABLE_CLI "Enable command line tool build" ON)
 
 set(COMPILE_OPTIONS_NX
     -Wall
@@ -75,7 +76,10 @@ set(CMAKE_EXE_LINKER_FLAGS
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINK_OPTIONS}")
 
 add_subdirectory("lib")
-add_subdirectory("src")
+
+if(ENABLE_CLI)
+  add_subdirectory("src")
+endif()
 
 if(ENABLE_DOCS)
   add_subdirectory("doc")

@@ -78,5 +78,9 @@ add_project_link_arguments(
 inc_dirs = include_directories('include')
 
 subdir('lib')
-subdir('src')
+
+if get_option('enable_cli') == 'true'
+  subdir('src')
+endif
+
 subdir('doc')
