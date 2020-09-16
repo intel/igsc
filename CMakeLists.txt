@@ -20,6 +20,11 @@ option(ENABLE_DOCS "Enable docs build" OFF)
 option(ENABLE_TESTS "Perform unit tests after build" OFF)
 option(ENABLE_WERROR "Enable treat warnings as error" ON)
 option(ENABLE_CLI "Enable command line tool build" ON)
+option(ENABLE_ENUM "Enable enumeration build" ON)
+
+include(CMakeDependentOption)
+cmake_dependent_option(CLI_ENABLED "Enable command line tool build" ON "ENABLE_ENUM;ENABLE_CLI" OFF)
+cmake_dependent_option(TESTS_ENABLED "Perform unit tests after build" ON "ENABLE_ENUM;ENABLE_CLI;ENABLE_TESTS" OFF)
 
 set(COMPILE_OPTIONS_NX
     -Wall
@@ -77,8 +82,12 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINK_OPTIONS}")
 
 add_subdirectory("lib")
 
-if(ENABLE_CLI)
+if(CLI_ENABLED)
   add_subdirectory("src")
+endif()
+
+if(TESTS_ENABLED)
+  add_subdirectory("tests")
 endif()
 
 if(ENABLE_DOCS)
@@ -86,10 +95,6 @@ if(ENABLE_DOCS)
 endif()
 
 include(dist.cmake)
-
-if(ENABLE_TESTS)
-  add_subdirectory("tests")
-endif()
 
 set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
 if(WIN32 AND NOT UNIX)

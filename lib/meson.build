@@ -9,8 +9,16 @@ srcs = [
   'igsc_lib.c',
   'oprom.c',
   'oprom_parser.c',
-  'enum/igsc_enum_udev.c',
 ]
+
+deps = []
+if get_option('enable_enum')
+  srcs += ['enum/igsc_enum_udev.c']
+  libudev_dep = dependency('libudev')
+  deps += [libudev_dep]
+else
+  srcs += ['enum/igsc_enum_stubs.c']
+endif
 
 if get_option('enable_perf')
   add_project_arguments('-DIGSC_PERF', language : 'c')
@@ -20,9 +28,7 @@ cargs = []
 metee_proj = subproject('metee', required: true)
 metee_dep = metee_proj.get_variable('metee_dep_static')
 
-libudev_dep = dependency('libudev')
-
-deps = [metee_dep, libudev_dep]
+deps += [metee_dep]
 
 igsc_shared = shared_library(
   'igsc',

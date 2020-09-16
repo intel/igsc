@@ -11,12 +11,20 @@ if(WIN32)
     )
 endif()
 
+if(ENABLE_ENUM)
+    set(ENUM_SOURCES
+        $<$<BOOL:${UNIX}>:enum/igsc_enum_udev.c>
+        $<$<BOOL:${WIN32}>:enum/igsc_enum_windows.c>
+    )
+else()
+    set(ENUM_SOURCES enum/igsc_enum_stubs.c)
+endif()
+
 set(LIBSOURCES
     igsc_lib.c
     oprom.c
     oprom_parser.c
-    $<$<BOOL:${UNIX}>:enum/igsc_enum_udev.c>
-    $<$<BOOL:${WIN32}>:enum/igsc_enum_windows.c>
+    ${ENUM_SOURCES}
     $<$<BOOL:${ENABLE_PERF}>:igsc_perf.c>
     $<$<BOOL:${WIN32}>:${PROJECT_BINARY_DIR}/igsc_lib.rc>
 )
@@ -33,6 +41,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
 target_compile_definitions(
   ${PROJECT_NAME}
   PRIVATE IGSC_DLL_EXPORTS
+  PRIVATE $<$<BOOL:${ENABLE_ENUM}>:IGSC_ENUM>
   PRIVATE $<$<BOOL:${SYSLOG}>:SYSLOG>
   PRIVATE $<$<BOOL:${ENABLE_PERF}>:IGSC_PERF>
 )
@@ -41,7 +50,7 @@ set_target_properties(
   VERSION ${GSC_VERSION_STRING} SOVERSION ${GSC_VERSION_MAJOR}
 )
 
-find_library (UDEV udev)
+find_library(UDEV udev)
 
 target_link_libraries(${PROJECT_NAME}
                       LIBMETEE $<$<BOOL:${WIN32}>:CfgMgr32.lib> $<$<BOOL:${UNIX}>:${UDEV}>)

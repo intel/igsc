@@ -79,7 +79,7 @@ inc_dirs = include_directories('include')
 
 subdir('lib')
 
-if get_option('enable_cli') == 'true'
+if get_option('enable_enum') and get_option('enable_cli')
   subdir('src')
 endif
 
