@@ -2,5 +2,5 @@
         stage: build
         script:
                 - meson setup build/
-                - meson configure -Dsyslog=true -Dbuildtype=debug build
+                - meson configure ${MESON_ARGS} build
                 - ninja -v -C build/
