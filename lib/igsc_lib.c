@@ -1218,11 +1218,12 @@ exit:
     return ret;
 }
 
-int igsc_device_fw_update(IN struct igsc_device_handle *handle,
-                          IN const uint8_t *buffer,
-                          IN const uint32_t buffer_len,
-                          IN igsc_progress_func_t progress_f,
-                          IN void *ctx)
+static int gsc_update(IN struct igsc_device_handle *handle,
+                      IN const void *buffer,
+                      IN const uint32_t buffer_len,
+                      IN igsc_progress_func_t progress_f,
+                      IN void *ctx,
+                      IN uint32_t payload_type)
 {
     struct igsc_lib_ctx *lib_ctx;
     int      ret;
@@ -1248,14 +1249,28 @@ int igsc_device_fw_update(IN struct igsc_device_handle *handle,
     gsc_pref_cnt_init(perf_ctx);
     gsc_pref_cnt_checkpoint(perf_ctx, "Program start");
 
-    ret = gsc_fwu_img_layout_parse(&lib_ctx->layout, buffer, buffer_len);
-    if (ret != IGSC_SUCCESS)
+    if (payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW)
     {
-        goto exit;
+        ret = gsc_fwu_img_layout_parse(&lib_ctx->layout, buffer, buffer_len);
+        if (ret != IGSC_SUCCESS)
+        {
+            goto exit;
+        }
+
+        fpt_size = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].size;
+        fpt_data = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].content;
+    }
+    else if (payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_IAF_PSC)
+    {
+        fpt_size = buffer_len;
+        fpt_data = buffer;
+        payload_type = GSC_FWU_HECI_PAYLOAD_TYPE_IAF_PSC;
+    }
+    else
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
     }
 
-    fpt_size = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].size;
-    fpt_data = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].content;
 
     gsc_debug("Update Image Payload size: %d bytes\n", fpt_size);
 
@@ -1269,7 +1284,7 @@ int igsc_device_fw_update(IN struct igsc_device_handle *handle,
 
     gsc_pref_cnt_checkpoint(perf_ctx, "Before FWU_START");
 
-    ret = gsc_fwu_start(lib_ctx, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
+    ret = gsc_fwu_start(lib_ctx, payload_type);
     if (ret != IGSC_SUCCESS)
     {
         goto exit;
@@ -1310,9 +1325,10 @@ int igsc_device_fw_update(IN struct igsc_device_handle *handle,
 
     gsc_pref_cnt_checkpoint(perf_ctx, "After FWU_END");
 
+    if (payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW)
     {
-    /* In order the underlying library detects the firmware reset
-     * and updates its state for the current handle a dummy command
+    /* In order for the underlying library to detect the firmware reset
+     * and to update its state for the current handle a dummy command
      * (get fw version) needs to be performed. The expectation is
      * that it will fail eventually.
      */
@@ -1362,11 +1378,32 @@ int igsc_device_fw_update(IN struct igsc_device_handle *handle,
     ret = driver_reconnect(lib_ctx);
 
 exit:
+
     gsc_fwu_img_layout_reset(&lib_ctx->layout);
 
     driver_deinit(lib_ctx);
 
     return ret;
+}
+
+int igsc_device_fw_update(IN struct igsc_device_handle *handle,
+                          IN const uint8_t *buffer,
+                          IN const uint32_t buffer_len,
+                          IN igsc_progress_func_t progress_f,
+                          IN void *ctx)
+{
+    return gsc_update(handle, buffer, buffer_len, progress_f, ctx,
+                      GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
+}
+
+int igsc_iaf_psc_update(IN struct igsc_device_handle *handle,
+                        IN const uint8_t *buffer,
+                        IN const uint32_t buffer_len,
+                        IN igsc_progress_func_t progress_f,
+                        IN void *ctx)
+{
+    return gsc_update(handle, buffer, buffer_len, progress_f, ctx,
+                      GSC_FWU_HECI_PAYLOAD_TYPE_IAF_PSC);
 }
 
 uint8_t igsc_fw_version_compare(IN struct igsc_fw_version *image_version,

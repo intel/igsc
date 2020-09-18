@@ -68,10 +68,11 @@ enum gsc_fwu_heci_command_id {
  * @brief list of payload types for GSC firmware update commands
  */
 enum gsc_fwu_heci_payload_type {
-    GSC_FWU_HECI_PAYLOAD_TYPE_INVALID    = 0, /**< lower sentinel */
-    GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW     = 1, /** < graphics firmware */
-    GSC_FWU_HECI_PAYLOAD_TYPE_OPROM_DATA = 2, /**< oprom data partition */
-    GSC_FWU_HECI_PAYLOAD_TYPE_OPROM_CODE = 3, /**< oprom code partition */
+    GSC_FWU_HECI_PAYLOAD_TYPE_INVALID    = 0, /**< lower sentinel                       */
+    GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW     = 1, /**< graphics firmware                    */
+    GSC_FWU_HECI_PAYLOAD_TYPE_OPROM_DATA = 2, /**< oprom data partition                 */
+    GSC_FWU_HECI_PAYLOAD_TYPE_OPROM_CODE = 3, /**< oprom code partition                 */
+    GSC_FWU_HECI_PAYLOAD_TYPE_IAF_PSC    = 4, /**< acclerator fabric configuration data */
 };
 
 #pragma pack(1)
