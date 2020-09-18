@@ -332,6 +332,29 @@ igsc_device_fw_update(IN  struct igsc_device_handle *handle,
                       IN  void *ctx);
 
 /**
+ *  @brief Perform Intel Accelerator Fabric Platform Specific
+ *         Configuration (PSC) update from the provided update data
+ *         image.
+ *
+ *  @param handle A handle to the device.
+ *  @param buffer A pointer to the buffer with the PSC data update image.
+ *  @param buffer_len Length of the buffer with the PSC data update image.
+ *  @param progress_f Pointer to the callback function for data update
+ *         progress monitor.
+ *  @param ctx Context passed to progress_f function.
+ *
+ *  @return
+ *  * IGSC_SUCCESS if successful
+ *  * otherwise error code.
+ */
+IGSC_EXPORT int
+igsc_iaf_psc_update(IN struct igsc_device_handle *handle,
+                   IN const uint8_t *buffer,
+                   IN const uint32_t buffer_len,
+                   IN igsc_progress_func_t progress_f,
+                   IN void *ctx);
+
+/**
  *  @brief Compares input fw version to the flash one
  *
  *  @param image_ver pointer to the update image OPROM version
