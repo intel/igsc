@@ -1,5 +1,20 @@
 # IGSC FUL
 
+## [v0.1.4] - 2020-09-21
+
+### Added
+
+1. Add requirements and tests
+
+### Fixed
+
+1. cmake: add security compilation flags
+
+### Changed
+1. lib: make enumeration part of the library optional
+2. build: make cli binary build to be optional
+3. build: remove dependency on cmake in meson
+
 ## [v0.1.3] - 2020-08-31
 
 ### Added
@@ -10,8 +25,6 @@
 2. oprom: allow update when device version's major is 0
 
 ### Changed
-
-# IGSC FUL
 
 ## [v0.1.2] - 2020-08-24
 
