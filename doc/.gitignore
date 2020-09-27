@@ -1,0 +1,5 @@
+# Ignore everything in this directory
+_build/
+Thumbs.db
+.DS_Store
+py-sphinx
