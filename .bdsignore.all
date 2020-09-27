@@ -1,0 +1,13 @@
+.bdsignore.all
+protex/*
+doc/*
+README.md
+CHANGELOG.md
+.editorconfig
+.git
+.gitlint
+.gitignore
+.gitattributes
+.gitlab-ci/*
+.gitlab-ci.yml
+.cmake-format.py

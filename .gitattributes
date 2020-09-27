@@ -1,0 +1,6 @@
+*     text=auto
+*.svg text
+*.png binary
+# Don't export CI files
+.gitlab-ci.yml export-ignore
+.gitlab-ci export-ignore
