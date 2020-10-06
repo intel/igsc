@@ -1,4 +1,4 @@
-.. Graphics System Contrller Firmware Interface
+.. Graphics System Controller Firmware Interface
    documentation master file, created by
    sphinx-quickstart on Tue Nov 26 04:07:28 2019.
    You can adapt this file completely to your liking, but it should at least
