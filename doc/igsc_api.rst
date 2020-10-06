@@ -171,7 +171,7 @@ The structure represents the device firmware version.
     };
 
 
-**Version comaprison logic is**
+**Version comparison logic is**
 
 
 .. code-block:: c
@@ -252,7 +252,7 @@ The structure represents the device firmware version.
 
   .. note::
 
-**Version comaprison logic is**
+**Version comparison logic is**
 
 
 .. code-block:: c
