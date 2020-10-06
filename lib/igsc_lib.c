@@ -22,7 +22,6 @@
 #include "igsc_oprom.h"
 #include "igsc_perf.h"
 #include "igsc_log.h"
-#include "igsc_oprom.h"
 
 #include "utils.h"
 
@@ -1144,6 +1143,68 @@ int igsc_image_fw_version(IN  const uint8_t *buffer,
     }
 
     return IGSC_SUCCESS;
+}
+
+int igsc_image_get_type(IN const uint8_t *buffer,
+                        IN const uint32_t buffer_len,
+                        OUT uint8_t *type)
+{
+    struct gsc_fwu_img_layout layout;
+    struct igsc_oprom_image *oimg = NULL;
+    int ret;
+    uint8_t img_type = IGSC_IMAGE_TYPE_UNKNOWN;
+    uint32_t oimg_type;
+
+    if (type == NULL || buffer == NULL || buffer_len == 0)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    gsc_fwu_img_layout_reset(&layout);
+
+    ret = gsc_fwu_img_layout_parse(&layout, buffer, buffer_len);
+    if (ret == IGSC_SUCCESS)
+    {
+        img_type = IGSC_IMAGE_TYPE_GFX_FW;
+        goto exit;
+    }
+
+    ret = igsc_image_oprom_init(&oimg, buffer, buffer_len);
+    if (ret == IGSC_SUCCESS)
+    {
+        ret = igsc_image_oprom_type(oimg, &oimg_type);
+        if (ret == IGSC_SUCCESS)
+        {
+             if (oimg_type == IGSC_OPROM_DATA)
+             {
+                 img_type = IGSC_IMAGE_TYPE_OPROM_DATA;
+                 goto exit;
+             }
+             else if (oimg_type == IGSC_OPROM_CODE)
+             {
+                 img_type = IGSC_IMAGE_TYPE_OPROM_CODE;
+                 goto exit;
+             }
+             else if (oimg_type == (IGSC_OPROM_DATA | IGSC_OPROM_CODE))
+             {
+                 img_type = IGSC_IMAGE_TYPE_OPROM;
+                 goto exit;
+             }
+        }
+        ret = IGSC_ERROR_INTERNAL;
+        goto exit;
+    }
+
+    ret = IGSC_ERROR_BAD_IMAGE;
+
+exit:
+    gsc_fwu_img_layout_reset(&layout);
+
+    igsc_image_oprom_release(oimg);
+
+    *type = img_type;
+
+    return ret;
 }
 
 int igsc_device_fw_update(IN struct igsc_device_handle *handle,

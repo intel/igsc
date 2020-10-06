@@ -44,6 +44,17 @@ typedef void *igsc_handle_t;
 #endif /* __linux__ */
 
 /**
+ * types of supported update images
+ */
+enum igsc_image_type {
+    IGSC_IMAGE_TYPE_UNKNOWN = 0, /**< Unknown image type */
+    IGSC_IMAGE_TYPE_GFX_FW,      /**< GSC Frimware image */
+    IGSC_IMAGE_TYPE_OPROM,       /**< OPROM CODA an DATA combined image */
+    IGSC_IMAGE_TYPE_OPROM_CODE,  /**< OPROM code image */
+    IGSC_IMAGE_TYPE_OPROM_DATA,  /**< OPROM data image */
+};
+
+/**
  * Structure to store fw version data
  */
 struct igsc_fw_version {
@@ -462,6 +473,19 @@ int igsc_image_oprom_release(IN struct igsc_oprom_image *img);
 IGSC_EXPORT
 uint8_t igsc_oprom_version_compare(const struct igsc_oprom_version *image_ver,
                                    const struct igsc_oprom_version *device_ver);
+/**
+ *  @brief Determine the type of the provided image.
+ *
+ *  @param buffer A pointer to the buffer with the image.
+ *  @param buffer_len Length of the buffer with the image.
+ *  @param type Type of the image (enum igsc_image_type).
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_image_get_type(IN const uint8_t *buffer,
+                        IN const uint32_t buffer_len,
+                        OUT uint8_t *type);
 /**
  * @}
  */
