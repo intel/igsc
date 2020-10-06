@@ -203,6 +203,105 @@ static void test_oprom_code_help(void **state)
 }
 
 /**
+ * test: igsc image-type --image <file-path>
+ */
+static void test_image_type_1(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("image-type");
+    argv[argc++] = test_strdup("--image");
+    argv[argc++] = test_strdup("fw.img");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret == EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc image-type
+ */
+static void test_image_type_bad_1(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("image-type");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc image-type --image
+ */
+static void test_image_type_bad_2(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("image-type");
+    argv[argc++] = test_strdup("--image");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc image-type --image <image> <extra parameter>
+ * extra parameter
+ */
+static void test_image_type_bad_3(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("image-type");
+    argv[argc++] = test_strdup("--image");
+    argv[argc++] = test_strdup("oprom.img");
+    argv[argc++] = test_strdup("oprom.img");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc image-type --device <image>
+ */
+static void test_image_type_bad_4(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("image-type");
+    argv[argc++] = test_strdup("--device");
+    argv[argc++] = test_strdup("oprom.img");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
  * test: igsc fw update --image <image> --device <device>
  */
 static void test_fw_update_1(void **state)
@@ -1052,6 +1151,11 @@ int main(void)
         cmocka_unit_test(test_help),
         cmocka_unit_test(test_fw_help),
         cmocka_unit_test(test_oprom_code_help),
+        cmocka_unit_test(test_image_type_bad_1),
+        cmocka_unit_test(test_image_type_bad_2),
+        cmocka_unit_test(test_image_type_bad_3),
+        cmocka_unit_test(test_image_type_bad_4),
+        cmocka_unit_test(test_image_type_1),
         cmocka_unit_test(test_fw_update_1),
         cmocka_unit_test(test_fw_update_2),
         cmocka_unit_test(test_fw_update_3),

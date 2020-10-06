@@ -117,6 +117,55 @@ static void test_device_init_calloc_fail_2(void **state)
 }
 
 /**
+ * @brief A test to check if igsc_image_get_type() return error when
+ *        NULL buffer is sent.
+ *
+ * @param state unit testing state
+ */
+static void test_get_type_null_1(void **state)
+{
+    int ret;
+    uint8_t type;
+
+    ret = igsc_image_get_type(NULL, 100, &type);
+
+    assert_int_equal(ret, IGSC_ERROR_INVALID_PARAMETER);
+}
+
+/**
+ * @brief A test to check if igsc_image_get_type() return error when
+ *        NULL type pointer is sent.
+ *
+ * @param state unit testing state
+ */
+static void test_get_type_null_2(void **state)
+{
+    int ret;
+    uint8_t buffer;
+
+    ret = igsc_image_get_type(&buffer, sizeof(buffer), NULL);
+
+    assert_int_equal(ret, IGSC_ERROR_INVALID_PARAMETER);
+}
+
+/**
+ * @brief A test to check if igsc_image_get_type() return error when
+ *        zero buffer_len is sent.
+ *
+ * @param state unit testing state
+ */
+static void test_get_type_null_3(void **state)
+{
+    int ret;
+    uint8_t buffer;
+    uint8_t type;
+
+    ret = igsc_image_get_type(&buffer, 0, &type);
+
+    assert_int_equal(ret, IGSC_ERROR_INVALID_PARAMETER);
+}
+
+/**
  * @brief A test to check if igsc_device_init_by_device() return error when
  *        NULL handle is send.
  *
@@ -529,8 +578,15 @@ int main(void)
         cmocka_unit_test(test_params_version_compare_equal),
     };
 
+    const struct CMUnitTest get_type_tests[] = {
+        cmocka_unit_test(test_get_type_null_1),
+        cmocka_unit_test(test_get_type_null_2),
+        cmocka_unit_test(test_get_type_null_3),
+    };
+
     int status = cmocka_run_group_tests(device_image_tests, NULL, NULL);
     status += cmocka_run_group_tests(version_cmp_tests, NULL, NULL);
+    status += cmocka_run_group_tests(get_type_tests, NULL, NULL);
 
     return status;
 }
