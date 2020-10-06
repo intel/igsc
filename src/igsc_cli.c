@@ -20,6 +20,10 @@
 
 #include "igsc_lib.h"
 
+#ifdef __linux__
+#define _countof(a) (sizeof(a)/sizeof((a)[0]))
+#endif // __linux__
+
 bool verbose = false;
 bool quiet = false;
 bool use_progress_bar = false;
@@ -1105,6 +1109,83 @@ exit:
     return ret;
 }
 
+const char *type_table[] = {
+    [IGSC_IMAGE_TYPE_UNKNOWN] = "Unknown",
+    [IGSC_IMAGE_TYPE_GFX_FW] = "GFX FW Update image",
+    [IGSC_IMAGE_TYPE_OPROM] = "Oprom Code and Data Update image",
+    [IGSC_IMAGE_TYPE_OPROM_CODE] = "Oprom Code Update image",
+    [IGSC_IMAGE_TYPE_OPROM_DATA] = "Oprom Data Update image"
+};
+
+const char *image_type_to_str(uint8_t type)
+{
+    if (type >= _countof(type_table))
+    {
+        type = IGSC_IMAGE_TYPE_UNKNOWN;
+    }
+
+    return type_table[type];
+}
+
+mockable_static
+int image_type(const char *image_path)
+{
+    struct img *img = NULL;
+    uint8_t type;
+    int ret;
+
+    img = image_read_from_file(image_path);
+    if (img == NULL)
+    {
+        fwupd_error("Failed to read: %s\n", image_path);
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    ret = igsc_image_get_type(img->blob, img->size, &type);
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Unknown image type: %s\n", image_path);
+        goto exit;
+    }
+
+    printf("Image type: %s\n", image_type_to_str(type));
+
+exit:
+    free(img);
+
+    return ret;
+}
+
+static int do_image_type(int argc, char *argv[])
+{
+    const char *image_path = NULL;
+
+    if (argc == 2)
+    {
+        if (arg_is_image(argv[0]))
+        {
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No image to update\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            image_path = argv[0];
+        }
+        else
+        {
+            fwupd_error("Wrong argument: %s\n", argv[0]);
+            return ERROR_BAD_ARGUMENT;
+        }
+    }
+    else
+    {
+        fwupd_error("Too few or too many arguments\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    return image_type(image_path);
+}
+
 static int do_oprom_update(int argc, char *argv[], enum igsc_oprom_type type)
 {
     bool allow_downgrade = false;
@@ -1426,6 +1507,15 @@ static const struct gsc_op g_ops[] = {
                  "OPTIONS:\n\n"
                  "    --info\n"
                  "         display information for each device\n",
+    },
+    {
+        .name  = "image-type",
+        .op    = do_image_type,
+        .usage = {"--image <image>", NULL, NULL},
+        .help  = "Determine the type of supplied image\n"
+                 "OPTIONS:\n\n"
+                 "    -i | --image <image file>\n"
+                 "            supplied image\n",
     },
     {
         .name  = NULL,
