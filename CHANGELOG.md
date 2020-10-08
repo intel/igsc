@@ -1,5 +1,15 @@
 # IGSC FUL
 
+## [v0.2.0] - 2020-10-08
+
+### Added
+
+1. get image type API
+
+### Fixed
+
+1. Fixed few spelling errors
+
 ## [v0.1.4] - 2020-09-21
 
 ### Added
