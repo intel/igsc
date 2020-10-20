@@ -32,6 +32,8 @@ set(LIBSOURCES
 add_library(${PROJECT_NAME} SHARED ${LIBSOURCES})
 set_target_properties(${PROJECT_NAME}
                       PROPERTIES PUBLIC_HEADER ${CMAKE_SOURCE_DIR}/include/igsc_lib.h)
+set_target_properties(${PROJECT_NAME}
+                      PROPERTIES PUBLIC_HEADER ${CMAKE_SOURCE_DIR}/include/igsc_export.h)
 
 target_include_directories(${PROJECT_NAME} PRIVATE .)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/include)
