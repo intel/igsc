@@ -393,6 +393,77 @@ struct gsc_op {
 };
 
 mockable_static
+int iaf_psc_update(const char *device_path, const char *image_path)
+{
+    struct img *img = NULL;
+    struct igsc_device_handle handle;
+    char *device_path_found = NULL;
+    igsc_progress_func_t progress_func = NULL;
+    int ret;
+
+    memset(&handle, 0, sizeof(handle));
+
+    if (!device_path)
+    {
+        if (get_first_device(&device_path_found) != IGSC_SUCCESS ||
+            device_path_found == NULL)
+        {
+            fwupd_error("No device to update\n");
+            return EXIT_FAILURE;
+        }
+        device_path = device_path_found;
+    }
+
+    img = image_read_from_file(image_path);
+    if (img == NULL)
+    {
+        ret = EXIT_FAILURE;
+        fwupd_error("Failed to read :%s\n", image_path);
+        goto exit;
+    }
+
+    ret = igsc_device_init_by_device(&handle, device_path);
+    if (ret)
+    {
+        fwupd_error("Cannot initialize device: %s\n", device_path);
+        goto exit;
+    }
+
+    if (!quiet)
+    {
+        if (use_progress_bar)
+        {
+            progress_func = progress_bar_func;
+        }
+        else
+        {
+            progress_func = progress_percentage_func;
+        }
+    }
+
+    ret = igsc_iaf_psc_update(&handle, img->blob, img->size,
+                              progress_func, NULL);
+
+    /* new line after progress bar */
+    if (!quiet)
+    {
+        printf("\n");
+    }
+    if (ret)
+    {
+        fwupd_error("Update process failed\n");
+    }
+
+exit:
+    (void)igsc_device_close(&handle);
+
+    free(img);
+    free(device_path_found);
+    return ret;
+
+}
+
+mockable_static
 int firmware_update(const char *device_path,
                     const char *image_path,
                     bool allow_downgrade)
@@ -627,6 +698,58 @@ static int do_firmware_version(int argc, char *argv[])
     return ERROR_BAD_ARGUMENT;
 }
 
+static int do_iaf_psc_update(int argc, char *argv[])
+{
+    const char *device_path = NULL;
+    const char *image_path = NULL;
+
+    if (argc <= 0)
+    {
+        fwupd_error("No image to update\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    do
+    {
+        if (arg_is_quiet(argv[0]))
+        {
+            quiet = true;
+            continue;
+        }
+        if (arg_is_device(argv[0]))
+        {
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No device to update\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            device_path = argv[0];
+        }
+        else if (arg_is_image(argv[0]))
+        {
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No image to update\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            image_path = argv[0];
+        }
+        else
+        {
+            fwupd_error("Wrong argument %s\n", argv[0]);
+            return ERROR_BAD_ARGUMENT;
+        }
+    } while(arg_next(&argc, &argv));
+
+    if (image_path)
+    {
+        return iaf_psc_update(device_path, image_path);
+    }
+
+    fwupd_error("No image to update\n");
+    return ERROR_BAD_ARGUMENT;
+}
+
 static int do_firmware_update(int argc, char *argv[])
 {
     bool allow_downgrade = false;
@@ -682,6 +805,29 @@ static int do_firmware_update(int argc, char *argv[])
     }
 
     fwupd_error("No image to update\n");
+    return ERROR_BAD_ARGUMENT;
+}
+
+static int do_iaf_psc(int argc, char *argv[])
+{
+    const char *sub_command = NULL;
+
+    if (argc <= 0)
+    {
+        fwupd_error("Missing arguments\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    sub_command = argv[0];
+
+    arg_next(&argc, &argv);
+
+    if (arg_is_token(sub_command, "update"))
+    {
+        return do_iaf_psc_update(argc, argv);
+    }
+
+    fwupd_error("Wrong argument %s\n", sub_command);
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -1474,6 +1620,18 @@ static const struct gsc_op g_ops[] = {
                  "\nOPTIONS:\n\n"
                  "    -a | --allow-downgrade\n"
                  "            allow downgrade or override the same version\n"
+                 "    -d | --device <device>\n"
+                 "            device to be updated\n"
+                 "    -i | --image <image file>\n"
+                 "            supplied image\n",
+    },
+    {
+        .name  = "iaf",
+        .op    = do_iaf_psc,
+        .usage = {"update [options] [--device <dev>] --image  <image>",
+                   NULL},
+        .help  = "Update Intel Accelerator Fabric configuration data on the devices by the supplied image\n"
+                 "\nOPTIONS:\n\n"
                  "    -d | --device <device>\n"
                  "            device to be updated\n"
                  "    -i | --image <image file>\n"
