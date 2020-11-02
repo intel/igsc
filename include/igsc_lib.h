@@ -22,11 +22,24 @@ extern "C" {
 #ifndef OUT
 #define OUT
 #endif /* OUT */
+
+#if defined (_WIN32) || defined (_WIN64)
+  #ifdef IGSC_DLL_EXPORTS
+    #define IGSC_EXPORT __declspec(dllexport)
+  #else
+    #define IGSC_EXPORT __declspec(dllimport)
+  #endif
+#else
+  #ifdef IGSC_DLL_EXPORTS
+    #define IGSC_EXPORT __attribute__((__visibility__("default")))
+  #else
+    #define IGSC_EXPORT
+  #endif
+#endif
 /** @endcond */
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "igsc_export.h"
 /**
  * A file descriptor
  * @typedef igsc_handle_t
