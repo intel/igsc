@@ -60,6 +60,7 @@ struct igsc_lib_ctx {
     size_t working_buffer_length;     /**< Tee buffer length */
     bool driver_init_called;          /**< Driver was initialized */
     struct gsc_fwu_img_layout layout; /**< Context for the image layout */
+    uint32_t last_firmware_status;    /**< last status code returned from the firmware */
 };
 
 #define FWSTS(n) ((n) - 1)
@@ -476,7 +477,8 @@ static int gsc_fwu_buffer_validate(struct igsc_lib_ctx *lib_ctx,
     return IGSC_SUCCESS;
 }
 
-static int gsc_fwu_heci_validate_response_header(struct gsc_fwu_heci_response *resp_header,
+static int gsc_fwu_heci_validate_response_header(struct igsc_lib_ctx *lib_ctx,
+                                                 struct gsc_fwu_heci_response *resp_header,
                                                  enum gsc_fwu_heci_command_id command_id)
 {
     int status;
@@ -486,6 +488,8 @@ static int gsc_fwu_heci_validate_response_header(struct gsc_fwu_heci_response *r
         status = IGSC_ERROR_INTERNAL;
         goto exit;
     }
+
+    lib_ctx->last_firmware_status = resp_header->status;
 
     if (resp_header->header.command_id != command_id)
     {
@@ -638,7 +642,7 @@ static int gsc_fwu_get_version(struct igsc_lib_ctx *lib_ctx,
         goto exit;
     }
 
-    status = gsc_fwu_heci_validate_response_header(&resp->response, command_id);
+    status = gsc_fwu_heci_validate_response_header(lib_ctx, &resp->response, command_id);
     if (status != IGSC_SUCCESS)
     {
         gsc_error("Invalid HECI message response (%d)\n", status);
@@ -755,7 +759,7 @@ static int gsc_fwu_start(struct igsc_lib_ctx *lib_ctx, uint32_t payload_type)
         goto exit;
     }
 
-    status = gsc_fwu_heci_validate_response_header(&resp->response, command_id);
+    status = gsc_fwu_heci_validate_response_header(lib_ctx, &resp->response, command_id);
     if (status != IGSC_SUCCESS)
     {
         gsc_error("Invalid HECI message response (%d)\n", status);
@@ -828,7 +832,7 @@ static int gsc_fwu_data(struct igsc_lib_ctx *lib_ctx,
         goto exit;
     }
 
-    status = gsc_fwu_heci_validate_response_header(&resp->response, command_id);
+    status = gsc_fwu_heci_validate_response_header(lib_ctx, &resp->response, command_id);
     if (status != IGSC_SUCCESS)
     {
         gsc_error("Invalid HECI message response (%d)\n", status);
@@ -1633,4 +1637,42 @@ int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
 
     return igsc_oprom_update_from_buffer(handle, oprom_type, buffer, buffer_len,
                                          progress_f, ctx);
+}
+
+uint32_t igsc_get_last_firmware_status(IN  struct igsc_device_handle *handle)
+{
+    return handle->ctx->last_firmware_status;
+}
+
+const char *igsc_translate_firmware_status(IN  uint32_t firmware_status)
+{
+    const char *msg = NULL;
+
+    switch (firmware_status) {
+    case GSC_FWU_STATUS_SUCCESS:
+        msg = "Success";
+	break;
+    case GSC_FWU_STATUS_SIZE_ERROR:
+        msg = "Num of bytes to read/write/erase is bigger than partition size";
+        break;
+    case GSC_FWU_STATUS_UPDATE_OPROM_INVALID_STRUCTURE:
+        msg = "Wrong oprom signature";
+        break;
+    case GSC_FWU_STATUS_UPDATE_OPROM_SECTION_NOT_EXIST:
+        msg = "Update oprom section does not exists on flash";
+        break;
+    case GSC_FWU_STATUS_INVALID_COMMAND:
+        msg = "Invalid HECI message sent";
+        break;
+    case GSC_FWU_STATUS_INVALID_PARAMS:
+        msg = "Invalid command parameters";
+        break;
+    case GSC_FWU_STATUS_FAILURE:
+    /* fall through */
+    default:
+        msg = "General firmware error";
+        break;
+    }
+
+    return msg;
 }

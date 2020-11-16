@@ -187,6 +187,37 @@ struct igsc_device_handle
 };
 
 /**
+ * @addtogroup firmware_status
+ * @{
+ */
+
+/**
+ *  @brief Return the last firmware status code.
+ *
+ *  @param handle A handle to the device.
+ *
+ *  @return last firmware status code.
+ */
+IGSC_EXPORT
+uint32_t igsc_get_last_firmware_status(IN struct igsc_device_handle *handle);
+
+/**
+ *  @brief Return the firmware status message corresponding to the code.
+ *
+ *  @param firmware_status code of firmware status
+ *
+ *  @return firmware status message corresponding to the code.
+ */
+IGSC_EXPORT
+const char *igsc_translate_firmware_status(IN uint32_t firmware_status);
+
+/**
+ * @}
+ */
+
+
+
+/**
  *  @brief Initializes a GSC Firmware Update device.
  *
  *  @param handle A handle to the device. All subsequent calls to the lib's
@@ -543,6 +574,7 @@ void igsc_device_iterator_destroy(struct igsc_device_iterator *iter);
 /**
  * @}
  */
+
 
 #ifdef __cplusplus
 }
