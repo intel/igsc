@@ -78,6 +78,41 @@ static int status_tee2fu(TEESTATUS status)
     }
 }
 
+
+#if defined(DEBUG) || defined(_DEBUG)
+static void gsc_debug_hex_dump(const char *title, const void *buf, size_t len)
+{
+#define pbufsz (16 * 3)
+    char pbuf[pbufsz];
+    const unsigned char *_buf = buf;
+    size_t j = 0;
+
+    debug_print("%s\n", title);
+
+    while (len-- > 0)
+    {
+        snprintf(&pbuf[j], pbufsz - j, "%02X ", *_buf++);
+        j += 3;
+        if (j == 16 * 3)
+        {
+            debug_print("%s\n", pbuf);
+            j = 0;
+        }
+    }
+    if (j)
+    {
+        debug_print("%s\n", pbuf);
+    }
+}
+#else
+static void gsc_debug_hex_dump(const char *title, const void *buf, size_t len)
+{
+    (void)title; /* unused */
+    (void)buf;   /* unused */
+    (void)len;   /* unused */
+}
+#endif /* defined(DEBUG) || defined(_DEBUG) */
+
 mockable_static
 void driver_working_buffer_free(struct igsc_lib_ctx *lib_ctx)
 {
@@ -521,6 +556,8 @@ int gsc_tee_command(struct igsc_lib_ctx *lib_ctx,
     int status;
     TEESTATUS tee_status;
 
+    gsc_debug_hex_dump("Sending:", req_buf, buf_size);
+
     num_bytes = 0;
     tee_status = TeeWrite(&lib_ctx->driver_handle, req_buf, request_len, &num_bytes, 0);
     if (!TEE_IS_SUCCESS(tee_status))
@@ -543,6 +580,8 @@ int gsc_tee_command(struct igsc_lib_ctx *lib_ctx,
         status = status_tee2fu(tee_status);
         goto exit;
     }
+
+    gsc_debug_hex_dump("Received:", resp_buf, *response_len);
 
     status = IGSC_SUCCESS;
 
@@ -831,6 +870,8 @@ static int gsc_fwu_end(struct igsc_lib_ctx *lib_ctx)
     memset(req, 0, sizeof(req->header));
     req->header.command_id = command_id;
     req->reserved = 0;
+
+    gsc_debug_hex_dump("Sending:", (unsigned char *)req, request_len);
 
     tee_status = TeeWrite(&lib_ctx->driver_handle, req, request_len, NULL, 0);
     if (!TEE_IS_SUCCESS(tee_status))
