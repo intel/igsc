@@ -4,11 +4,11 @@ cmake_minimum_required(VERSION 3.10)
 
 # Find install metee library
 find_library(
-  LIBMETEE_LIB REQUIRED
+  LIBMETEE_LIB
   NAMES metee
   PATHS ENV METEE_LIB_PATH)
 find_path(
-  LIBMETEE_HEADER REQUIRED
+  LIBMETEE_HEADER
   NAMES metee.h
   PATHS ENV METEE_HEADER_PATH)
 
