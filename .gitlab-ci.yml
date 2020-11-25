@@ -28,8 +28,6 @@ gitlint:
         image: ${CI_REGISTRY}/${CI_PYTHON}
         tags:
                 - Linux
-        before_script:
-        - *ssh_setup
         extends: .gitlint
 
 cmake_lint:
