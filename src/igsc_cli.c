@@ -513,6 +513,12 @@ int firmware_update(const char *device_path,
     print_fw_version(&device_fw_version);
 
 exit:
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_verbose("firmware status: %s(%d)\n",
+                      igsc_translate_firmware_status(igsc_get_last_firmware_status(&handle)),
+                      igsc_get_last_firmware_status(&handle));
+    }
     (void)igsc_device_close(&handle);
 
     free(img);
@@ -546,6 +552,13 @@ int firmware_version(const char *device_path)
     print_fw_version(&fw_version);
 
 exit:
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_verbose("firmware status: %s(%d)\n",
+                      igsc_translate_firmware_status(igsc_get_last_firmware_status(&handle)),
+                      igsc_get_last_firmware_status(&handle));
+    }
+
     (void)igsc_device_close(&handle);
     return ret;
 }
