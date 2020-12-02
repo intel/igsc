@@ -516,3 +516,20 @@ done via SetupDi interface.
 
     int igsc_device_iterator_next(struct igsc_device_iterator *iter,
                                   struct igsc_device_info *info);
+
+2.7 Retrieving firmware status
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Retrieve the firmware status code of the last operation.
+
+
+.. code-block:: c
+
+   uint32_t igsc_get_last_firmware_status(IN struct igsc_device_handle *handle);
+
+
+2. Return the firmware status message corresponding to the firmware status code.
+
+.. code-block:: c
+
+   const char *igsc_translate_firmware_status(IN uint32_t firmware_status);
