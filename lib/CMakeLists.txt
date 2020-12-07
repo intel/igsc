@@ -22,6 +22,7 @@ endif()
 
 set(LIBSOURCES
     igsc_lib.c
+    ifr.c
     oprom.c
     oprom_parser.c
     ${ENUM_SOURCES}

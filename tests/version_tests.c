@@ -13,24 +13,49 @@
 
 #include "test_strdup.h"
 
+#include <metee.h>
+
 #include "igsc_system.h"
 #include "igsc_lib.h"
 #include "igsc_heci.h"
+#include "igsc_internal.h"
 #include "dev_info_mock.c"
 
 typedef void (*respons_genartor_f)(struct gsc_fwu_heci_version_resp *);
 
-int mock_driver_init(struct igsc_lib_ctx *lib_ctx);
-void mock_driver_deinit(struct igsc_lib_ctx *lib_ctx);
 
-int driver_init(struct igsc_lib_ctx *lib_ctx)
+int driver_working_buffer_alloc(struct igsc_lib_ctx *lib_ctx);
+void driver_working_buffer_free(struct igsc_lib_ctx *lib_ctx);
+int gsc_driver_init(struct igsc_lib_ctx *lib_ctx, const GUID *guid)
 {
-    return mock_driver_init(lib_ctx);
+    int status;
+
+    (void)guid;
+
+    lib_ctx->driver_handle.maxMsgLen = 2048;
+    lib_ctx->driver_handle.protcolVer = 1;
+
+    status = driver_working_buffer_alloc(lib_ctx);
+    if (status != IGSC_SUCCESS)
+    {
+        return status;
+    }
+
+    lib_ctx->driver_init_called = true;
+
+    return status;
 }
 
-void driver_deinit(struct igsc_lib_ctx *lib_ctx)
+void gsc_driver_deinit(struct igsc_lib_ctx *lib_ctx)
 {
-    mock_driver_deinit(lib_ctx);
+    if (!lib_ctx->driver_init_called)
+    {
+        return;
+    }
+
+    driver_working_buffer_free(lib_ctx);
+
+    lib_ctx->driver_init_called = false;
 }
 
 static int group_setup(void **state)
