@@ -48,7 +48,7 @@ add_cmocka_test(oprom_parser_tests
 add_cmocka_test_environment(oprom_parser_tests)
 
 add_cmocka_test(cli_tests
-                SOURCES cli_tests.c ../lib/igsc_lib.c ../lib/oprom.c ../lib/oprom_parser.c enum_mock.c
+                SOURCES cli_tests.c ../lib/igsc_lib.c ../lib/oprom.c ../lib/oprom_parser.c ../lib/ifr.c enum_mock.c
                 LINK_LIBRARIES ${CMOCKA_LIBRARIES} LIBMETEE
                 COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS} -Dmain=ut_main -Digsc_strdup=test_strdup -DUNIT_TESTING=1
                 INCLUDE_DIRECTORIES ${IGCS_INCLUDE_DIRS} ${CMOCKA_INCLUDE_DIR} ../src
