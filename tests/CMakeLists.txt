@@ -55,6 +55,14 @@ add_cmocka_test(cli_tests
                 LINK_OPTIONS  "-Wl,--wrap=igsc_device_iterator_next -Wl,--wrap=igsc_device_iterator_create -Wl,--wrap=igsc_device_iterator_destroy")
 add_cmocka_test_environment(cli_tests)
 
+add_cmocka_test(ifr_tests
+                SOURCES ifr_tests.c ../lib/igsc_lib.c ../lib/oprom.c ../lib/oprom_parser.c ../lib/ifr.c enum_mock.c
+                LINK_LIBRARIES ${CMOCKA_LIBRARIES} LIBMETEE
+                COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS} -Dmain=ut_main -Digsc_strdup=test_strdup -DUNIT_TESTING=1
+                INCLUDE_DIRECTORIES ${IGCS_INCLUDE_DIRS} ${CMOCKA_INCLUDE_DIR} ../src
+                LINK_OPTIONS  "-Wl,--wrap=igsc_device_iterator_next -Wl,--wrap=igsc_device_iterator_create -Wl,--wrap=igsc_device_iterator_destroy")
+add_cmocka_test_environment(ifr_tests)
+
 add_cmocka_test(igsc_enum_tests
                 SOURCES igsc_enum_tests.c
                 LINK_LIBRARIES ${CMOCKA_LIBRARIES} LIBMETEE udev
