@@ -17,6 +17,7 @@
 #pragma warning(disable:4127)
 
 #define  mockable_static static
+#define  mockable
 
 #endif /* _MSC_VER */
 

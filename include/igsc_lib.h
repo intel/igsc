@@ -148,28 +148,6 @@ struct igsc_device_info {
     uint16_t subsys_device_id;       /**< gfx device subsystem device id */
     uint16_t subsys_vendor_id;       /**< gfx device subsystem vendor id */
 };
-
-/**
- * @name IGSC_ERRORS
- *     The Library return codes
- * @addtogroup IGSC_ERRORS
- * @{
- */
-#define IGSC_ERROR_BASE              0x0000U               /**< Error Base */
-#define IGSC_SUCCESS                 (IGSC_ERROR_BASE + 0) /**< Success */
-#define IGSC_ERROR_INTERNAL          (IGSC_ERROR_BASE + 1) /**< Internal Error */
-#define IGSC_ERROR_NOMEM             (IGSC_ERROR_BASE + 2) /**< Memory Allocation Failed */
-#define IGSC_ERROR_INVALID_PARAMETER (IGSC_ERROR_BASE + 3) /**< Invalid parameter was provided */
-#define IGSC_ERROR_DEVICE_NOT_FOUND  (IGSC_ERROR_BASE + 4) /**< Requested device was not found */
-#define IGSC_ERROR_BAD_IMAGE         (IGSC_ERROR_BASE + 5) /**< Provided image has wrong format */
-#define IGSC_ERROR_PROTOCOL          (IGSC_ERROR_BASE + 6) /**< Error in the update protocol */
-#define IGSC_ERROR_BUFFER_TOO_SMALL  (IGSC_ERROR_BASE + 7) /**< Provided buffer is too small */
-#define IGSC_ERROR_INVALID_STATE     (IGSC_ERROR_BASE + 8) /**< Invalid library internal state */
-#define IGSC_ERROR_NOT_SUPPORTED     (IGSC_ERROR_BASE + 9) /**< Unsupported request */
-/**
- * @}
- */
-
 /**
  * @def IGSC_MAX_IMAGE_SIZE
  * @brief Maximum firmware image size
@@ -593,12 +571,121 @@ int igsc_device_iterator_next(struct igsc_device_iterator *iter,
  */
 IGSC_EXPORT
 void igsc_device_iterator_destroy(struct igsc_device_iterator *iter);
+/**
+ * @}
+ */
 
+/**
+ * @addtogroup ifr
+ * @{
+ */
+
+/**
+ * @name IGSC_ERRORS
+ *     The Library return codes
+ * @addtogroup IGSC_ERRORS
+ * @{
+ */
+#define IGSC_ERROR_BASE              0x0000U               /**< Error Base */
+#define IGSC_SUCCESS                 (IGSC_ERROR_BASE + 0) /**< Success */
+#define IGSC_ERROR_INTERNAL          (IGSC_ERROR_BASE + 1) /**< Internal Error */
+#define IGSC_ERROR_NOMEM             (IGSC_ERROR_BASE + 2) /**< Memory Allocation Failed */
+#define IGSC_ERROR_INVALID_PARAMETER (IGSC_ERROR_BASE + 3) /**< Invalid parameter was provided */
+#define IGSC_ERROR_DEVICE_NOT_FOUND  (IGSC_ERROR_BASE + 4) /**< Requested device was not found */
+#define IGSC_ERROR_BAD_IMAGE         (IGSC_ERROR_BASE + 5) /**< Provided image has wrong format */
+#define IGSC_ERROR_PROTOCOL          (IGSC_ERROR_BASE + 6) /**< Error in the update protocol */
+#define IGSC_ERROR_BUFFER_TOO_SMALL  (IGSC_ERROR_BASE + 7) /**< Provided buffer is too small */
+#define IGSC_ERROR_INVALID_STATE     (IGSC_ERROR_BASE + 8) /**< Invalid library internal state */
+#define IGSC_ERROR_NOT_SUPPORTED     (IGSC_ERROR_BASE + 9) /**< Unsupported request */
+/**
+ * @}
+ */
+
+/**
+ * ifr tiles masks
+ */
+enum igsc_ifr_tiles {
+    IGSC_IFR_TILE_0 = 0x0001,
+    IGSC_IFR_TILE_1 = 0x0002,
+};
+
+/**
+ * ifr supported test masks
+ */
+enum igsc_supported_ifr_tests {
+    IGSC_IFR_SUPPORTED_TEST_SCAN  = 0x00000001,
+    IGSC_IFR_SUPPORTED_TEST_ARRAY = 0x00000002,
+};
+
+/**
+ * ifr repairs masks
+ */
+enum igsc_ifr_repairs {
+    IGSC_IFR_REPAIR_DSS_EN = 0x00000001,
+    IGSC_IFR_REPAIR_ARRAY  = 0x00000002,
+};
+
+/**
+ * @name IGSC_IFR_RUN_TEST_STATUSES
+ *     The IFR Run Test Command Statuses
+ * @addtogroup IGSC_IFR_RUN_TEST_STATUSES
+ * @{
+ */
+enum ifr_test_run_status
+{
+    IFR_TEST_STATUS_SUCCESS = 0,           /**< Test passed successfully */
+    IFR_TEST_STATUS_PASSED_WITH_REPAIR,    /**< Test passed, recoverable error found and repaired. No subslice swap needed */
+    IFR_TEST_STATUS_PASSED_WITH_RECOVERY,  /**< Test passed, recoverable error found and repaired. Subslice swap needed. */
+    IFR_TEST_STATUS_SUBSLICE_FAILURE,      /**< Test completed, unrecoverable error found (Subslice failure and no spare Subslice available). */
+    IFR_TEST_STATUS_NON_SUBSLICE_FAILURE,  /**< Test completed, unrecoverable error found (non-Subslice failure). */
+    IFR_TEST_STATUS_ERROR,                 /**< Test error */
+};
 /**
  * @}
  */
 
 
+/**
+ *  @brief Retrieves the status of GSC IFR device.
+ *
+ *  @param handle A handle to the device.
+ *  @param result Test result code
+ *  @param supported_tests Bitmask holding the tests supported on the platform.
+ *  @param ifr_applied Bitmask holding the in field repairs was applied during boot.
+ *  @param tiles_num Number of tiles on the specific SOC.
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_ifr_get_status(IN  struct igsc_device_handle *handle,
+                        OUT uint8_t   *result,
+                        OUT uint32_t  *supported_tests,
+                        OUT uint32_t  *ifr_applied,
+                        OUT uint8_t   *tiles_num);
+
+/**
+ *  @brief Runs IFT test on GSC IFR device.
+ *
+ *  @param handle A handle to the device.
+ *  @param test_type Requested test to run
+ *  @param result Test result code
+ *  @param tiles Tiles on which to run the test
+ *  @param run_status Test run status
+ *  @param error_code The error code of the test that was run (0 - no error)
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_ifr_run_test(IN struct igsc_device_handle *handle,
+                      IN uint8_t   test_type,
+                      IN uint8_t   tiles,
+                      OUT uint8_t  *result,
+                      OUT uint8_t  *run_status,
+                      OUT uint32_t *error_code);
+
+/**
+ * @}
+ */
 #ifdef __cplusplus
 }
 #endif
