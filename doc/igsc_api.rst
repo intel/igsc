@@ -481,6 +481,121 @@ which holds paring state of the OPROM image information.
      uint8_t igsc_oprom_version_compare(const struct igsc_oprom_version *image_ver,
                                       const struct igsc_oprom_version *device_ver);
 
+8. IFR (In-Field Repair) functions
+
+  In order to increase the lifetime of the discrete GFX die, there is some redundancy added to it.
+  In case of failures, CSC firmware will enable reserved HW instead of malfunctioning HW if possible. 
+  The SW triggers the tests that are run by the CSC firmware which decides based on the tests
+  results whether to replace malfunctioning HW by the redundant one on the next boot.
+  After the test a reset should be performed.
+
+  The following commands for querying and triggering the IFR flow are supported:
+
+  a. Get IFR Status:
+
+    This API returns which IFR tests are supported, how many tiles exist and whether IFR
+    repairs were previously applied by the firmware.
+
+    .. code-block:: c
+
+      int igsc_ifr_get_status(IN  struct igsc_device_handle *handle,
+                              OUT uint8_t   *result,
+                              OUT uint32_t  *supported_tests,
+                              OUT uint32_t  *ifr_applied,
+                              OUT uint8_t   *tiles_num);
+
+
+    *Example 1:*
+
+    .. code-block:: c
+
+      int main(int argc, char *argv[])
+      {
+         struct igsc_device_handle *handle = NULL;
+         const char *device_path = NULL;
+         uint32_t supported_tests = 0;
+         uint32_t ifr_applied = 0
+         uint8_t  tiles_num = 0;
+         uint8_t  result = 0;
+         int ret;
+
+         device_path = argv[1];
+
+         igsc_device_init_by_device(&handle, device_path);
+
+         ret = igsc_ifr_get_status(handle, &result, &supported_tests, &ifr_applied, &tiles_num);
+         if (ret || result)
+         {
+             fprintf(stderr, "Failed to get ifr status, returned %d, result %u\n",
+                     ret, result);
+             return -1;
+          }
+
+          printf("Number of tiles: %u\n", tiles_num);
+          printf("Supported tests: scan_test: %u, array test: %u\n",
+                 !!(supported_tests & IGSC_IFR_SUPPORTED_TEST_SCAN),
+                 !!(supported_tests & IGSC_IFR_SUPPORTED_TEST_ARRAY));
+          printf("Applied repairs: DSS EN repair: %u, Array repair: %u\n",
+                 !!(ifr_applied & IGSC_IFR_REPAIR_DSS_EN)
+                 !!(ifr_applied & IGSC_IFR_REPAIR_ARRAY));
+
+         igsc_device_close(handle);
+         return 0;
+      }
+
+
+  b. Run IFR Test:
+
+    Provides API for triggering the IFR flow and returns the status
+    of the requested test.
+    The command will choose which test to run and on which tile to
+    run it on (tile 0 / tile 1 / all tiles).
+    A scan test is expected to take a few seconds.
+    Host SW will receive a response for the IFR request message only
+    after the IFR flow completes.
+ 
+    .. code-block:: c
+
+      int igsc_ifr_run_test(IN struct ifr_device_handle *handle,
+                            IN uint8_t                  test_type,
+                            IN uint8_t                   tiles,
+                            OUT uint8_t                 *result,
+                            OUT uint8_t                 *run_status,
+                            OUT uint32_t                *error_code);
+
+    *Example 2:*
+
+    .. code-block:: c
+
+      int main(int argc, char *argv[])
+      {
+          struct igsc_device_handle *hadnle;
+          uint8_t run_status = 0;
+          uint32_t error_code = 0;
+          uint8_t result = 0;
+          struct tile_num = 0;
+          uint8_t test_type = 0; /* run scan test */
+          int ret;
+
+          device_path = argv[1];
+
+          igsc_device_init_by_device(&handle, device_path);
+
+          tile_num.tile_0 = 1; /* run test on the first tile */
+
+          ret = igsc_ifr_run_test(handle, test_type, tile_num, &result, &run_status, &error_code);
+          if (ret || result)
+          {
+              fprintf(stderr, "Failed to run test, returned %d result %u status %u error_code %u\n",
+                      ret, result, run_status, error_code);
+              return -1;
+          }
+
+          printf("error_code is %u run_status is %u\n", error_code, run_status);
+
+          igsc_device_close(handle);
+          return 0;
+      }
 
 2.6 Device Enumeration API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
