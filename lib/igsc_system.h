@@ -15,6 +15,9 @@
 #define FPT_HEADER_LENGTH  32
 #define GSC_FWU_IUP_NUM 2
 
+#define INFO_HEADER_MARKER (0x4f464e49)
+#define FWIM_HEADER_MARKER (0x4d495746)
+
 #pragma pack(1)
 
 struct gsc_fwu_fpt_header {
@@ -57,12 +60,12 @@ struct gsc_fwu_fpt_entry {
  */
 struct gsc_fwu_fw_image_data {
 	struct gsc_fwu_version fw_version;
-	uint16_t              flags;
-	uint8_t               fw_type;
-	uint8_t               fw_sub_type;
-	uint32_t              arb_svn;
-	uint32_t              tcb_svn;
-	uint32_t              vcn;
+	uint16_t               flags;
+	uint8_t                fw_type;
+	uint8_t                fw_sub_type;
+	uint32_t               arb_svn;
+	uint32_t               tcb_svn;
+	uint32_t               vcn;
 };
 
 struct gsc_fwu_iup_data {
@@ -74,13 +77,13 @@ struct gsc_fwu_iup_data {
 };
 
 struct gsc_fwu_image_data {
-	struct gsc_fwu_fw_image_data fw_img_data;              /**< FTPR data */
+	struct gsc_fwu_fw_image_data fw_img_data;               /**< FTPR data */
 	struct gsc_fwu_iup_data      iup_data[GSC_FWU_IUP_NUM]; /**< IUP Data */
 };
 
 struct gsc_fwu_image_metadata_v1 {
 	struct gsc_fwu_external_version overall_version; /**< The version of the overall IFWI image, i.e. the combination of IPs */
-	struct gsc_fwu_image_data      update_img_data;
+	struct gsc_fwu_image_data       update_img_data; /**< Sub-partitions */
 };
 
 struct gsc_fwu_fpt_img {
@@ -89,5 +92,26 @@ struct gsc_fwu_fpt_img {
 };
 
 #pragma pack()
+
+enum FWU_FPT_ENTRY {
+    FWU_FPT_ENTRY_IMAGE_INFO,
+    FWU_FPT_ENTRY_FW_IMAGE,
+    FWU_FPT_ENTRY_NUM
+};
+
+struct gsc_fwu_img_entry {
+    const uint8_t *content;
+    uint32_t size;
+};
+
+struct gsc_fwu_img_layout {
+    struct gsc_fwu_img_entry table[FWU_FPT_ENTRY_NUM];
+};
+
+#define ENTRY_ID_TO_BITMASK(entry_id) (1U << (entry_id))
+
+#define MANDATORY_ENTRY_BITMASK \
+    (ENTRY_ID_TO_BITMASK(FWU_FPT_ENTRY_IMAGE_INFO) | \
+    ENTRY_ID_TO_BITMASK(FWU_FPT_ENTRY_FW_IMAGE))
 
 #endif /* !__IGSC_SYSTEM_H__ */

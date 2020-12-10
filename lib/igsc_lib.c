@@ -22,46 +22,12 @@
 #include "igsc_oprom.h"
 #include "igsc_perf.h"
 #include "igsc_log.h"
+#include "igsc_internal.h"
 
 #include "utils.h"
 
 DEFINE_GUID(GUID_METEE_FWU, 0x87d90ca5, 0x3495, 0x4559,
             0x81, 0x05, 0x3f, 0xbf, 0xa3, 0x7b, 0x8b, 0x79);
-
-#define INFO_HEADER_MARKER (0x4f464e49)
-#define FWIM_HEADER_MARKER (0x4d495746)
-
-enum FWU_FPT_ENTRY {
-    FWU_FPT_ENTRY_IMAGE_INFO,
-    FWU_FPT_ENTRY_FW_IMAGE,
-    FWU_FPT_ENTRY_NUM
-};
-
-struct gsc_fwu_img_entry {
-    const uint8_t *content;
-    uint32_t size;
-};
-
-struct gsc_fwu_img_layout {
-    struct gsc_fwu_img_entry table[FWU_FPT_ENTRY_NUM];
-};
-
-#define ENTRY_ID_TO_BITMASK(entry_id) (1U << (entry_id))
-
-#define MANDATORY_ENTRY_BITMASK \
-       (ENTRY_ID_TO_BITMASK(FWU_FPT_ENTRY_IMAGE_INFO) | \
-        ENTRY_ID_TO_BITMASK(FWU_FPT_ENTRY_FW_IMAGE))
-
-struct igsc_lib_ctx {
-    char *device_path;                /**< GSC device path */
-    igsc_handle_t dev_handle;         /**< GSC device handle */
-    TEEHANDLE driver_handle;          /**< Context for the driver */
-    uint8_t *working_buffer;          /**< Buffer for tee calls */
-    size_t working_buffer_length;     /**< Tee buffer length */
-    bool driver_init_called;          /**< Driver was initialized */
-    struct gsc_fwu_img_layout layout; /**< Context for the image layout */
-    uint32_t last_firmware_status;    /**< last status code returned from the firmware */
-};
 
 #define FWSTS(n) ((n) - 1)
 
