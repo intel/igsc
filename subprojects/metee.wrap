@@ -1,6 +1,6 @@
 [wrap-git]
 directory = metee
-url = ssh://github.com/intel/metee.git
+url = https://github.com/intel/metee.git
 revision = master
 depth = 1
 
