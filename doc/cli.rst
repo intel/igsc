@@ -111,4 +111,18 @@ the firmware and OPROM partitions versions on each device.
 
 .. code-block:: sh
 
-   igsc list-devices [--info]
+    igsc list-devices [--info]
+
+
+3.5 In-Field Repair
+~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: sh
+
+    igsc ifr get-status --device /dev/meiX
+
+
+.. code-block:: sh
+
+    igsc ifr run-test --device /dev/meiX --tile [0|1|all] --test [scan|array]
+
