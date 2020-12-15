@@ -1,5 +1,15 @@
 # IGSC FUL
 
+
+## [V0.3.0] - 2022-01-17
+
+### Added
+
+1. Add accelrator fabric PSC update
+2. In field repair command support
+3. Fix spelling of word 'firmware'
+
+
 ## [v0.2.6] - 2021-09-02
 
 ### Fixed
