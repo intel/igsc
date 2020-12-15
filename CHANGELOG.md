@@ -1,5 +1,16 @@
 # IGSC FUL
 
+## [v0.3.0] - 2020-01-17
+
+### Added
+
+1. Add accelrator fabric PSC update
+2. In field repair command support
+
+### Fixed
+
+# IGSC FUL
+
 ## [v0.2.1] - 2020-12-22
 
 ### Added
