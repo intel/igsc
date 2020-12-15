@@ -1,5 +1,28 @@
 # IGSC FUL
 
+## [v0.2.1] - 2020-12-22
+
+### Added
+
+1. lib: add igsc_internal.h with struct igsc_lib_ctx
+2. doc: add firmware status code retrieval functions
+3. cli: add firmware status print in verbose mode
+4. lib: add return code from the firmware HECI messages
+5. lib: add heci buffer trace (in debug code)
+6. Add Apache 2 license file
+
+### Fixed
+
+1. metee.wrap use https instead of ssh for metee
+2. cmake: drop REQUIRED for metee find_library
+3. merge igsc_export.h into igsc_lib.h
+4. README.md use uniform name for build directory
+5. Add missing stack protection compilation flags
+6. test: fix pointer sign conversion
+7. Fix uninitialized variable warning in oprom_parser
+
+# IGSC FUL
+
 ## [v0.2.0] - 2020-10-08
 
 ### Added
