@@ -676,6 +676,8 @@ int image_oprom_get_next(struct igsc_oprom_image *img,
 {
     struct oprom_subsystem_device_id _device;
 
+    memset(&_device, 0, sizeof(_device));
+
     if (image_oprom_get_device(img, img->cur_device_pos, &_device) != IGSC_SUCCESS)
     {
         gsc_debug("no more devices\n");
