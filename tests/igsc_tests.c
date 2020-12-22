@@ -344,7 +344,7 @@ static void igsc_device_get_device_info_null_3(void **state)
 static void test_image_oprom_init_calloc_fail(void **status)
 {
     struct igsc_oprom_image *img = NULL;
-    const char buf[100];
+    const uint8_t buf[100];
 
     will_return(__wrap__test_calloc, 1);
 
