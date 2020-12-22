@@ -38,7 +38,9 @@ set(COMPILE_OPTIONS_NX
     -Woverflow
     -fwrapv
     -fPIC
-    "$<$<CONFIG:DEBUG>:-O0;-g3;-ggdb>"
+    -fstack-protector-strong
+    "$<$<CONFIG:Debug>:-O0;-g3;-ggdb>"
+    "$<$<CONFIG:Release>:-O2;-D_FORTIFY_SOURCE=2>"
     "$<$<BOOL:${ENABLE_WERROR}>:-Werror>"
 )
 
