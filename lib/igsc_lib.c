@@ -113,9 +113,8 @@ int driver_working_buffer_alloc(struct igsc_lib_ctx *lib_ctx)
     return IGSC_SUCCESS;
 }
 
-
-mockable_static
-void driver_deinit(struct igsc_lib_ctx *lib_ctx)
+mockable
+void gsc_driver_deinit(struct igsc_lib_ctx *lib_ctx)
 {
     if (!lib_ctx->driver_init_called)
     {
@@ -129,20 +128,21 @@ void driver_deinit(struct igsc_lib_ctx *lib_ctx)
     lib_ctx->driver_init_called = false;
 }
 
-mockable_static
-int driver_init(struct igsc_lib_ctx *lib_ctx)
+mockable
+int gsc_driver_init(struct igsc_lib_ctx *lib_ctx, IN const GUID *guid)
 {
     TEESTATUS tee_status;
     int status;
 
     if (lib_ctx->dev_handle == IGSC_INVALID_DEVICE_HANDLE)
     {
-        tee_status = TeeInit(&lib_ctx->driver_handle, &GUID_METEE_FWU, lib_ctx->device_path);
+        tee_status = TeeInit(&lib_ctx->driver_handle, guid, lib_ctx->device_path);
     }
     else
     {
-        tee_status = TeeInitHandle(&lib_ctx->driver_handle, &GUID_METEE_FWU, lib_ctx->dev_handle);
+        tee_status = TeeInitHandle(&lib_ctx->driver_handle, guid, lib_ctx->dev_handle);
     }
+
     if (!TEE_IS_SUCCESS(tee_status))
     {
         gsc_error("Error in HECI init (%d)\n", tee_status);
@@ -422,8 +422,8 @@ exit:
     return status;
 }
 
-static int gsc_fwu_buffer_validate(struct igsc_lib_ctx *lib_ctx,
-                                   size_t req_sz, size_t resp_sz)
+int gsc_fwu_buffer_validate(struct igsc_lib_ctx *lib_ctx,
+                            size_t req_sz, size_t resp_sz)
 {
     if (lib_ctx->working_buffer == NULL)
     {
@@ -516,7 +516,7 @@ exit:
     return status;
 }
 
-mockable_static
+mockable
 int gsc_tee_command(struct igsc_lib_ctx *lib_ctx,
                     void *req_buf, size_t request_len,
                     void *resp_buf, size_t buf_size,
@@ -1079,7 +1079,7 @@ int igsc_device_fw_version(IN struct igsc_device_handle *handle,
     }
 
     lib_ctx = handle->ctx;
-    ret = driver_init(lib_ctx);
+    ret = gsc_driver_init(lib_ctx, &GUID_METEE_FWU);
     if (ret != IGSC_SUCCESS)
     {
         gsc_error("Failed to init HECI driver\n");
@@ -1088,7 +1088,7 @@ int igsc_device_fw_version(IN struct igsc_device_handle *handle,
 
     ret = gsc_get_fw_version(lib_ctx, version);
 
-    driver_deinit(lib_ctx);
+    gsc_driver_deinit(lib_ctx);
 
     return ret;
 }
@@ -1261,7 +1261,7 @@ int igsc_device_fw_update(IN struct igsc_device_handle *handle,
 
     gsc_pref_cnt_checkpoint(perf_ctx, "After reading and parsing image");
 
-    ret = driver_init(lib_ctx);
+    ret = gsc_driver_init(lib_ctx, &GUID_METEE_FWU);
     if (ret != IGSC_SUCCESS)
     {
         goto exit;
@@ -1364,7 +1364,7 @@ int igsc_device_fw_update(IN struct igsc_device_handle *handle,
 exit:
     gsc_fwu_img_layout_reset(&lib_ctx->layout);
 
-    driver_deinit(lib_ctx);
+   gsc_driver_deinit(lib_ctx);
 
     return ret;
 }
@@ -1423,7 +1423,7 @@ int igsc_device_oprom_version(IN struct igsc_device_handle *handle,
     }
 
     lib_ctx = handle->ctx;
-    ret = driver_init(lib_ctx);
+    ret = gsc_driver_init(lib_ctx, &GUID_METEE_FWU);
     if (ret != IGSC_SUCCESS)
     {
         gsc_error("Failed to init HECI driver\n");
@@ -1432,7 +1432,7 @@ int igsc_device_oprom_version(IN struct igsc_device_handle *handle,
 
     ret = gsc_fwu_get_oprom_version(lib_ctx, partition, version);
 
-    driver_deinit(lib_ctx);
+    gsc_driver_deinit(lib_ctx);
 
     return ret;
 }
@@ -1491,7 +1491,7 @@ static int igsc_oprom_update_from_buffer(IN  struct igsc_device_handle *handle,
 
     gsc_pref_cnt_checkpoint(perf_ctx, "After reading and parsing image");
 
-    ret = driver_init(lib_ctx);
+    ret = gsc_driver_init(lib_ctx, &GUID_METEE_FWU);
     if (ret != IGSC_SUCCESS)
     {
         goto exit;
@@ -1574,7 +1574,7 @@ static int igsc_oprom_update_from_buffer(IN  struct igsc_device_handle *handle,
 exit:
     gsc_fwu_img_layout_reset(&lib_ctx->layout);
 
-    driver_deinit(lib_ctx);
+    gsc_driver_deinit(lib_ctx);
 
     return ret;
 }

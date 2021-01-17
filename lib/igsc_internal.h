@@ -18,4 +18,15 @@ struct igsc_lib_ctx {
     uint32_t last_firmware_status;    /**< last status code returned from the firmware */
 };
 
+int gsc_fwu_buffer_validate(struct igsc_lib_ctx *lib_ctx,
+                            size_t req_sz, size_t resp_sz);
+
+int gsc_tee_command(struct igsc_lib_ctx *lib_ctx,
+                    void *req_buf, size_t request_len,
+                    void *resp_buf, size_t buf_size,
+                    size_t *response_len);
+
+void gsc_driver_deinit(struct igsc_lib_ctx *lib_ctx);
+int gsc_driver_init(struct igsc_lib_ctx *lib_ctx, IN const GUID *guid);
+
 #endif /* !__IGSC_INTERNAL_H__ */
