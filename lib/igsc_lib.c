@@ -708,7 +708,6 @@ static int gsc_fwu_get_oprom_version(struct igsc_lib_ctx *lib_ctx,
                                (uint8_t *)version, sizeof(*version));
 }
 
-
 static int gsc_fwu_start(struct igsc_lib_ctx *lib_ctx, uint32_t payload_type)
 {
     int status;
@@ -718,6 +717,7 @@ static int gsc_fwu_start(struct igsc_lib_ctx *lib_ctx, uint32_t payload_type)
     size_t buf_len;
     const uint8_t *fpt_info;
     uint32_t fpt_info_len;
+    struct gsc_fwu_heci_image_metadata zero_meta_data = {0};
 
     struct gsc_fwu_heci_start_req  *req;
     struct gsc_fwu_heci_start_resp *resp;
@@ -730,9 +730,16 @@ static int gsc_fwu_start(struct igsc_lib_ctx *lib_ctx, uint32_t payload_type)
     response_len = sizeof(*resp);
     buf_len = lib_ctx->working_buffer_length;
 
-    fpt_info_len = lib_ctx->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].size;
-    fpt_info = lib_ctx->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].content;
-
+    if (payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_IAF_PSC)
+    {
+        fpt_info_len = sizeof(zero_meta_data);
+        fpt_info = (const uint8_t *)&zero_meta_data;
+    }
+    else
+    {
+        fpt_info_len = lib_ctx->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].size;
+        fpt_info = lib_ctx->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].content;
+    }
     request_len += fpt_info_len;
     status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
     if (status != IGSC_SUCCESS)
@@ -749,7 +756,8 @@ static int gsc_fwu_start(struct igsc_lib_ctx *lib_ctx, uint32_t payload_type)
     memset(req->reserved, 0, sizeof(req->reserved));
     if (gsc_memcpy_s(&req->data, buf_len - sizeof(*req), fpt_info, fpt_info_len))
     {
-        gsc_error("Copy of meta data failed\n");
+        gsc_error("Copy of meta data failed, buf len %ld meta data len %u\n",
+                  buf_len - sizeof(*req), fpt_info_len);
         status = IGSC_ERROR_INTERNAL;
         goto exit;
     }
@@ -1318,20 +1326,19 @@ static int gsc_update(IN struct igsc_device_handle *handle,
         {
             goto exit;
         }
-
-        fpt_size = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].size;
-        fpt_data = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].content;
     }
     else if (payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_IAF_PSC)
     {
-        fpt_size = buffer_len;
-        fpt_data = buffer;
-        payload_type = GSC_FWU_HECI_PAYLOAD_TYPE_IAF_PSC;
+        lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].size = buffer_len;
+        lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].content = buffer;
     }
     else
     {
         return IGSC_ERROR_INVALID_PARAMETER;
     }
+
+    fpt_size = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].size;
+    fpt_data = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].content;
 
     gsc_debug("Update Image Payload size: %d bytes\n", fpt_size);
 
