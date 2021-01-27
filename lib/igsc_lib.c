@@ -1381,7 +1381,13 @@ static int gsc_update(IN struct igsc_device_handle *handle,
 
     gsc_pref_cnt_checkpoint(perf_ctx, "After PLRs");
 
-    ret = driver_reconnect(lib_ctx);
+    /*
+     * After Gfx FW update there is a FW reset so driver reconnect is needed
+     */
+    if (payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW)
+    {
+        ret = driver_reconnect(lib_ctx);
+    }
 
 exit:
 
