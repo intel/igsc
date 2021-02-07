@@ -1,5 +1,55 @@
 # IGSC FUL
 
+## [v0.7.0] - 2022-07-01
+
+### Added
+
+1.  ci: add codespell configuration files
+2.  doc: add documentation for the new ifr api
+3.  ut: ifr: add unit tests for the new ifr get status command
+4.  ut: ifr: add unit tests for ifr memory ppr test command
+5.  ut: ifr: add unit tests for ifr array&scan command
+6.  cli: add new ifr get status command to cli
+7.  cli: add ifr memory ppr command to cli
+8.  cli: add ifr array&scan command to cli
+9.  cli: extend struct gsc_op to include up to 5 subcommands
+10. lib: implement new ifr get status api
+11. lib: implement ifr memory ppr test command
+12. lib: implement new ifr array&scan test command api
+13. lib: ifr: define api to new ifr get status command
+14. lib: ifr: define api to ifr array&scan and memory ppr tests
+15. lib: ifr: define new ifr heci commands
+16. ut: add unit tests for "get memory ppr status"
+17. ut: add unit tests for "get number of memory errors"
+18. doc: add documentation of "get number of memory errors" api
+19. doc: add documentation for "get memory ppr status" api
+20. cli: gfsp: implement get memory ppr status cli command
+21. lib: gfsp: implement get memory ppr status api
+22. lib: gfsp: add get memory PPR status heci message definitions
+23. lib: gfsp: define "get memory PPR status" api
+24. cli: gfsp: add get number of memory errors cli command
+25. lib: gfsp: define get number of memory errors API
+26. cmake: add windows presets
+27. cmake: add option to download dependencies from conan
+
+
+### Fixed
+
+1. cli: fix ifr run-test command with --device parameter
+2. lib: increase read timeout
+3. lib: ifr: remove redundant include from ifr.h
+4. lib: include msvc config.h in enum files
+5. lib: adjust sku tag naming
+6. ut: oprom update on bad type return invalid param error
+7. lib: ifr: remove redundant include from ifr.h
+
+
+
+### Changed
+
+1. ut: remove obsolete definition of read_ifr_file
+2. cmake: enchance metee search
+
 ## [v0.6.0] - 2022-02-20
 
 ### Added
