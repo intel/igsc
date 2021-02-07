@@ -1,5 +1,47 @@
 # IGSC FUL
 
+## [v0.5.0] - 2021-07-21
+
+### Added
+
+1.  tests: add fw data update tests
+2.  tests: add force update library function tests
+3.  cli: add force update option to fw update
+4.  lib: add force update bit flag to the lib
+5.  cli: add fw data update to cli
+6.  lib: add signed in field data update to the library
+7.  lib: add library API for the GSC In-Field Data Update
+8.  lib: support the second firmware reset in CP mode
+9.  cmake: add package config helper
+10. cli: add a message when permission denied
+11. lib: add permission denied error code to the library
+12. lib: add timeout teewrite and teewrite
+13. ci: add Debug Windows build
+14. CMake: set DEBUG defines in Debug mode
+
+### Fixed
+
+1.  lib: check integer overflow in oprom parser
+2.  tests: fix layout_parse function in firmware parser tests
+3.  lib: fix typos in comments in igsc_lib.h
+4.  lib: try reconnect in a loop after firmware reset
+5.  lib: fix the gsc_msleep function
+6.  cli: fix debug print of sent data hex dump
+7.  lib: fix hw config comparison in library
+8.  cli: fix oprom update error handling
+9.  lib: fix error value for mismatch of oprom image type and request
+10. oprom: fix type size comparison issue in oprom_parser.c
+11. ci: fix hw config compitability logic and print-outs
+12. lib: CMake: require UDev library and header on Linux
+13. lib: restart firmware update in case of an error
+14. cli: oprom: fix print if good devid is not found in the image
+15. fix CHANGELOG spelling
+
+### Changed
+
+1.  lib: replace the 512/128 SKU names with SOC1/SOC2
+2.  cli: prefix the firmware version in print
+
 ## [v0.4.0] - 2021-04-12
 
 ### Added
