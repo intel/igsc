@@ -1,5 +1,14 @@
 # IGSC FUL
 
+## [v0.3.1] - 2020-02-07
+
+### Added
+
+### Fixed
+
+1. lib: remove driver reconnect after iaf psc update
+2. lib: fix psc update
+
 ## [v0.3.0] - 2020-01-17
 
 ### Added
@@ -8,8 +17,6 @@
 2. In field repair command support
 
 ### Fixed
-
-# IGSC FUL
 
 ## [v0.2.1] - 2020-12-22
 
