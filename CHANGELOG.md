@@ -1,5 +1,24 @@
 # IGSC FUL
 
+## [v0.5.0] - 2022-02-01
+
+### Added
+
+1.  tests: add fw data update tests
+2.  tests: add force update library function tests
+3.  cli: add force update option to fw update
+4.  lib: add force update bit flag to the lib
+5.  cli: add fw data update to cli
+6.  lib: add signed in field data update to the library
+7.  lib: add library API for the GSC In-Field Data Update
+8.  lib: support the second firmware reset in CP mode
+
+### Fixed
+
+1.  tests: fix layout_parse function in firmware parser tests
+2.  lib: fix typos in comments in igsc_lib.h
+3.  lib: fix hw config comparison in library
+
 
 ## [v0.4.0] - 2022-01-30
 
