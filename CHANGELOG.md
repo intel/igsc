@@ -1,5 +1,12 @@
 # IGSC FUL
 
+## [v0.7.1] - 2021-11-02
+
+### Fixed
+
+cli: fix ifr run-test command with --device parameter
+
+
 ## [v0.7.0] - 2021-10-21
 
 ### Fixed
