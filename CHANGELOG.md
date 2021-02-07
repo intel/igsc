@@ -1,6 +1,19 @@
 # IGSC FUL
 
 
+## [v0.4.0] - 2022-01-30
+
+### Added
+1. lib: send no update message at the end of firmware update
+2. lib: retrieve hw configuration from the device
+3. lib: add igsc_fw_hw_config_compatible() function
+4. cli: add hw config option to cli
+
+### Fixed
+
+1. Fix VERSION file
+
+
 ## [V0.3.0] - 2022-01-17
 
 ### Added
