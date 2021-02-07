@@ -1,5 +1,43 @@
 # IGSC FUL
 
+## [v0.7.0] - 2021-10-21
+
+### Fixed
+
+lib: increase read timeout
+lib: ifr: remove redundant include from ifr.h
+lib: include msvc config.h in enum files
+
+### Changed
+
+doc: add documentation for the new ifr api
+ut: ifr: add unit tests for the new ifr get status command
+ut: ifr: add unit tests for ifr memory ppr test command
+ut: ifr: add unit tests for ifr array&scan command
+cli: add new ifr get status command to cli
+cli: add ifr memory ppr command to cli
+cli: add ifr array&scan command to cli
+cli: extend struct gsc_op to include up to 5 subcommands
+lib: implement new ifr get status api
+lib: implement ifr memory ppr test command
+lib: implement new ifr array&scan test command api
+lib: ifr: define new ifr command ids
+lib: ifr: define api to new ifr get status command
+lib: ifr: define api to ifr array&scan and memory ppr tests
+lib: ifr: define new ifr heci commands
+ut: add unit tests for "get memory ppr status"
+ut: add unit tests for "get number of memory errors"
+doc: add documentation of "get number of memory errors" api
+doc: add documentation for "get memory ppr status" api
+ut: remove obsolete definition of read_ifr_file
+cli: gfsp: implement "get memory ppr status" cli command
+lib: gfsp: implement "get memory ppr status" api
+lib: gfsp: define "get memory PPR status" api
+lib: gfsp: add "get memory PPR status" heci message definitions
+cli: gfsp: implement "get number of memory errors" cli command
+lib: gfsp: implement "get number of memory errors" api
+lib: gfsp: define "get number of memory errors" api
+
 ## [v0.6.0] - 2021-09-02
 
 ### Added
