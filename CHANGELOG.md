@@ -1,6 +1,19 @@
 # IGSC FUL
 
-## [v0.3.1] - 2020-02-07
+## [v0.4.0] - 2021-04-12
+
+### Added
+1. lib: send no update message at the end of firmware update
+2. lib: retrive hw configuration from the device
+3. lib: add igsc_fw_hw_config_compatible() function
+4. cli: add hw config option to cli
+
+### Fixed
+
+1. lib: oprom: use %d for uint32_t in debug prints
+2. lib: use generic BIT macro
+
+## [v0.3.1] - 2021-02-07
 
 ### Added
 
@@ -9,7 +22,7 @@
 1. lib: remove driver reconnect after iaf psc update
 2. lib: fix psc update
 
-## [v0.3.0] - 2020-01-17
+## [v0.3.0] - 2021-01-17
 
 ### Added
 
