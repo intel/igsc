@@ -1,5 +1,26 @@
 # IGSC FUL
 
+## [v0.6.0] - 2022-02-20
+
+### Added
+
+1. doc: add documentation of the get subsystem ids functionality
+2. tests: add unit-test for subsystems ids functions
+3. cli: add device info update
+4. lib: implement get subsystem ids library function
+5. lib: add get subsystem ids heci messages definitions
+6. doc: add documentation for iaf psc partition update api
+7. doc: add firmware data update api documentation
+
+### Fixed
+
+1. lib: fix wrong handling of return values in subsystem ids
+2. lib: release fwdata image in igsc_device_fwdata_update()
+3. lib: add more meaningful comments for enum gsc_fwu_heci_command_id
+4. doc: fix library documentation of return values
+5. doc: separate the ifr into higher level section
+6. doc: little fixes in igsc_api
+
 ## [v0.5.0] - 2022-02-01
 
 ### Added
