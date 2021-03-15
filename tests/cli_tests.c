@@ -428,6 +428,152 @@ static void test_fw_update_bad_3(void **state)
 }
 
 /**
+ * test: igsc fw update --image fw.img --device
+ */
+static void test_fw_update_bad_4(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("fw");
+    argv[argc++] = test_strdup("update");
+    argv[argc++] = test_strdup("--image");
+    argv[argc++] = test_strdup("fw.img");
+    argv[argc++] = test_strdup("--device");
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc fw update --image fw.img -d
+ */
+static void test_fw_update_bad_5(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("fw");
+    argv[argc++] = test_strdup("update");
+    argv[argc++] = test_strdup("--image");
+    argv[argc++] = test_strdup("fw.img");
+    argv[argc++] = test_strdup("-d");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc fw hwconfig
+ */
+static void test_fw_hwconfig_bad_1(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("fw");
+    argv[argc++] = test_strdup("hwconfig");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc fw hwconfig --image
+ */
+static void test_fw_hwconfig_bad_2(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("fw");
+    argv[argc++] = test_strdup("hwconfig");
+    argv[argc++] = test_strdup("--image");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc fw hwconfig fw.img
+ */
+static void test_fw_hwconfig_bad_3(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("fw");
+    argv[argc++] = test_strdup("hwconfig");
+    argv[argc++] = test_strdup("fw.img");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc fw hwconfig --image fw.img --device
+ */
+static void test_fw_hwconfig_bad_4(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("fw");
+    argv[argc++] = test_strdup("hwconfig");
+    argv[argc++] = test_strdup("--image");
+    argv[argc++] = test_strdup("fw.img");
+    argv[argc++] = test_strdup("--device");
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc fw hwconfig --image fw.img -d
+ */
+static void test_fw_hwconfig_bad_5(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("fw");
+    argv[argc++] = test_strdup("hwconfig");
+    argv[argc++] = test_strdup("--image");
+    argv[argc++] = test_strdup("fw.img");
+    argv[argc++] = test_strdup("-d");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+
+/**
  * test: igsc fw version --image fw.img
  */
 static void test_fw_version_1(void **state)
@@ -1162,6 +1308,13 @@ int main(void)
         cmocka_unit_test(test_fw_update_bad_1),
         cmocka_unit_test(test_fw_update_bad_2),
         cmocka_unit_test(test_fw_update_bad_3),
+        cmocka_unit_test(test_fw_update_bad_4),
+        cmocka_unit_test(test_fw_update_bad_5),
+        cmocka_unit_test(test_fw_hwconfig_bad_1),
+        cmocka_unit_test(test_fw_hwconfig_bad_2),
+        cmocka_unit_test(test_fw_hwconfig_bad_3),
+        cmocka_unit_test(test_fw_hwconfig_bad_4),
+        cmocka_unit_test(test_fw_hwconfig_bad_5),
         cmocka_unit_test(test_fw_version_1),
         cmocka_unit_test(test_fw_version_2),
         cmocka_unit_test(test_fw_version_bad_1),
