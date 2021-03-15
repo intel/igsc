@@ -558,6 +558,43 @@ exit:
     return status;
 }
 
+static int gsc_send_no_update(struct igsc_lib_ctx *lib_ctx)
+{
+    TEESTATUS tee_status;
+    int status;
+    size_t request_len;
+    struct gsc_fwu_heci_no_update_req *req;
+
+    req = (struct gsc_fwu_heci_no_update_req *)lib_ctx->working_buffer;
+    request_len = sizeof(*req);
+
+    status = gsc_fwu_buffer_validate(lib_ctx, request_len, 0);
+    if (status != IGSC_SUCCESS)
+    {
+        return status;
+    }
+
+    memset(req, 0, request_len);
+    req->header.command_id = GSC_FWU_HECI_COMMAND_ID_NO_UPDATE;
+    req->reserved = 0;
+
+    gsc_debug_hex_dump("Sending:", (unsigned char *)req, request_len);
+
+    tee_status = TeeWrite(&lib_ctx->driver_handle, req, request_len, NULL, 0);
+    if (!TEE_IS_SUCCESS(tee_status))
+    {
+        gsc_error("Error in HECI write (%d)\n", tee_status);
+        status = status_tee2fu(tee_status);
+        goto exit;
+    }
+
+    status = IGSC_SUCCESS;
+
+exit:
+    return status;
+
+}
+
 static int gsc_fwu_get_version(struct igsc_lib_ctx *lib_ctx,
                                uint32_t partition,
                                uint8_t *version, size_t version_length)
@@ -1387,6 +1424,20 @@ static int gsc_update(IN struct igsc_device_handle *handle,
     if (payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW)
     {
         ret = driver_reconnect(lib_ctx);
+
+        if (ret == IGSC_SUCCESS)
+        {
+            /* After the reconnect - send 'no update' message */
+            ret = gsc_send_no_update(lib_ctx);
+            if (ret != IGSC_SUCCESS)
+            {
+               gsc_error("failed to send 'no update' message after reset\n");
+            }
+        }
+        else
+        {
+            gsc_error("failed to reconnect to the driver after reset\n");
+        }
     }
 
 exit:

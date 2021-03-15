@@ -269,6 +269,17 @@ struct gsc_fwu_heci_end_resp {
     struct gsc_fwu_heci_response response;
 };
 
+/**
+ * @brief firmware no update message
+ *
+ * @param header @ref gsc_fwu_heci_header
+ * @param reserved reserved
+ */
+struct gsc_fwu_heci_no_update_req {
+    struct gsc_fwu_heci_header header;
+    uint32_t                   reserved;
+};
+
 /** @} */
 
 #pragma pack()
