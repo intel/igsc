@@ -511,14 +511,14 @@ int image_oprom_parse(struct igsc_oprom_image *img)
             img->data_part_ptr = img->buffer + offset;
             img->data_part_len = pci_data->image_length * PCI_IMG_SIZE_UNIT_SIZE;
             cur_part_type = CUR_PART_DATA;
-            gsc_debug("DATA part: offset %ld len %ld\n", offset, img->data_part_len);
+            gsc_debug("DATA part: offset %ld len %d\n", offset, img->data_part_len);
         }
         else if (pci_data->code_type == OPROM_CODE_TYPE_CODE)
         {
             img->code_part_ptr = img->buffer + offset;
             img->code_part_len = pci_data->image_length * PCI_IMG_SIZE_UNIT_SIZE;
             cur_part_type = CUR_PART_CODE;
-            gsc_debug("CODE part: offset %ld len %ld\n", offset, img->code_part_len);
+            gsc_debug("CODE part: offset %ld len %d\n", offset, img->code_part_len);
         }
         else
         {
@@ -529,7 +529,7 @@ int image_oprom_parse(struct igsc_oprom_image *img)
             {
                 img->data_part_len += pci_data->image_length * PCI_IMG_SIZE_UNIT_SIZE;
                 offset += pci_data->image_length * PCI_IMG_SIZE_UNIT_SIZE;
-                gsc_debug("DATA part: type 0x%x offset %ld len %ld\n",
+                gsc_debug("DATA part: type 0x%x offset %ld len %d\n",
                           pci_data->code_type, offset, img->data_part_len);
 
                 continue;
@@ -538,7 +538,7 @@ int image_oprom_parse(struct igsc_oprom_image *img)
             {
                 img->code_part_len += pci_data->image_length * PCI_IMG_SIZE_UNIT_SIZE;
                 offset += pci_data->image_length * PCI_IMG_SIZE_UNIT_SIZE;
-                gsc_debug("CODE part: type 0x%x offset %ld len %ld\n",
+                gsc_debug("CODE part: type 0x%x offset %ld len %d\n",
                           pci_data->code_type, offset, img->code_part_len);
                 continue;
             }
