@@ -16,5 +16,7 @@ group update needed
    end
    SW -> FW: fwu_get_version
    FW -> SW: fw_version_response
+
+   SW -> FW: fw_no_update
 end
 @enduml

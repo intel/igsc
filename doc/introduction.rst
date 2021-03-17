@@ -95,8 +95,7 @@ library enables some of those checks to be done prior to writing to device.
    while firmware perform additional step and reboots. When the `competion` bit
    is set and `fw udate state` is idle the process has completed.
 6. The library queries for firmware version again and verifies that the new
-7. The library (on windows) sends `fw no update` message. On Linux this step
-   is performed by the Linux kernel driver.
+7. The library sends `fw no update` message.
 
 1.5.2 OPROM Update
 ^^^^^^^^^^^^^^^^^^^
