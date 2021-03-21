@@ -1,5 +1,17 @@
 # IGSC FUL
 
+## [v0.2.2] - 2021-03-21
+
+### Added
+
+1. doc: add no_update flow to the documenation
+2. lib: send no update message at the end of firmware update
+3. lib: generalize image update flow
+4. lib: export tee handlers functions to the internal header
+
+### Fixed
+
+
 ## [v0.2.1] - 2020-12-22
 
 ### Added
