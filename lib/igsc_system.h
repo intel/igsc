@@ -17,6 +17,7 @@
 
 #define INFO_HEADER_MARKER (0x4f464e49)
 #define FWIM_HEADER_MARKER (0x4d495746)
+#define IMGI_HEADER_MARKER (0x49474d49)
 
 #pragma pack(1)
 
@@ -91,11 +92,31 @@ struct gsc_fwu_fpt_img {
 	struct gsc_fwu_fpt_entry  entry[];
 };
 
+#define FWU_GWS_IMAGE_INFO_FORMAT_VERSION 0x1
+
+#define  GSC_IFWI_TAG_128_SKU_BIT BIT(0)
+#define  GSC_IFWI_TAG_256_SKU_BIT BIT(1)
+#define  GSC_IFWI_TAG_512_SKU_BIT BIT(2)
+
+/**
+ * @brief firmware update image info
+ *
+ * @param format_version image info format version
+ * @param instance_id bitmask of supported skus
+ * @param reserved
+ */
+struct fwu_gws_image_info {
+    uint32_t format_version;
+    uint32_t instance_id;
+    uint32_t reserved[14];
+};
+
 #pragma pack()
 
 enum FWU_FPT_ENTRY {
     FWU_FPT_ENTRY_IMAGE_INFO,
     FWU_FPT_ENTRY_FW_IMAGE,
+    FWU_FPT_ENTRY_IMAGE_INSTANCE,
     FWU_FPT_ENTRY_NUM
 };
 

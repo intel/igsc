@@ -60,6 +60,7 @@ enum gsc_fwu_heci_command_id {
     GSC_FWU_HECI_COMMAND_ID_GET_VERSION,    /**< retrieve version of a firmware  */
     GSC_FWU_HECI_COMMAND_ID_NO_UPDATE,      /**< Do not wait for firmware update */
     GSC_FWU_HECI_COMMAND_ID_GET_IP_VERSION, /**< retrieve version of a partition */
+    GSC_FWU_HECI_COMMAND_ID_GET_CONFIG,     /**< get config command              */
     GSC_FWU_HECI_COMMAND_MAX                /**< upper sentinel command          */
 };
 
@@ -229,7 +230,7 @@ struct gsc_fwu_heci_start_resp {
  * @brief firmware update data
  *
  * @param header @ref gsc_fwu_heci_header
- * @param payload_type firmware payload type @ref gsc_fwu_heci_payload_type
+ * @param data_length length of data section
  * @param reserved reserved
  * @param data[] firmware payload fragment
  */
@@ -278,6 +279,47 @@ struct gsc_fwu_heci_end_resp {
 struct gsc_fwu_heci_no_update_req {
     struct gsc_fwu_heci_header header;
     uint32_t                   reserved;
+};
+
+/** @} */
+
+/**
+ * @defgroup gsc-fw-api-hdr GSC Firmware Configuration Retrieval API
+ * @ingroup  gsc-fw-api
+ * @{
+ */
+
+/**
+ * @brief firmware get config message
+ *
+ * @param header @ref gsc_fwu_heci_header
+ * @param reserved
+ */
+struct gsc_fwu_heci_get_config_message_req {
+   struct gsc_fwu_heci_header header;
+   uint32_t                   reserved[2];
+};
+
+#define GSC_FWU_GET_CONFIG_FORMAT_VERSION 0x1
+
+/**
+ * @brief firmware get config message response
+ *
+ * @param response @ref gsc_fwu_heci_response
+ * @param format_version response format version
+ * @param hw_step hw step of the device
+ * @param hw_sku hw sku of the device
+ * @param reserved
+ * @param debug_config differentiate between different binaries
+ *        for debug or validation purposes
+ */
+struct gsc_fwu_heci_get_config_message_resp {
+    struct gsc_fwu_heci_response response;
+    uint32_t                     format_version;
+    uint32_t                     hw_step;
+    uint32_t                     hw_sku;
+    uint32_t                     reserved[8];
+    uint32_t                     debug_config;
 };
 
 /** @} */
