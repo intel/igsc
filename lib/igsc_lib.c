@@ -32,6 +32,25 @@
 DEFINE_GUID(GUID_METEE_FWU, 0x87d90ca5, 0x3495, 0x4559,
             0x81, 0x05, 0x3f, 0xbf, 0xa3, 0x7b, 0x8b, 0x79);
 
+enum gsc_dg2_sku_id {
+    GSC_DG2_SKUID_SOC1 = 0,
+    GSC_DG2_SKUID_SOC2 = 1,
+    GSC_DG2_SKUID_SOC3 = 2
+};
+
+enum gsc_soc_step_id {
+    GSC_SOC_STEP_A0_ID      = 0x0,
+    GSC_SOC_STEP_A1_ID      = 0x1,
+    GSC_SOC_STEP_B0_ID      = 0x2,
+    GSC_SOC_STEP_INVALID_ID = 0xFF
+};
+
+
+struct gsc_hw_config_1 {
+    uint32_t hw_sku;
+    uint32_t hw_step;
+};
+
 #define FWSTS(n) ((n) - 1)
 
 static int status_tee2fu(TEESTATUS status)
@@ -272,7 +291,11 @@ static int gsc_fwu_img_layout_parse(struct gsc_fwu_img_layout *layout,
         goto exit;
     }
 
-    if (fpt->header.num_of_entries < FWU_FPT_ENTRY_NUM ||
+    /**
+     * Note: that only INFO and FWIM sections MUST appear in the image,
+     * while IMGI section is optional.
+     * */
+    if (fpt->header.num_of_entries < FWU_FPT_ENTRY_IMAGE_INSTANCE ||
         fpt->header.num_of_entries > FPT_MAX_ENTERIES)
     {
         gsc_error("Invalid FPT number of entries (%d)\n",
@@ -385,6 +408,9 @@ static int gsc_fwu_img_layout_parse(struct gsc_fwu_img_layout *layout,
             case FWIM_HEADER_MARKER:
                 entry_id = FWU_FPT_ENTRY_FW_IMAGE;
                 break;
+            case IMGI_HEADER_MARKER:
+                entry_id = FWU_FPT_ENTRY_IMAGE_INSTANCE;
+                break;
             default:
                 entry_id = FWU_FPT_ENTRY_NUM;
                 break;
@@ -398,7 +424,7 @@ static int gsc_fwu_img_layout_parse(struct gsc_fwu_img_layout *layout,
         if (entries_found_bitmask & BIT(entry_id))
         {
             gsc_error("FPT entry 0x%x already encountered\n",
-                    entry->partition_name);
+                      entry->partition_name);
             status = IGSC_ERROR_BAD_IMAGE;
             goto exit;
         }
@@ -1143,39 +1169,174 @@ int igsc_device_fw_version(IN struct igsc_device_handle *handle,
     return ret;
 }
 
-int igsc_image_fw_version(IN  const uint8_t *buffer,
-                          IN  uint32_t buffer_len,
-                          OUT struct igsc_fw_version *version)
+static int gsc_device_hw_config(struct igsc_lib_ctx *lib_ctx,
+                                struct igsc_hw_config *hw_config)
 {
-    int    ret;
-    struct gsc_fwu_img_layout layout;
+    int status;
+    size_t request_len;
+    size_t response_len;
+    size_t received_len;
+    size_t buf_len;
+    struct gsc_hw_config_1 *hw_config_1;
 
+    struct gsc_fwu_heci_get_config_message_resp *resp;
+    struct gsc_fwu_heci_get_config_message_req *req;
+    uint8_t command_id = GSC_FWU_HECI_COMMAND_ID_GET_CONFIG;
+
+    if (hw_config == NULL)
+    {
+        gsc_error("Invalid parameter\n");
+        return IGSC_ERROR_INTERNAL;
+    }
+
+    memset(hw_config, 0, sizeof(*hw_config));
+    hw_config_1 = (struct gsc_hw_config_1 *)hw_config->blob;
+
+    req = (struct gsc_fwu_heci_get_config_message_req *)lib_ctx->working_buffer;
+    request_len = sizeof(*req);
+
+    resp = (struct gsc_fwu_heci_get_config_message_resp *)lib_ctx->working_buffer;
+    response_len = sizeof(*resp);
+    buf_len = lib_ctx->working_buffer_length;
+
+    status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Buffer validation failed\n");
+        return status;
+    }
+
+    memset(req, 0, request_len);
+    req->header.command_id = command_id;
+
+    status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response (%d)\n", status);
+        goto exit;
+    }
+
+    if (received_len < sizeof(resp->response))
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    status = gsc_fwu_heci_validate_response_header(lib_ctx, &resp->response, command_id);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response (%d)\n", status);
+        goto exit;
+    }
+
+    if (received_len != response_len)
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    gsc_debug("HW Config: fmt %u hw step %u, hw sku %u debug_config %u\n",
+              resp->format_version,
+              resp->hw_step, resp->hw_sku,
+              resp->debug_config);
+
+    if (resp->format_version != GSC_FWU_GET_CONFIG_FORMAT_VERSION)
+    {
+        gsc_error("Got wrong message GET_CONFIG_FORMAT_VERSION (%u) while expecting (%u)\n",
+                  resp->format_version, GSC_FWU_GET_CONFIG_FORMAT_VERSION);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    hw_config->format_version = resp->format_version;
+    hw_config_1->hw_step = resp->hw_step;
+
+    /* convert to firmware bit mask for easier comparison */
+    if (resp->hw_step == GSC_DG2_SKUID_SOC1)
+    {
+        hw_config_1->hw_sku = GSC_IFWI_TAG_512_SKU_BIT;
+    }
+    else if (resp->hw_step == GSC_DG2_SKUID_SOC3)
+    {
+        hw_config_1->hw_sku = GSC_IFWI_TAG_256_SKU_BIT;
+    }
+    else if (resp->hw_step == GSC_DG2_SKUID_SOC2)
+    {
+        hw_config_1->hw_sku = GSC_IFWI_TAG_128_SKU_BIT;
+    }
+    else
+    {
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    status = IGSC_SUCCESS;
+
+exit:
+    return status;
+}
+
+int igsc_device_hw_config(IN struct igsc_device_handle *handle,
+                          OUT struct igsc_hw_config *hw_config)
+{
+    struct igsc_lib_ctx *lib_ctx;
+    struct igsc_fw_version version;
+    int ret;
+
+    if (handle == NULL || handle->ctx == NULL || hw_config == NULL)
+    {
+        gsc_error("Bad parameters\n");
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    memset(&version, 0, sizeof(version));
+    memset(hw_config, 0, sizeof(*hw_config));
+
+    lib_ctx = handle->ctx;
+    ret = gsc_driver_init(lib_ctx, &GUID_METEE_FWU);
+    if (ret != IGSC_SUCCESS)
+    {
+        gsc_error("Failed to init HECI driver\n");
+        return ret;
+    }
+
+    ret = gsc_get_fw_version(lib_ctx, &version);
+    if (ret != IGSC_SUCCESS)
+    {
+        gsc_error("Failed to retrieve firmware version %d\n", ret);
+        goto exit;
+    }
+
+    /* the command is only supported on DG2 */
+    if (memcmp(version.project, "DG02", sizeof(version.project)))
+    {
+        ret = IGSC_ERROR_NOT_SUPPORTED;
+        goto exit;
+    }
+
+    ret = gsc_device_hw_config(lib_ctx, hw_config);
+    if (ret != IGSC_SUCCESS)
+    {
+        gsc_error("Failed to retrieve hardware config %d\n", ret);
+    }
+
+exit:
+    gsc_driver_deinit(lib_ctx);
+
+    return ret;
+}
+
+static int gsc_image_fw_version(IN const struct gsc_fwu_img_layout *layout,
+                                 OUT struct igsc_fw_version *version)
+{
     struct gsc_fwu_heci_image_metadata *meta;
     struct gsc_fwu_image_metadata_v1 *meta_v1;
     uint32_t meta_len;
 
-    if (buffer == NULL || buffer_len == 0 || version == NULL)
-    {
-        return IGSC_ERROR_INVALID_PARAMETER;
-    }
-
-    gsc_fwu_img_layout_reset(&layout);
-
-    /*
-     * Parse the image, check that the image layout is correct and store it in
-     * the library context
-     */
-    ret = gsc_fwu_img_layout_parse(&layout, buffer, buffer_len);
-    if (ret != IGSC_SUCCESS)
-    {
-        return ret;
-    }
-
-    gsc_debug("Update Image Payload size: %d bytes\n",
-             layout.table[FWU_FPT_ENTRY_FW_IMAGE].size);
-
-    meta = (struct gsc_fwu_heci_image_metadata *)layout.table[FWU_FPT_ENTRY_IMAGE_INFO].content;
-    meta_len = layout.table[FWU_FPT_ENTRY_IMAGE_INFO].size;
+    meta = (struct gsc_fwu_heci_image_metadata *)layout->table[FWU_FPT_ENTRY_IMAGE_INFO].content;
+    meta_len = layout->table[FWU_FPT_ENTRY_IMAGE_INFO].size;
 
     if (meta->metadata_format_version != GSC_FWU_HECI_METADATA_VERSION_1)
     {
@@ -1204,6 +1365,109 @@ int igsc_image_fw_version(IN  const uint8_t *buffer,
     }
 
     return IGSC_SUCCESS;
+}
+
+int igsc_image_fw_version(IN  const uint8_t *buffer,
+                          IN  uint32_t buffer_len,
+                          OUT struct igsc_fw_version *version)
+{
+    int    ret;
+    struct gsc_fwu_img_layout layout;
+
+    if (buffer == NULL || buffer_len == 0 || version == NULL)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    gsc_fwu_img_layout_reset(&layout);
+
+    /*
+     * Parse the image, check that the image layout is correct and store it in
+     * the library context
+     */
+    ret = gsc_fwu_img_layout_parse(&layout, buffer, buffer_len);
+    if (ret != IGSC_SUCCESS)
+    {
+        return ret;
+    }
+
+    gsc_debug("Update Image Payload size: %d bytes\n",
+              layout.table[FWU_FPT_ENTRY_FW_IMAGE].size);
+
+    return gsc_image_fw_version(&layout, version);
+}
+
+static int gsc_image_hw_config(const struct gsc_fwu_img_layout *layout,
+                               struct igsc_hw_config *hw_config)
+{
+    struct fwu_gws_image_info *info = NULL;
+    struct gsc_hw_config_1 *hw_config_1;
+    uint32_t info_len;
+
+
+    info = (struct fwu_gws_image_info *)layout->table[FWU_FPT_ENTRY_IMAGE_INSTANCE].content;
+    info_len = layout->table[FWU_FPT_ENTRY_IMAGE_INSTANCE].size;
+
+    if (info_len < sizeof(*info))
+    {
+        gsc_error("No valid IMGI section in the image\n");
+        return IGSC_ERROR_BAD_IMAGE;
+    }
+
+    if (info->format_version != FWU_GWS_IMAGE_INFO_FORMAT_VERSION)
+    {
+        gsc_error("Wrong Image Info format version in the Image, got %u, expected %u\n",
+                  info->format_version, FWU_GWS_IMAGE_INFO_FORMAT_VERSION);
+        return IGSC_ERROR_BAD_IMAGE;
+    }
+
+    gsc_debug("Image Instance Id 0x%x\n", info->instance_id);
+
+    hw_config->format_version = info->format_version;
+    hw_config_1 = (struct gsc_hw_config_1 *)hw_config->blob;
+    hw_config_1->hw_sku = info->instance_id;
+    hw_config_1->hw_step = 0;
+
+    return IGSC_SUCCESS;
+}
+
+int igsc_image_hw_config(IN  const uint8_t *buffer,
+                         IN  uint32_t buffer_len,
+                         OUT struct igsc_hw_config *hw_config)
+{
+    int    ret;
+    struct gsc_fwu_img_layout layout;
+    struct igsc_fw_version version;
+
+    if (buffer == NULL || buffer_len == 0 || hw_config == NULL)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    memset(&version, 0, sizeof(version));
+    memset(hw_config, 0, sizeof(*hw_config));
+
+    gsc_fwu_img_layout_reset(&layout);
+
+    /*
+     * Parse the image, check that the image layout is correct and store it in
+     * the library context
+     */
+    ret = gsc_fwu_img_layout_parse(&layout, buffer, buffer_len);
+    if (ret != IGSC_SUCCESS)
+    {
+        return ret;
+    }
+
+    ret = gsc_image_fw_version(&layout, &version);
+
+    /* the command is only supported on DG2 */
+    if (memcmp(version.project, "DG02", sizeof(version.project)))
+    {
+        return IGSC_ERROR_NOT_SUPPORTED;
+    }
+
+    return gsc_image_hw_config(&layout, hw_config);
 }
 
 int igsc_image_get_type(IN const uint8_t *buffer,
@@ -1757,7 +2021,7 @@ const char *igsc_translate_firmware_status(IN  uint32_t firmware_status)
     switch (firmware_status) {
     case GSC_FWU_STATUS_SUCCESS:
         msg = "Success";
-    break;
+        break;
     case GSC_FWU_STATUS_SIZE_ERROR:
         msg = "Num of bytes to read/write/erase is bigger than partition size";
         break;

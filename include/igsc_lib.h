@@ -172,6 +172,21 @@ struct igsc_device_info {
  * @}
  */
 
+/*
+ * Hardware configuration blob size
+ */
+#define IGSC_HW_CONFIG_BLOB_SIZE 48
+
+/**
+ * @brief structure to store hw configuration
+ * @param format_version version of the hw config
+ * @param blob hardware configuration data
+ */
+struct igsc_hw_config {
+    uint32_t format_version;
+    uint8_t blob[IGSC_HW_CONFIG_BLOB_SIZE];
+};
+
 /**
  * @def IGSC_MAX_IMAGE_SIZE
  * @brief Maximum firmware image size
@@ -302,6 +317,35 @@ IGSC_EXPORT
 int igsc_image_fw_version(IN  const uint8_t *buffer,
                           IN  uint32_t buffer_len,
                           OUT struct igsc_fw_version *version);
+
+/**
+ *  @brief Retrieves the hw configuration from the device
+ *
+ *  @param handle A handle to the device.
+ *  @param hw_config The memory to store obtained the hardware configuration
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ *  @return IGSC_ERROR_NOT_SUPPORTED if feature is not supported
+ */
+IGSC_EXPORT
+int igsc_device_hw_config(IN  struct igsc_device_handle *handle,
+                          OUT struct igsc_hw_config *hw_config);
+
+
+/**
+ *  @brief Retrieves the hw configurations from the provided
+ *  firmware update image.
+ *
+ *  @param buffer A pointer to the buffer with the firmware update image.
+ *  @param buffer_len Length of the buffer with the firmware update image.
+ *  @param hw_config The memory to store obtained the hardware configuration
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_image_hw_config(IN  const uint8_t *buffer,
+                         IN  uint32_t buffer_len,
+                         OUT struct igsc_hw_config *hw_config);
 
 /**
  *  @brief Callback function template for monitor firmware update progress.
