@@ -1470,6 +1470,37 @@ int igsc_image_hw_config(IN  const uint8_t *buffer,
     return gsc_image_hw_config(&layout, hw_config);
 }
 
+int igsc_hw_config_compatible(IN const struct igsc_hw_config *image_hw_config,
+                               IN const struct igsc_hw_config *device_hw_config)
+{
+    struct gsc_hw_config_1 *image_hw_config_1;
+    struct gsc_hw_config_1 *device_hw_config_1;
+
+    if (image_hw_config == NULL || device_hw_config == NULL)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    if (image_hw_config->format_version != GSC_FWU_GET_CONFIG_FORMAT_VERSION ||
+        device_hw_config->format_version != GSC_FWU_GET_CONFIG_FORMAT_VERSION)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+    image_hw_config_1 = (struct gsc_hw_config_1 *)image_hw_config->blob;
+    device_hw_config_1 = (struct gsc_hw_config_1 *)device_hw_config->blob;
+
+    if (image_hw_config_1->hw_sku == 0 && device_hw_config_1->hw_sku == 0)
+    {
+        return IGSC_SUCCESS;
+    }
+    if (image_hw_config_1->hw_sku & device_hw_config_1->hw_sku)
+    {
+        return IGSC_SUCCESS;
+    }
+
+    return IGSC_ERROR_INCOMPATIBLE;
+}
+
 int igsc_image_get_type(IN const uint8_t *buffer,
                         IN const uint32_t buffer_len,
                         OUT uint8_t *type)
