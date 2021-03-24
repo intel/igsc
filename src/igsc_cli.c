@@ -157,6 +157,17 @@ static inline void print_oprom_data_version(const struct igsc_oprom_version *opr
     print_oprom_version(IGSC_OPROM_DATA, oprom_version);
 }
 
+static inline void print_hw_config(const char *title, const struct igsc_hw_config *hw_config)
+{
+    char cfg_str[512];
+
+    memset(cfg_str, 0, sizeof(cfg_str));
+    if (igsc_hw_config_to_string(hw_config, cfg_str, sizeof(cfg_str)) > 0)
+    {
+        printf("%s: %s\n", title, cfg_str);
+    }
+}
+
 static struct img *image_read_from_file(const char *p_path)
 {
     FILE  *fp = NULL;
@@ -378,6 +389,12 @@ static bool arg_is_test(const char *arg)
            arg_is_token(arg, "--test");
 }
 
+static bool arg_is_check(const char *arg)
+{
+    return arg_is_token(arg, "-c") ||
+           arg_is_token(arg, "--check");
+}
+
 /* prevent optimization
  * FIXME: try to use:
  *   __attribute__((optimize("O0")))
@@ -483,6 +500,32 @@ exit:
 }
 
 mockable_static
+int firmware_check_hw_config(struct igsc_device_handle *handle, const struct img *img)
+{
+    struct igsc_hw_config device_hw_config;
+    struct igsc_hw_config image_hw_config;
+    int ret;
+
+    memset(&device_hw_config, 0, sizeof(device_hw_config));
+    memset(&image_hw_config, 0, sizeof(image_hw_config));
+
+    ret = igsc_device_hw_config(handle, &device_hw_config);
+    if (ret != IGSC_SUCCESS && ret != IGSC_ERROR_NOT_SUPPORTED)
+    {
+        return ret;
+    }
+
+    ret = igsc_image_hw_config(img->blob, img->size, &image_hw_config);
+    if (ret != IGSC_SUCCESS && ret != IGSC_ERROR_NOT_SUPPORTED)
+    {
+        return ret;
+    }
+
+    return igsc_hw_config_compatible(&image_hw_config, &device_hw_config);
+}
+
+
+mockable_static
 int firmware_update(const char *device_path,
                     const char *image_path,
                     bool allow_downgrade)
@@ -550,8 +593,7 @@ int firmware_update(const char *device_path,
     }
     print_dev_fw_version(&device_fw_version);
 
-    cmp = igsc_fw_version_compare(&image_fw_version,
-                                             &device_fw_version);
+    cmp = igsc_fw_version_compare(&image_fw_version, &device_fw_version);
     switch (cmp)
     {
     case IGSC_VERSION_NEWER:
@@ -586,6 +628,20 @@ int firmware_update(const char *device_path,
         {
             progress_func = progress_percentage_func;
         }
+    }
+
+    ret = firmware_check_hw_config(&handle, img);
+    if (ret == IGSC_VERSION_NOT_COMPATIBLE)
+    {
+        fwupd_error("The firmware image in %s is incompatible with the device %s\n",
+                    image_path, device_path);
+        ret = EXIT_FAILURE;
+        goto exit;
+    }
+    if (ret != IGSC_SUCCESS)
+    {
+        ret = EXIT_FAILURE;
+        goto exit;
     }
 
     ret = igsc_device_fw_update(&handle, img->blob, img->size,
@@ -730,6 +786,216 @@ static int do_firmware_version(int argc, char *argv[])
     fwupd_error("Wrong number of arguments\n");
     return ERROR_BAD_ARGUMENT;
 }
+
+static int image_hw_config(const char *image_path, struct igsc_hw_config *hw_config)
+{
+    struct img *img = NULL;
+    int ret;
+
+    img = image_read_from_file(image_path);
+    if (img == NULL)
+    {
+        fwupd_error("Failed to read :%s\n", image_path);
+        ret = EXIT_FAILURE;
+        goto exit;
+    }
+
+    ret = igsc_image_hw_config(img->blob, img->size, hw_config);
+    if (ret != IGSC_ERROR_NOT_SUPPORTED && ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Error in the image file\n");
+    }
+
+
+exit:
+    free(img);
+    return ret;
+}
+
+static int firmware_hw_config(const char *device_path, struct igsc_hw_config *hw_config)
+{
+    struct igsc_device_handle handle;
+    int ret;
+
+    memset(&handle, 0, sizeof(handle));
+    ret = igsc_device_init_by_device(&handle, device_path);
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Cannot initialize device: %s\n", device_path);
+        goto exit;
+    }
+
+    ret = igsc_device_hw_config(&handle, hw_config);
+    if (ret == IGSC_ERROR_NOT_SUPPORTED)
+    {
+        fwupd_error("config option is not available\n");
+    }
+
+exit:
+    if (ret != IGSC_SUCCESS && ret != IGSC_ERROR_NOT_SUPPORTED)
+    {
+        fwupd_verbose("firmware status: %s(%d)\n",
+                      igsc_translate_firmware_status(igsc_get_last_firmware_status(&handle)),
+                      igsc_get_last_firmware_status(&handle));
+    }
+    (void)igsc_device_close(&handle);
+    return ret;
+}
+
+static int do_firmware_hw_config(int argc, char *argv[])
+{
+    const char *device_path = NULL;
+    char *device_path_found = NULL;
+    const char *image_path = NULL;
+    struct igsc_hw_config dev_hw_config;
+    struct igsc_hw_config img_hw_config;
+    bool check = false;
+    int ret;
+
+    if (argc == 0)
+    {
+        goto no_args;
+    }
+
+    if (argc > 5)
+    {
+        fwupd_error("Wrong number of arguments\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    do
+    {
+        if (arg_is_check(argv[0]))
+        {
+            check = true;
+        }
+        else if (arg_is_device(argv[0]))
+        {
+            if (device_path)
+            {
+                fwupd_error("duplicated argument\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No device to supplied\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            device_path = argv[0];
+        }
+        else if (arg_is_image(argv[0]))
+        {
+            if (image_path)
+            {
+                fwupd_error("duplicated argument\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No image file supplied\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            image_path = argv[0];
+        }
+        else
+        {
+            fwupd_error("Wrong argument %s\n", argv[0]);
+            return ERROR_BAD_ARGUMENT;
+        }
+    }
+    while(arg_next(&argc, &argv));
+
+no_args:
+    if (check)
+    {
+        if (image_path == NULL)
+        {
+            fwupd_error("No image file supplied\n");
+            return ERROR_BAD_ARGUMENT;
+        }
+
+        if (device_path == NULL)
+        {
+            if (get_first_device(&device_path_found) != IGSC_SUCCESS ||
+                device_path_found == NULL)
+            {
+                ret = EXIT_FAILURE;
+                fwupd_error("No device to check\n");
+                goto out;
+            }
+            device_path = device_path_found;
+        }
+
+        ret = image_hw_config(image_path, &img_hw_config);
+        if (ret != IGSC_SUCCESS)
+        {
+            goto out;
+        }
+
+        ret = firmware_hw_config(device_path, &dev_hw_config);
+        if (ret != IGSC_SUCCESS)
+        {
+            goto out;
+        }
+
+        ret = igsc_hw_config_compatible(&img_hw_config, &dev_hw_config);
+        if (ret == IGSC_ERROR_INCOMPATIBLE)
+        {
+            fwupd_error("The firmware image in %s is incompatible with the device %s\n",
+                        image_path, device_path);
+            ret = EXIT_FAILURE;
+        }
+        else if (ret != IGSC_SUCCESS)
+        {
+            fwupd_error("hw configuration comparison failure %s %s %d\n", image_path, device_path, ret);
+            ret = EXIT_FAILURE;
+            goto out;
+        }
+
+        print_hw_config("image", &img_hw_config);
+        print_hw_config("device",  &dev_hw_config);
+    }
+    else
+    {
+        ret = EXIT_SUCCESS;
+        if (device_path == NULL && image_path == NULL)
+        {
+            if (get_first_device(&device_path_found) != IGSC_SUCCESS ||
+                device_path_found == NULL)
+            {
+                ret = EXIT_FAILURE;
+                fwupd_error("No device to check\n");
+                goto out;
+            }
+            device_path = device_path_found;
+        }
+
+        if (image_path)
+        {
+            ret = image_hw_config(image_path, &img_hw_config);
+            if (ret != IGSC_SUCCESS)
+            {
+                goto out;
+            }
+            print_hw_config("image", &img_hw_config);
+        }
+
+        if (device_path)
+        {
+            ret = firmware_hw_config(device_path, &dev_hw_config);
+            if (ret != IGSC_SUCCESS)
+            {
+                goto out;
+            }
+            print_hw_config("device", &dev_hw_config);
+        }
+    }
+
+out:
+    free(device_path_found);
+    return ret;
+}
+
 
 static int do_iaf_psc_update(int argc, char *argv[])
 {
@@ -886,6 +1152,11 @@ static int do_firmware(int argc, char *argv[])
     if (arg_is_token(sub_command, "update"))
     {
         return do_firmware_update(argc, argv);
+    }
+
+    if (arg_is_token(sub_command, "hwconfig"))
+    {
+        return do_firmware_hw_config(argc, argv);
     }
 
     fwupd_error("Wrong argument %s\n", sub_command);
@@ -1287,7 +1558,7 @@ int oprom_update(const char *image_path,
             progress_func = progress_percentage_func;
         }
     }
-   
+
     ret = igsc_device_oprom_update(handle, type, oimg, progress_func, NULL);
 
     /* new line after progress bar */
@@ -1959,6 +2230,7 @@ static const struct gsc_op g_ops[] = {
         .op    = do_firmware,
         .usage = {"update [options] [--device <dev>] --image  <image>",
                   "version [--device <dev>] | --image <file> ",
+                  "hwconfig [--check] [--device <dev> | --image  <image>]",
                    NULL},
         .help  = "Update firmware partition or retrieve version from the devices or the supplied image\n"
                  "\nOPTIONS:\n\n"
@@ -1967,7 +2239,9 @@ static const struct gsc_op g_ops[] = {
                  "    -d | --device <device>\n"
                  "            device to be updated\n"
                  "    -i | --image <image file>\n"
-                 "            supplied image\n",
+                 "            supplied image\n"
+                 "    -c | --check\n"
+                 "            check whether firmware is compatible with the device\n",
     },
     {
         .name  = "iaf",
