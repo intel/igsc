@@ -325,6 +325,18 @@ int igsc_image_hw_config(IN  const uint8_t *buffer,
                          OUT struct igsc_hw_config *hw_config);
 
 /**
+ *  @brief Check whether image hardware configuration compatible with
+ *  device hardware configuration.
+ *
+ *  @param igsc_hw_config Stores the image hardware configuration.
+ *  @param device_hw_config Stores the device hardware configuration.
+ *
+ *  @return IGSC_SUCCESS if image hardware configuration compatible with device.
+ */
+IGSC_EXPORT
+int igsc_hw_config_compatible(IN const struct igsc_hw_config *image_hw_config,
+                              IN const struct igsc_hw_config *device_hw_config);
+/**
  *  @brief Callback function template for monitor firmware update progress.
  *
  *  @param sent Number of bytes sent to the firmware.
@@ -632,16 +644,17 @@ void igsc_device_iterator_destroy(struct igsc_device_iterator *iter);
  * @{
  */
 #define IGSC_ERROR_BASE              0x0000U               /**< Error Base */
-#define IGSC_SUCCESS                 (IGSC_ERROR_BASE + 0) /**< Success */
-#define IGSC_ERROR_INTERNAL          (IGSC_ERROR_BASE + 1) /**< Internal Error */
-#define IGSC_ERROR_NOMEM             (IGSC_ERROR_BASE + 2) /**< Memory Allocation Failed */
-#define IGSC_ERROR_INVALID_PARAMETER (IGSC_ERROR_BASE + 3) /**< Invalid parameter was provided */
-#define IGSC_ERROR_DEVICE_NOT_FOUND  (IGSC_ERROR_BASE + 4) /**< Requested device was not found */
-#define IGSC_ERROR_BAD_IMAGE         (IGSC_ERROR_BASE + 5) /**< Provided image has wrong format */
-#define IGSC_ERROR_PROTOCOL          (IGSC_ERROR_BASE + 6) /**< Error in the update protocol */
-#define IGSC_ERROR_BUFFER_TOO_SMALL  (IGSC_ERROR_BASE + 7) /**< Provided buffer is too small */
-#define IGSC_ERROR_INVALID_STATE     (IGSC_ERROR_BASE + 8) /**< Invalid library internal state */
-#define IGSC_ERROR_NOT_SUPPORTED     (IGSC_ERROR_BASE + 9) /**< Unsupported request */
+#define IGSC_SUCCESS                 (IGSC_ERROR_BASE +  0) /**< Success */
+#define IGSC_ERROR_INTERNAL          (IGSC_ERROR_BASE +  1) /**< Internal Error */
+#define IGSC_ERROR_NOMEM             (IGSC_ERROR_BASE +  2) /**< Memory Allocation Failed */
+#define IGSC_ERROR_INVALID_PARAMETER (IGSC_ERROR_BASE +  3) /**< Invalid parameter was provided */
+#define IGSC_ERROR_DEVICE_NOT_FOUND  (IGSC_ERROR_BASE +  4) /**< Requested device was not found */
+#define IGSC_ERROR_BAD_IMAGE         (IGSC_ERROR_BASE +  5) /**< Provided image has wrong format */
+#define IGSC_ERROR_PROTOCOL          (IGSC_ERROR_BASE +  6) /**< Error in the update protocol */
+#define IGSC_ERROR_BUFFER_TOO_SMALL  (IGSC_ERROR_BASE +  7) /**< Provided buffer is too small */
+#define IGSC_ERROR_INVALID_STATE     (IGSC_ERROR_BASE +  8) /**< Invalid library internal state */
+#define IGSC_ERROR_NOT_SUPPORTED     (IGSC_ERROR_BASE +  9) /**< Unsupported request */
+#define IGSC_ERROR_INCOMPATIBLE      (IGSC_ERROR_BASE + 10) /**< Incompatible request */
 /**
  * @}
  */
