@@ -108,10 +108,8 @@ struct gsc_fwu_img_layout {
     struct gsc_fwu_img_entry table[FWU_FPT_ENTRY_NUM];
 };
 
-#define ENTRY_ID_TO_BITMASK(entry_id) (1U << (entry_id))
 
 #define MANDATORY_ENTRY_BITMASK \
-    (ENTRY_ID_TO_BITMASK(FWU_FPT_ENTRY_IMAGE_INFO) | \
-    ENTRY_ID_TO_BITMASK(FWU_FPT_ENTRY_FW_IMAGE))
+    (BIT(FWU_FPT_ENTRY_IMAGE_INFO) | BIT(FWU_FPT_ENTRY_FW_IMAGE))
 
 #endif /* !__IGSC_SYSTEM_H__ */
