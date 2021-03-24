@@ -389,7 +389,7 @@ static int gsc_fwu_img_layout_parse(struct gsc_fwu_img_layout *layout,
             continue;
         }
 
-        if (entries_found_bitmask & ENTRY_ID_TO_BITMASK(entry_id))
+        if (entries_found_bitmask & BIT(entry_id))
         {
             gsc_error("FPT entry 0x%x already encountered\n",
                     entry->partition_name);
@@ -397,7 +397,7 @@ static int gsc_fwu_img_layout_parse(struct gsc_fwu_img_layout *layout,
             goto exit;
         }
 
-        entries_found_bitmask |= ENTRY_ID_TO_BITMASK(entry_id);
+        entries_found_bitmask |= BIT(entry_id);
 
         if (entry_id >= _countof(layout->table))
         {

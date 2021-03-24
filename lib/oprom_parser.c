@@ -38,7 +38,7 @@
 #define PCI_CLASS_CODE           0x00
 #define PCI_REVISION_LEVEL       0x00
 #define PCI_IMG_SIZE_UNIT_SIZE   512U
-#define PCI_LAST_IMAGE_IND_BIT   (1U << 7)
+#define PCI_LAST_IMAGE_IND_BIT   BIT(7)
 
 #define PCI_SUBSYSTEM_EFI_BOOT_SRV_DRV    0x00
 #define PCI_MACHINE_TYPE_X64              0x00
