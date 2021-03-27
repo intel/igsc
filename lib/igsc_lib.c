@@ -48,6 +48,8 @@ struct gsc_hw_config_1 {
     uint32_t hw_step;
 };
 
+#define to_hw_config_1(cfg) ((struct gsc_hw_config_1 *)(cfg)->blob)
+
 #define FWSTS(n) ((n) - 1)
 
 static int status_tee2fu(TEESTATUS status)
@@ -1321,6 +1323,72 @@ exit:
 
     return ret;
 }
+
+int igsc_hw_config_to_string(IN const struct igsc_hw_config *hw_config,
+                             IN char *buf, IN size_t length)
+{
+    int ret;
+
+    if (hw_config == NULL  || buf == NULL || length == 0)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    memset(buf, 0, length);
+
+    if (hw_config->format_version == 0)
+    {
+         ret = snprintf(buf, length, "hw sku: [ n/a ] hw step: [ n/a ]");
+         return ret;
+    }
+
+    if (to_hw_config_1(hw_config)->hw_sku == 0)
+    {
+        ret = snprintf(buf, length, "hw sku: [ n/a ]");
+    }
+    else
+    {
+        ret = snprintf(buf, length, "hw sku: [ %s%s%s]",
+                       (GSC_IFWI_TAG_128_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "128 " : "",
+                       (GSC_IFWI_TAG_256_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "256 " : "",
+                       (GSC_IFWI_TAG_512_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "512 " : "");
+    }
+    if (ret < 0)
+    {
+        return ret;
+    }
+    if ((size_t)ret == length)
+    {
+        return ret;
+    }
+
+    buf += ret;
+    length -= (size_t)ret;
+
+    if (to_hw_config_1(hw_config)->hw_step == 0)
+    {
+        ret += snprintf(buf + ret, length, " hw step: [ n/a ]");
+    }
+
+    switch(to_hw_config_1(hw_config)->hw_step)
+    {
+    case GSC_SOC_STEP_A0_ID:
+        ret = snprintf(buf, length, " hw step: [ A0 ]");
+        break;
+    case GSC_SOC_STEP_A1_ID:
+        ret = snprintf(buf, length, " hw step: [ A1 ]");
+        break;
+    case GSC_SOC_STEP_B0_ID:
+        ret = snprintf(buf, length, " hw step: [ B0 ]");
+        break;
+    case GSC_SOC_STEP_INVALID_ID:
+    default:
+        ret = snprintf(buf, length, " hw step: [ n/a ]");
+    }
+
+    return ret;
+}
+
 
 static int gsc_image_fw_version(IN const struct gsc_fwu_img_layout *layout,
                                  OUT struct igsc_fw_version *version)
