@@ -40,6 +40,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 /**
  * A file descriptor
  * @typedef igsc_handle_t
@@ -359,6 +360,19 @@ int igsc_image_hw_config(IN  const uint8_t *buffer,
 IGSC_EXPORT
 int igsc_hw_config_compatible(IN const struct igsc_hw_config *image_hw_config,
                               IN const struct igsc_hw_config *device_hw_config);
+/**
+ *  @brief express hw configuration in a string
+ *
+ *  @param hw_config Stores the hardware configuration.
+ *  @param buf to store the hw configuration in a printable null terminated string
+ *  @param length length of supplied buffer
+ *
+ *  @return number of bytes in buffer excluding null terminator or < 0 on error
+ */
+IGSC_EXPORT
+int igsc_hw_config_to_string(IN const struct igsc_hw_config *hw_config,
+                             IN char *buf, IN size_t length);
+
 /**
  *  @brief Callback function template for monitor firmware update progress.
  *
