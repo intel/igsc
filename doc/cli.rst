@@ -48,6 +48,27 @@ usage of the library.
 
     igsc fw version --image <fw image file>
 
+
+4. Retrieve the hw configuration of the device,  in case the device is
+   not supplied the tool will use the first available device.
+
+.. code-block:: sh
+
+    igsc fw hwconfig [--device <device>]
+
+5. retrieve hw configuration supported by the supplied image file.
+
+.. code-block:: sh
+
+    igsc fw hwconfig --image <fw image file>
+
+6. Check for hw configuration compatibility between the device and by the supplied image file.
+
+.. code-block:: sh
+
+    igsc fw hwconfig --check --image <fw image file> [--device <device>]
+
+
 3.3 OPROM Update
 ~~~~~~~~~~~~~~~~~
 
