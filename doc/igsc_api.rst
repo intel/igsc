@@ -103,6 +103,16 @@ image.
         IGSC_VERSION_OLDER = 4,          /**< update image version is older than the one on the device */
     };
 
+5. Hardware configuration data. This is an opaque type as the hardware configuration and format can change between generations
+
+.. code-block:: c
+
+   struct igsc_hw_config {
+       uint32_t format_version;
+       uint8_t blob[48];
+   };
+
+
 2.3 Device Access:
 ~~~~~~~~~~~~~~~~~~
 
@@ -179,6 +189,9 @@ The structure represents the device firmware version.
     if (Image Project != Device Project)
         Incompatible Image
 
+    if (Image HW Config !~ Device HW Config)
+        Incompatible Image
+
     if ((Image Hotfix version == Device Hotfix version) &&
         (Image Build version <= Device Build version)) ||
        (Image Hotfix version < Device Hotfix version):
@@ -203,8 +216,39 @@ The structure represents the device firmware version.
                               IN  uint32_t buffer_len,
                               OUT struct igsc_fw_version *version);
 
+4. Retrieve the device hardware configuration.
 
-4. A type of the progress function: A function provided by the caller,
+.. code-block:: c
+
+    int igsc_device_hw_config(IN  struct igsc_device_handle *handle,
+                              OUT struct igsc_hw_config *hw_config);
+
+
+5. Retrieve the hardware configuration supported by the supplied firmware
+
+
+.. code-block:: c
+
+    int igsc_image_hw_config(IN  const uint8_t *buffer,
+                             IN  uint32_t buffer_len,
+                             OUT struct igsc_hw_config *hw_config);
+
+6. Convert the hardware configuration to a printable string
+
+.. code-block:: c
+
+    int igsc_hw_config_to_string(struct igsc_hw_config *hw_config,
+                                 char *buf, size_t length);
+
+7.  Check whether image hardware configuration compatible with device hardware configuration.
+
+
+.. code-block:: c
+
+   bool igsc_hw_config_compatible(IN const struct igsc_hw_config *image_hw_config,
+                               IN const struct igsc_hw_config *device_hw_config);
+
+8. A type of the progress function: A function provided by the caller,
    intended to reflect the progress of the update.
 
 .. code-block:: c
@@ -214,7 +258,7 @@ The structure represents the device firmware version.
                                         IN void *ctx);
 
 
-5. Firmware update of the device: The function get buffer in memory
+9. Firmware update of the device: The function get buffer in memory
    and send it to the device. It calls progress function handler
    for each chunk it sends.
 
@@ -230,7 +274,7 @@ The structure represents the device firmware version.
                               IN  igsc_progress_func_t progress_f,
                               IN  void *ctx);
 
-6. Function that implements version comparison logic, it returns
+10. Function that implements version comparison logic, it returns
    one of values of `enum igsc_version_compare_result`
 
 .. code-block:: c
