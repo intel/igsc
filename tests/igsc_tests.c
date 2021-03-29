@@ -359,6 +359,18 @@ static void test_image_oprom_init_calloc_fail(void **status)
     igsc_image_oprom_release(img);
 }
 
+static void igsc_hwconfig_null_inputs(void **status)
+{
+    struct igsc_hw_config hw_config =
+    {
+        .format_version = 1
+    };
+
+    assert_int_equal(igsc_hw_config_compatible(NULL, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_hw_config_compatible(&hw_config, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_hw_config_compatible(NULL, &hw_config), IGSC_ERROR_INVALID_PARAMETER);
+}
+
 static void igsc_device_fw_update_null_inputs(void **status)
 {
     struct igsc_device_handle handle;
@@ -434,6 +446,7 @@ static void igsc_device_oprom_update_bad_type(void **status)
 static void test_params_version_null(void **state)
 {
     struct igsc_fw_version ver;
+
     memset(&ver, 0, sizeof(ver));
 
     assert_int_equal(igsc_fw_version_compare(NULL, NULL), IGSC_VERSION_ERROR);
@@ -561,6 +574,7 @@ int main(void)
         cmocka_unit_test(igsc_device_get_device_info_null_2),
         cmocka_unit_test(igsc_device_get_device_info_null_3),
         cmocka_unit_test(test_image_oprom_init_calloc_fail),
+        cmocka_unit_test(igsc_hwconfig_null_inputs),
         cmocka_unit_test(igsc_device_fw_update_null_inputs),
         cmocka_unit_test(igsc_device_fw_update_buffer_len_zero),
         cmocka_unit_test(igsc_device_oprom_update_null_inputs),
