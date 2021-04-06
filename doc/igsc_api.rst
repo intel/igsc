@@ -63,7 +63,7 @@ image.
    #endif /* __linux__ */
 
 
-2. Device Handle: Internal handle used by the library
+3. Device Handle: Internal handle used by the library
 
 .. code-block:: c
 
@@ -72,7 +72,7 @@ image.
     };
 
 
-3 . The device system information retrieved from the operating system.
+4 . The device system information retrieved from the operating system.
 
 .. code-block:: c
 
@@ -90,7 +90,7 @@ image.
          uint16_t subsys_vendor_id;       /**< gfx device subsystem vendor id */
    }
 
-4. Version comparison return values
+5. Version comparison return values
 
 .. code-block:: c
 
@@ -102,7 +102,7 @@ image.
         IGSC_VERSION_OLDER = 4,          /**< update image version is older than the one on the device */
     };
 
-5. Hardware configuration data. This is an opaque type as the hardware configuration and format can change between generations
+6. Hardware configuration data. This is an opaque type as the hardware configuration and format can change between generations
 
 .. code-block:: c
 
