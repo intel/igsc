@@ -22,10 +22,10 @@ The API is divided into 3 groups:
    The API requires device access. This API includes actual image update
    functionality.
 
-3. **Image API**: Provides API for retrieving the required information from
+2. **Image API**: Provides API for retrieving the required information from
    the update images and utilizes library image parsing capabilities.
 
-1. **Device API**: API utilizing underlying operating system in order
+3. **Device API**: API utilizing underlying operating system in order
    to enumerate and access graphics device and retrieve information.
 
 
@@ -63,7 +63,7 @@ image.
    #endif /* __linux__ */
 
 
-2. Device Handle: Internal handle used by the library
+3. Device Handle: Internal handle used by the library
 
 .. code-block:: c
 
@@ -72,7 +72,7 @@ image.
     };
 
 
-3 . The device system information retrieved from the operating system.
+4 . The device system information retrieved from the operating system.
 
 .. code-block:: c
 
@@ -91,7 +91,7 @@ image.
          uint8_t    data[TBD];
    }
 
-4. Version comparison return values
+5. Version comparison return values
 
 .. code-block:: c
 
@@ -103,7 +103,7 @@ image.
         IGSC_VERSION_OLDER = 4,          /**< update image version is older than the one on the device */
     };
 
-5. Hardware configuration data. This is an opaque type as the hardware configuration and format can change between generations
+6. Hardware configuration data. This is an opaque type as the hardware configuration and format can change between generations
 
 .. code-block:: c
 
@@ -354,7 +354,7 @@ information.
 
     struct igsc_image_oprom;
 
-4. Retrieve device device OPROM version for data and code.
+5. Retrieve device device OPROM version for data and code.
 
 
   .. code-block:: c
@@ -363,7 +363,7 @@ information.
                                   IN  uint32_t igsc_oprom_type,
                                   OUT struct igsc_oprom_version *version);
 
-5. OPROM image Information retrieval:
+6. OPROM image Information retrieval:
 
    a. The function allocates and initializes an opaque
       structure `struct igsc_oprom_image` supplied
@@ -434,7 +434,7 @@ information.
 
 
 
-6. Update option ROM partitions:
+7. Update option ROM partitions:
 
    The function gets a parsed image sends it to the device.
    It calls progress function handler for each chunk it sends.
@@ -510,7 +510,7 @@ information.
          igsc_image_oprom_relese(img);
       }
 
-7. Function that implements version comparison logic, it returns
+8. Function that implements version comparison logic, it returns
    one of values of `enum igsc_version_compare_result`
 
 .. code-block:: c
@@ -518,7 +518,7 @@ information.
    uint8_t igsc_oprom_version_compare(const struct igsc_oprom_version *image_ver,
                                       const struct igsc_oprom_version *device_ver);
 
-8. IFR (In-Field Repair) functions
+9. IFR (In-Field Repair) functions
 
   In order to increase the lifetime of the discrete GFX die, there is some redundancy added to it.
   In case of failures, CSC firmware will enable reserved HW instead of malfunctioning HW if possible. 
