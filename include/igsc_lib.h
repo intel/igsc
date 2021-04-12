@@ -669,6 +669,7 @@ void igsc_device_iterator_destroy(struct igsc_device_iterator *iter);
 #define IGSC_ERROR_INVALID_STATE     (IGSC_ERROR_BASE +  8) /**< Invalid library internal state */
 #define IGSC_ERROR_NOT_SUPPORTED     (IGSC_ERROR_BASE +  9) /**< Unsupported request */
 #define IGSC_ERROR_INCOMPATIBLE      (IGSC_ERROR_BASE + 10) /**< Incompatible request */
+#define IGSC_ERROR_TIMEOUT           (IGSC_ERROR_BASE + 11) /**< The operation has timed out */
 /**
  * @}
  */
