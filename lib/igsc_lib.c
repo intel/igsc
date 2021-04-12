@@ -26,6 +26,9 @@
 
 #include "utils.h"
 
+#define TEE_WRITE_TIMEOUT 60000 /* 60 sec */
+#define TEE_READ_TIMEOUT  60000 /* 60 sec */
+
 DEFINE_GUID(GUID_METEE_FWU, 0x87d90ca5, 0x3495, 0x4559,
             0x81, 0x05, 0x3f, 0xbf, 0xa3, 0x7b, 0x8b, 0x79);
 
@@ -40,6 +43,8 @@ static int status_tee2fu(TEESTATUS status)
         return IGSC_ERROR_INTERNAL;
     case TEE_DEVICE_NOT_FOUND:
         return IGSC_ERROR_DEVICE_NOT_FOUND;
+    case TEE_TIMEOUT:
+        return IGSC_ERROR_TIMEOUT;
     default:
         return IGSC_ERROR_INTERNAL;
     }
@@ -529,7 +534,7 @@ int gsc_tee_command(struct igsc_lib_ctx *lib_ctx,
     gsc_debug_hex_dump("Sending:", req_buf, buf_size);
 
     num_bytes = 0;
-    tee_status = TeeWrite(&lib_ctx->driver_handle, req_buf, request_len, &num_bytes, 0);
+    tee_status = TeeWrite(&lib_ctx->driver_handle, req_buf, request_len, &num_bytes, TEE_WRITE_TIMEOUT);
     if (!TEE_IS_SUCCESS(tee_status))
     {
         gsc_error("Error in HECI write (%d)\n", tee_status);
@@ -543,7 +548,7 @@ int gsc_tee_command(struct igsc_lib_ctx *lib_ctx,
         goto exit;
     }
 
-    tee_status = TeeRead(&lib_ctx->driver_handle, resp_buf, buf_size, response_len, 0);
+    tee_status = TeeRead(&lib_ctx->driver_handle, resp_buf, buf_size, response_len, TEE_READ_TIMEOUT);
     if (!TEE_IS_SUCCESS(tee_status))
     {
         gsc_error("Error in HECI read %d\n", tee_status);
@@ -581,7 +586,7 @@ static int gsc_send_no_update(struct igsc_lib_ctx *lib_ctx)
 
     gsc_debug_hex_dump("Sending:", (unsigned char *)req, request_len);
 
-    tee_status = TeeWrite(&lib_ctx->driver_handle, req, request_len, NULL, 0);
+    tee_status = TeeWrite(&lib_ctx->driver_handle, req, request_len, NULL, TEE_WRITE_TIMEOUT);
     if (!TEE_IS_SUCCESS(tee_status))
     {
         gsc_error("Error in HECI write (%d)\n", tee_status);
@@ -880,7 +885,7 @@ static int gsc_fwu_end(struct igsc_lib_ctx *lib_ctx)
 
     gsc_debug_hex_dump("Sending:", (unsigned char *)req, request_len);
 
-    tee_status = TeeWrite(&lib_ctx->driver_handle, req, request_len, NULL, 0);
+    tee_status = TeeWrite(&lib_ctx->driver_handle, req, request_len, NULL, TEE_WRITE_TIMEOUT);
     if (!TEE_IS_SUCCESS(tee_status))
     {
         gsc_error("Error in HECI write (%d)\n", tee_status);

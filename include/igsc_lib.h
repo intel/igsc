@@ -166,6 +166,7 @@ struct igsc_device_info {
 #define IGSC_ERROR_BUFFER_TOO_SMALL  (IGSC_ERROR_BASE + 7) /**< Provided buffer is too small */
 #define IGSC_ERROR_INVALID_STATE     (IGSC_ERROR_BASE + 8) /**< Invalid library internal state */
 #define IGSC_ERROR_NOT_SUPPORTED     (IGSC_ERROR_BASE + 9) /**< Unsupported request */
+#define IGSC_ERROR_TIMEOUT           (IGSC_ERROR_BASE + 11)/**< The operation has timed out */
 /**
  * @}
  */
