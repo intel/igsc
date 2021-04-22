@@ -1506,6 +1506,11 @@ int oprom_update(const char *image_path,
         fwupd_error("The image is not compatible with the device, check vid/did\n");
         goto exit;
     }
+    else if (ret == IGSC_ERROR_DEVICE_NOT_FOUND)
+    {
+        fwupd_error("The image is not compatible with the device\n");
+        goto exit;
+    }
     else
     {
         fwupd_error("Internal error: image to device match returned %d\n", ret);
