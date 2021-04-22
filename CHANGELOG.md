@@ -4,7 +4,7 @@
 
 ### Added
 1. lib: send no update message at the end of firmware update
-2. lib: retrive hw configuration from the device
+2. lib: retrieve hw configuration from the device
 3. lib: add igsc_fw_hw_config_compatible() function
 4. cli: add hw config option to cli
 
