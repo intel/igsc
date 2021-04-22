@@ -1466,6 +1466,11 @@ int oprom_update(const char *image_path,
     {
         update = allow_downgrade;
     }
+    else if (ret == IGSC_ERROR_DEVICE_NOT_FOUND)
+    {
+        fwupd_error("The image is not compatible with the device\n");
+        goto exit;
+    }
     else
     {
         fwupd_error("Internal error\n");
