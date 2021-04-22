@@ -149,11 +149,31 @@ vscode16:
         variables:
                 VS_CODE: "Visual Studio 16 2019"
                 COMPILE_TARGET: package
+                COMPILE_MODE: Release
         artifacts:
                 name:  igsc-win64.zip
                 paths:
                         - build\igsc-*.zip
 
+vscode16:debug:
+        stage: build
+        tags:
+                - Windows
+        before_script:
+        - *metee_windows
+        # Assigning gitlab variable from powershell is broken
+        # https://gitlab.com/gitlab-org/gitlab-runner/issues/4658#
+        - $env:LIBMETEE_REPO=$env:REPO_DIR
+        - echo $env:LIBMETEE_REPO
+        extends: .vscode
+        variables:
+                VS_CODE: "Visual Studio 16 2019"
+                COMPILE_TARGET: package
+                COMPILE_MODE: Debug
+        artifacts:
+                name:  igsc-win64.zip
+                paths:
+                        - build\igsc-*.zip
 vscode16:no_enum:
         stage: build
         tags:
@@ -168,6 +188,7 @@ vscode16:no_enum:
         variables:
                 VS_CODE: "Visual Studio 16 2019"
                 COMPILE_TARGET: package
+                COMPILE_MODE: Release
                 CMAKE_ARGS: '-DENABLE_ENUM:BOOL=OFF'
 
 centos8:
