@@ -624,7 +624,7 @@ int firmware_update(const char *device_path,
     }
 
     ret = firmware_check_hw_config(&handle, img);
-    if (ret == IGSC_VERSION_NOT_COMPATIBLE)
+    if (ret == IGSC_ERROR_INCOMPATIBLE)
     {
         fwupd_error("The firmware image in %s is incompatible with the device %s\n",
                     image_path, device_path);
@@ -791,7 +791,6 @@ static int image_hw_config(const char *image_path, struct igsc_hw_config *hw_con
     {
         fwupd_error("Error in the image file\n");
     }
-
 
 exit:
     free(img);
