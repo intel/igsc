@@ -1549,11 +1549,18 @@ int igsc_hw_config_compatible(IN const struct igsc_hw_config *image_hw_config,
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
+    /* In case of HW that doesn't support hw config just return success */
+    if (image_hw_config->format_version == 0 && device_hw_config->format_version == 0)
+    {
+        return IGSC_SUCCESS;
+    }
+
     if (image_hw_config->format_version != GSC_FWU_GET_CONFIG_FORMAT_VERSION ||
         device_hw_config->format_version != GSC_FWU_GET_CONFIG_FORMAT_VERSION)
     {
-        return IGSC_ERROR_INVALID_PARAMETER;
+        return IGSC_ERROR_NOT_SUPPORTED;
     }
+
     image_hw_config_1 = (struct gsc_hw_config_1 *)image_hw_config->blob;
     device_hw_config_1 = (struct gsc_hw_config_1 *)device_hw_config->blob;
 
