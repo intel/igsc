@@ -460,7 +460,14 @@ int firmware_update(const char *device_path,
     ret = igsc_device_fw_version(&handle, &device_fw_version);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Cannot retrieve firmware version from device: %s\n", device_path);
+        if (ret == IGSC_ERROR_PERMISSION_DENIED)
+        {
+            fwupd_error("Permission denied: missing required credentials to access the device: %s\n", device_path);
+        }
+        else
+        {
+            fwupd_error("Cannot retrieve firmware version from device: %s\n", device_path);
+        }
         goto exit;
     }
     print_dev_fw_version(&device_fw_version);
@@ -557,7 +564,14 @@ int firmware_version(const char *device_path)
     ret = igsc_device_fw_version(&handle, &fw_version);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Cannot retrieve firmware version from device: %s\n", device_path);
+        if (ret == IGSC_ERROR_PERMISSION_DENIED)
+        {
+           fwupd_error("Permission denied: missing required credentials to access the device %s\n", device_path);
+        }
+        else
+        {
+            fwupd_error("Cannot retrieve firmware version from device: %s\n", device_path);
+        }
         goto exit;
     }
 
@@ -745,8 +759,14 @@ int oprom_device_version(const char *device_path,
     ret = igsc_device_oprom_version(&handle, igsc_oprom_type, &oprom_version);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to get oprom version from device: %s\n",
-                    device_path);
+        if (ret == IGSC_ERROR_PERMISSION_DENIED)
+        {
+            fwupd_error("Permission denied: missing required credentials to access the device %s\n", device_path);
+        }
+        else
+        {
+            fwupd_error("Failed to get oprom version from device: %s\n", device_path);
+        }
         goto exit;
     }
 
@@ -1040,7 +1060,14 @@ int oprom_update(const char *image_path,
     ret = igsc_device_oprom_version(handle, type, &dev_version);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Cannot initialize device: %s\n", dev_info->name);
+        if (ret == IGSC_ERROR_PERMISSION_DENIED)
+        {
+            fwupd_error("Permission denied: missing required credentials to access the device %s\n", dev_info->name);
+        }
+        else
+        {
+            fwupd_error("Cannot initialize device: %s\n", dev_info->name);
+        }
         goto exit;
     }
     print_oprom_version(type, &dev_version);
