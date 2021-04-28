@@ -844,7 +844,6 @@ static int gsc_fwu_data(struct igsc_lib_ctx *lib_ctx,
     if (status != IGSC_SUCCESS)
     {
         gsc_error("Invalid HECI message response (%d)\n", status);
-        status = IGSC_ERROR_INTERNAL;
         goto exit;
     }
 
@@ -1275,6 +1274,7 @@ static int gsc_update(IN struct igsc_device_handle *handle,
     uint32_t percentage = 0;
     uint32_t fpt_size = 0;
     const uint8_t *fpt_data = NULL;
+    bool retry_update = false;
 
     struct gsc_perf_cnt _perf_ctx;
     struct gsc_perf_cnt *perf_ctx = &_perf_ctx;
@@ -1316,6 +1316,12 @@ static int gsc_update(IN struct igsc_device_handle *handle,
         goto exit;
     }
 
+retry:
+    bytes_sent = 0;
+    chunk_size = 0;
+    data_counter = 0;
+    percentage = 0;
+
     gsc_pref_cnt_checkpoint(perf_ctx, "Before FWU_START");
 
     ret = gsc_fwu_start(lib_ctx, payload_type);
@@ -1340,6 +1346,15 @@ static int gsc_update(IN struct igsc_device_handle *handle,
         ret = gsc_fwu_data(lib_ctx, fpt_data + bytes_sent, chunk_size);
         if (ret != IGSC_SUCCESS)
         {
+            if (ret != IGSC_ERROR_PROTOCOL && retry_update == false)
+            {
+                ret = driver_reconnect(lib_ctx);
+                if (ret == IGSC_SUCCESS)
+                {
+                    retry_update = true;
+                    goto retry;
+                }
+            }
             goto exit;
         }
         bytes_sent += chunk_size;
