@@ -51,10 +51,17 @@ set_target_properties(
   VERSION ${GSC_VERSION_STRING} SOVERSION ${GSC_VERSION_MAJOR}
 )
 
-find_library(UDEV udev)
+if(ENABLE_ENUM)
+  if(UNIX)
+    find_library(UDEV_LIB udev REQUIRED)
+    find_path(UDEV_INCLUDE_DIR libudev.h REQUIRED)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${UDEV_INCLUDE_DIR})
+  endif()
+  target_link_libraries(${PROJECT_NAME} $<$<BOOL:${UNIX}>:${UDEV_LIB}>)
+endif()
 
 target_link_libraries(${PROJECT_NAME}
-                      LIBMETEE $<$<BOOL:${WIN32}>:CfgMgr32.lib> $<$<BOOL:${UNIX}>:${UDEV}>)
+                      LIBMETEE $<$<BOOL:${WIN32}>:CfgMgr32.lib>)
 
 install(
   TARGETS ${PROJECT_NAME}
