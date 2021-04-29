@@ -92,15 +92,27 @@ static void fwupd_strerror(int errnum, char *buf, size_t buflen)
 }
 #endif /* __linux__ */
 
-static void print_fw_version(const struct igsc_fw_version *fw_version)
+static void print_fw_version(const char *prefix,
+                             const struct igsc_fw_version *fw_version)
 {
-    printf("FW Version: %c%c%c%c->%d->%d\n",
+    printf("%sFW Version: %c%c%c%c->%d->%d\n",
+           prefix,
            fw_version->project[0],
            fw_version->project[1],
            fw_version->project[2],
            fw_version->project[3],
            fw_version->hotfix,
            fw_version->build);
+}
+
+static inline void print_dev_fw_version(const struct igsc_fw_version *fw_version)
+{
+	print_fw_version("Device: ", fw_version);
+}
+
+static inline void print_img_fw_version(const struct igsc_fw_version *fw_version)
+{
+	print_fw_version("Image:  ", fw_version);
 }
 
 const char *oprom_type_to_str(uint32_t type)
@@ -556,7 +568,7 @@ int firmware_update(const char *device_path,
         goto exit;
     }
 
-    print_fw_version(&image_fw_version);
+    print_img_fw_version(&image_fw_version);
 
     ret = igsc_device_init_by_device(&handle, device_path);
     if (ret)
@@ -572,7 +584,7 @@ int firmware_update(const char *device_path,
         fwupd_error("Cannot retrieve firmware version from device: %s\n", device_path);
         goto exit;
     }
-    print_fw_version(&device_fw_version);
+    print_dev_fw_version(&device_fw_version);
 
     cmp = igsc_fw_version_compare(&image_fw_version, &device_fw_version);
     switch (cmp)
@@ -644,7 +656,7 @@ int firmware_update(const char *device_path,
         fwupd_error("Cannot retrieve firmware version from device: %s\n", device_path);
         goto exit;
     }
-    print_fw_version(&device_fw_version);
+    print_dev_fw_version(&device_fw_version);
 
 exit:
     if (ret != IGSC_SUCCESS)
@@ -683,7 +695,7 @@ int firmware_version(const char *device_path)
         goto exit;
     }
 
-    print_fw_version(&fw_version);
+    print_dev_fw_version(&fw_version);
 
 exit:
     if (ret != IGSC_SUCCESS)
@@ -718,7 +730,7 @@ int image_version(const char *image_path)
         fwupd_error("Cannot retrieve firmware version from image: %s\n", image_path);
         goto exit;
     }
-    print_fw_version(&fw_version);
+    print_img_fw_version(&fw_version);
 
 exit:
     free(img);
@@ -2159,7 +2171,7 @@ static int do_list_devices(int argc, char *argv[])
             ret = igsc_device_fw_version(&handle, &fw_version);
             if (ret == IGSC_SUCCESS)
             {
-                print_fw_version(&fw_version);
+                print_fw_version("", &fw_version);
             }
             ret = igsc_device_oprom_version(&handle, IGSC_OPROM_CODE, &oprom_version);
             if (ret == IGSC_SUCCESS)
