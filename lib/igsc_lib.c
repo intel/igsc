@@ -45,6 +45,8 @@ static int status_tee2fu(TEESTATUS status)
         return IGSC_ERROR_DEVICE_NOT_FOUND;
     case TEE_TIMEOUT:
         return IGSC_ERROR_TIMEOUT;
+    case TEE_PERMISSION_DENIED:
+        return IGSC_ERROR_PERMISSION_DENIED;
     default:
         return IGSC_ERROR_INTERNAL;
     }
