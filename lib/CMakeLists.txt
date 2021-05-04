@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright (C) 2019-2020 Intel Corporation
+# Copyright (C) 2019-2021 Intel Corporation
 cmake_minimum_required(VERSION 3.10)
 project(igsc C)
 set(LICENSE Apache)
@@ -35,7 +35,7 @@ set_target_properties(${PROJECT_NAME}
                       PROPERTIES PUBLIC_HEADER ${CMAKE_SOURCE_DIR}/include/igsc_lib.h)
 
 target_include_directories(${PROJECT_NAME} PRIVATE .)
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
 
@@ -64,8 +64,35 @@ target_link_libraries(${PROJECT_NAME}
                       LIBMETEE $<$<BOOL:${WIN32}>:CfgMgr32.lib>)
 
 install(
-  TARGETS ${PROJECT_NAME}
+  TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}Targets
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   PUBLIC_HEADER DESTINATION include
+)
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}/${PROJECT_NAME}ConfigVersion.cmake"
+  VERSION ${GSC_VERSION_STRING}
+  COMPATIBILITY AnyNewerVersion
+)
+
+export(EXPORT ${PROJECT_NAME}Targets
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}/${PROJECT_NAME}Targets.cmake"
+  NAMESPACE ${PROJECT_NAME}::
+)
+configure_file(cmake/${PROJECT_NAME}Config.cmake
+  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}/${PROJECT_NAME}Config.cmake"
+  COPYONLY
+)
+set(ConfigPackageLocation lib/cmake/${PROJECT_NAME})
+install(EXPORT ${PROJECT_NAME}Targets
+  FILE ${PROJECT_NAME}Targets.cmake
+  NAMESPACE ${PROJECT_NAME}::
+  DESTINATION ${ConfigPackageLocation}
+)
+
+install(FILES cmake/${PROJECT_NAME}Config.cmake
+    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}/${PROJECT_NAME}ConfigVersion.cmake"
+  DESTINATION ${ConfigPackageLocation}
 )
