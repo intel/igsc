@@ -670,6 +670,7 @@ void igsc_device_iterator_destroy(struct igsc_device_iterator *iter);
 #define IGSC_ERROR_NOT_SUPPORTED     (IGSC_ERROR_BASE +  9) /**< Unsupported request */
 #define IGSC_ERROR_INCOMPATIBLE      (IGSC_ERROR_BASE + 10) /**< Incompatible request */
 #define IGSC_ERROR_TIMEOUT           (IGSC_ERROR_BASE + 11) /**< The operation has timed out */
+#define IGSC_ERROR_PERMISSION_DENIED (IGSC_ERROR_BASE + 12) /**< The process doesn't have access rights */
 /**
  * @}
  */
