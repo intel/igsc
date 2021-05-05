@@ -66,6 +66,7 @@ enum igsc_image_type {
     IGSC_IMAGE_TYPE_OPROM,       /**< OPROM CODA an DATA combined image */
     IGSC_IMAGE_TYPE_OPROM_CODE,  /**< OPROM code image */
     IGSC_IMAGE_TYPE_OPROM_DATA,  /**< OPROM data image */
+    IGSC_IMAGE_TYPE_FW_DATA,     /**< firmware data image */
 };
 
 /**
@@ -86,6 +87,27 @@ enum igsc_version_compare_result {
     IGSC_VERSION_NEWER = 2,          /**< update image version is newer than the one on the device */
     IGSC_VERSION_EQUAL = 3,          /**< update image version is equal to the one on the device */
     IGSC_VERSION_OLDER = 4,          /**< update image version is older than the one on the device */
+};
+
+/**
+ * fwdata versions comparison results
+ */
+enum igsc_fwdata_version_compare_result {
+    IGSC_FWDATA_VERSION_REJECT_VCN = 0,                    /**< VCN version is bigger than device VCN */
+    IGSC_FWDATA_VERSION_REJECT_OEM_MANUF_DATA_VERSION = 1, /**< OEM manufacturing data version is not bigger than device OEM version */
+    IGSC_FWDATA_VERSION_REJECT_DIFFERENT_PROJECT = 2,      /**< major version is different from device major version */
+    IGSC_FWDATA_VERSION_ACCEPT = 3,                        /**< update image VCN version is equal than the one on the device, and OEM is bigger */
+    IGSC_FWDATA_VERSION_OLDER_VCN = 4,                     /**< update image VCN version is smaller to the one on the device */
+};
+
+/**
+ * Structure to store OEM manufacturing data version and data major VCN 
+ * for GSC in-field data firmware update image
+ */
+struct igsc_fwdata_version {
+    uint32_t oem_manuf_data_version; /**< GSC in-field data firmware OEM manufacturing data version */
+    uint16_t major_version;           /**< GSC in-field data firmware major version */
+    uint16_t major_vcn;              /**< GSC in-field data firmware major VCN */
 };
 
 /**
@@ -118,10 +140,28 @@ struct igsc_oprom_device_info {
 };
 
 /**
+ * vendor and device id, subsystem vendor and device id support by
+ * the GSC in-field data firmware update image as defined by PCI.
+ */
+struct igsc_fwdata_device_info {
+  uint16_t vendor_id; /**< vendor id */
+  uint16_t device_id; /**< device id */
+  uint16_t subsys_vendor_id; /**< subsystem vendor id */
+  uint16_t subsys_device_id; /**< subsystem device id */
+};
+
+/**
  * @struct igsc_oprom_image
  * opaque struct for oprom image handle
  */
 struct igsc_oprom_image;
+
+/**
+ * @struct igsc_fwdata_image
+ * opaque struct for fw data image handle
+ */
+struct igsc_fwdata_image;
+
 
 /**
  * opaque structure representing device lookup context
@@ -419,10 +459,177 @@ igsc_device_fw_update(IN  struct igsc_device_handle *handle,
  */
 IGSC_EXPORT int
 igsc_iaf_psc_update(IN struct igsc_device_handle *handle,
-                   IN const uint8_t *buffer,
-                   IN const uint32_t buffer_len,
-                   IN igsc_progress_func_t progress_f,
-                   IN void *ctx);
+                    IN const uint8_t *buffer,
+                    IN const uint32_t buffer_len,
+                    IN igsc_progress_func_t progress_f,
+                    IN void *ctx);
+
+/**
+ *  @brief Perform the GSC firmware in-field data update from the provided firmware update image.
+ *
+ *  @param handle A handle to the device.
+ *  @param buffer A pointer to the buffer with the firmware in-field data update image.
+ *  @param buffer_len Length of the buffer with the firmware in-field data update image.
+ *  @param progress_f Pointer to the callback function for firmware update
+ *         progress monitor.
+ *  @param ctx Context passed to progress_f function.
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT int
+igsc_device_fwdata_update(IN  struct igsc_device_handle *handle,
+                          IN  const uint8_t *buffer,
+                          IN  const uint32_t buffer_len,
+                          IN  igsc_progress_func_t progress_f,
+                          IN  void *ctx);
+
+/**
+ *  @brief Perform the GSC firmware in-field data update from the provided firmware update image.
+ *
+ *  @param handle A handle to the device.
+ *  @param img A pointer to the parsed firmware data image structure.
+ *  @param progress_f Pointer to the callback function for firmware update
+ *         progress monitor.
+ *  @param ctx Context passed to progress_f function.
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT int
+igsc_device_fwdata_image_update(IN  struct igsc_device_handle *handle,
+                                IN  struct igsc_fwdata_image *img,
+                                IN  igsc_progress_func_t progress_f,
+                                IN  void *ctx);
+
+/**
+ *  @brief initializes firmware data image handle from the supplied firmware data update image.
+ *
+ *  @param img firmware data image handle allocated by the function.
+ *  @param buffer A pointer to the buffer with the firmware data update image.
+ *  @param buffer_len Length of the buffer with the firmware data update image.
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_image_fwdata_init(IN OUT struct igsc_fwdata_image **img,
+                           IN const uint8_t *buffer,
+                           IN uint32_t buffer_len);
+
+/**
+ *  @brief Retrieves the GSC in-field data Firmware Version from the device.
+ *
+ *  @param handle A handle to the device.
+ *  @param version The memory to store obtained firmware version.
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_device_fwdata_version(IN  struct igsc_device_handle *handle,
+                               OUT struct igsc_fwdata_version *version);
+
+/**
+ *  @brief Retrieves the GSC in-field data Firmware version from the supplied GSC in-field data Firmware update image.
+ *
+ *  @param img GSC in-field data Firmware image handle
+ *  @param version The memory to store the obtained GSC in-field data Firmware version.
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_image_fwdata_version(IN struct igsc_fwdata_image *img,
+                              OUT struct igsc_fwdata_version *version);
+
+/**
+ *  @brief Compares input GSC in-field data firmware update version to the flash one
+ *
+ *  @param image_ver pointer to the GSC in-field data firmware update image version
+ *  @param device_ver pointer to the device GSC data firmware version
+ *
+ *  @return
+ *  * IGSC_VERSION_NOT_COMPATIBLE if update image is for a different platform
+ *  * IGSC_VERSION_NEWER          if update image version is newer than the one on the device
+ *  * IGSC_VERSION_EQUAL          if update image version is equal to the one on the device
+ *  * IGSC_VERSION_OLDER          if update image version is older than the one on the device
+ *  * IGSC_VERSION_ERROR          if NULL parameters were provided
+ */
+IGSC_EXPORT
+uint8_t igsc_fwdata_version_compare(IN struct igsc_fwdata_version *image_ver,
+                                    IN struct igsc_fwdata_version *device_ver);
+
+/**
+ *  @brief Retrieves a count of of different devices supported
+ *  by the GSC in-field data firmware update image associated with the handle.
+ *
+ *  @param img GSC in-field data firmware image handle
+ *  @param count the number of devices
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_image_fwdata_count_devices(IN struct igsc_fwdata_image *img,
+                                    OUT uint32_t *count);
+
+/**
+ *  @brief Retrieves a list of supported devices
+ *  by the GSC in-field data firmware update image associated with the handle.
+ *  The caller supplies allocated buffer `devices` of
+ *  `count` size. The function returns `count` filled
+ *  with actually returned devices.
+ *
+ *  @param img GSC in-field data firmware image handle
+ *  @param devices list of devices supported by the GSC in-field data firmware image
+ *  @param count in the number of devices allocated
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_image_fwdata_supported_devices(IN struct igsc_fwdata_image *img,
+                                        OUT struct igsc_fwdata_device_info *devices,
+                                        IN OUT uint32_t *count);
+/**
+ *  @brief check if GSC in-field data firmware image can be applied on the device.
+ *
+ *  @param img GSC in-field data firmware image handle
+ *  @param device physical device info
+ *
+ *  @return
+ *    * IGSC_SUCCESS if device is on the list of supported devices.
+ *    * IGSC_ERROR_DEVICE_NOT_FOUND otherwise.
+ */
+IGSC_EXPORT
+int igsc_image_fwdata_match_device(IN struct igsc_fwdata_image *img,
+                                   IN struct igsc_device_info *device);
+/**
+ *  @brief reset the iterator over supported devices
+ *
+ *  @param img GSC in-field data firmware image handle
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_image_fwdata_iterator_reset(IN struct igsc_fwdata_image *img);
+
+/**
+ *  @brief progress the supported device iterator
+ *  and return the GSC in-field data firmware device info
+ *
+ *  @param img GSC in-field data firmware image handle
+ *  @param device GSC in-field data firmware device information.
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_image_fwdata_iterator_next(IN struct igsc_fwdata_image *img,
+                                    OUT struct igsc_fwdata_device_info *device);
+
+/**
+ *  @brief release the fwdata image handle
+ *
+ *  @param img fwdata image handle
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_image_fwdata_release(IN struct igsc_fwdata_image *img);
 
 /**
  *  @brief Compares input fw version to the flash one
