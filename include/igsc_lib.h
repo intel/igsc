@@ -62,7 +62,7 @@ typedef void *igsc_handle_t;
  */
 enum igsc_image_type {
     IGSC_IMAGE_TYPE_UNKNOWN = 0, /**< Unknown image type */
-    IGSC_IMAGE_TYPE_GFX_FW,      /**< GSC Frimware image */
+    IGSC_IMAGE_TYPE_GFX_FW,      /**< GSC Firmware image */
     IGSC_IMAGE_TYPE_OPROM,       /**< OPROM CODA an DATA combined image */
     IGSC_IMAGE_TYPE_OPROM_CODE,  /**< OPROM code image */
     IGSC_IMAGE_TYPE_OPROM_DATA,  /**< OPROM data image */
@@ -611,8 +611,8 @@ int igsc_image_fwdata_release(IN struct igsc_fwdata_image *img);
 /**
  *  @brief Compares input fw version to the flash one
  *
- *  @param image_ver pointer to the update image OPROM version
- *  @param device_ver pointer to the device OPROM version
+ *  @param image_ver pointer to the update image version
+ *  @param device_ver pointer to the device version
  *
  *  @return
  *  * IGSC_VERSION_NOT_COMPATIBLE if update image is for a different platform
