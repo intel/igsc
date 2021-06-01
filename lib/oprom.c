@@ -213,12 +213,11 @@ int igsc_image_oprom_match_device(IN struct igsc_oprom_image *img,
         goto exit;
     }
 
-    ret = IGSC_ERROR_NOT_SUPPORTED;
-
     /* check that there is a match between request type and image type */
     img_type = image_oprom_get_type(img);
     if ((request_type & img_type) == 0)
     {
+        ret = IGSC_ERROR_INVALID_PARAMETER;
         goto exit;
     }
 
@@ -244,6 +243,7 @@ int igsc_image_oprom_match_device(IN struct igsc_oprom_image *img,
         }
     }
     /* search the device list for a match */
+    ret = IGSC_ERROR_NOT_SUPPORTED;
     while ((ret = image_oprom_get_next(img, &oprom_device)) == IGSC_SUCCESS)
     {
         if (oprom_match_device(device, &oprom_device))
