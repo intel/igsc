@@ -1499,18 +1499,14 @@ int oprom_update(const char *image_path,
     {
         update = true;
     }
-    else if (ret == IGSC_ERROR_NOT_SUPPORTED)
-    {
-        update = allow_downgrade;
-    }
     else if (ret == IGSC_ERROR_DEVICE_NOT_FOUND)
     {
-        fwupd_error("The image is not compatible with the device\n");
+        fwupd_error("The image is not compatible with the device, check vid/did\n");
         goto exit;
     }
     else
     {
-        fwupd_error("Internal error\n");
+        fwupd_error("Internal error: image to device match returned %d\n", ret);
         goto exit;
     }
 
