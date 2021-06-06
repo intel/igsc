@@ -1,5 +1,25 @@
 # IGSC FUL
 
+## [v0.2.3] - 2021-06-06
+
+### Added
+
+1. lib: use generic BIT macro
+
+### Fixed
+
+1.  oprom: fix type size comparison issue in oprom_parser.c
+2.  cli: add a message when permission denied
+3.  lib: add permission denied error code to the library
+4.  lib: restart firmware update in case of an error
+5.  lib: add timeout teewrite and teewrite
+6.  cli: prefix the firmware version in print
+7.  lib: CMake: require UDev library and header on Linux
+8.  CMake: set DEBUG defines in Debug mode
+9.  cli: oprom: fix print if good devid is not found in the image
+11. oprom: use %d for uint32_t in debug prints
+
+
 ## [v0.2.2] - 2021-03-21
 
 ### Added
