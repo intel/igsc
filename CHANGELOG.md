@@ -1,5 +1,13 @@
 # IGSC FUL
 
+## [v0.2.6] - 2021-09-02
+
+### Fixed
+
+cli: print device BDF as a hexadecimal numbers
+lib: udev: parse device BDF as hexadecimal
+doc: fix igsc documentation
+
 ## [v0.2.5] - 2021-08-30
 
 ### Added
@@ -49,7 +57,7 @@
 
 ### Added
 
-1. doc: add no_update flow to the documenation
+1. doc: add no_update flow to the documentation 
 2. lib: send no update message at the end of firmware update
 3. lib: generalize image update flow
 4. lib: export tee handlers functions to the internal header
