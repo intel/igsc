@@ -1,5 +1,18 @@
 # IGSC FUL
 
+## [v0.2.5] - 2021-08-30
+
+### Added
+
+1. scripts: add vscode build script
+
+### Fixed
+
+1. lib: check integer overflow in oprom parser
+2. lib: try reconnect in a loop after firmware reset
+3. lib: fix the gsc_msleep function
+4. cli: fix debug print of sent data hex dump
+
 ## [v0.2.4] - 2021-06-14
 
 ### Added
