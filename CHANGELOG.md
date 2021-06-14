@@ -1,5 +1,17 @@
 # IGSC FUL
 
+## [v0.2.4] - 2021-06-14
+
+### Added
+
+1. cmake: add package config helper
+
+### Fixed
+
+1. cli: fix oprom update error handling
+2. lib: fix error value for mismatch of oprom image type and request
+
+
 ## [v0.2.3] - 2021-06-06
 
 ### Added
