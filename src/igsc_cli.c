@@ -2395,6 +2395,48 @@ static int do_firmware_data(int argc, char *argv[])
     return ERROR_BAD_ARGUMENT;
 }
 
+#define MAX_TILES_NUM 4
+
+mockable_static
+int get_mem_err(struct igsc_device_handle *handle)
+{
+    int      ret;
+    uint32_t i, tiles_num;
+    uint8_t buf[sizeof(struct igsc_gfsp_mem_err) + MAX_TILES_NUM * sizeof(struct igsc_gfsp_tile_mem_err)];
+    struct igsc_gfsp_mem_err *tiles = (struct igsc_gfsp_mem_err *) buf;
+
+    /* set the number of tiles in the structure that will be passed as a buffer */
+    tiles->num_of_tiles = MAX_TILES_NUM;
+
+    /* call the igsc library routine to get number of tiles */
+    ret = igsc_gfsp_count_tiles(handle, &tiles_num);
+    if (ret)
+    {
+        fwupd_error("Failed to get number of tiles, returned %d\n", ret);
+        return EXIT_FAILURE;
+    }
+
+    if (tiles_num > MAX_TILES_NUM)
+    {
+       fwupd_error("Number of tiles is too big (%u), should not be bigger than %u\n",
+                   tiles_num, MAX_TILES_NUM);
+    }
+
+    /* call the igsc library routine to get memory errors */
+    ret = igsc_gfsp_memory_errors(handle, tiles);
+    if (ret)
+    {
+        fwupd_error("Failed to get memory errors number, returned %d\n", ret);
+        return EXIT_FAILURE;
+    }
+    printf("Number of tiles: %u\n", tiles->num_of_tiles);
+    for (i = 0; i < tiles->num_of_tiles; i++)
+        printf("tile %u: correctable memory errors: %u, uncorrectable memory errors: %u\n",
+               i, tiles->errors[i].corr_err, tiles->errors[i].uncorr_err);
+
+    return ret;
+}
+
 mockable_static
 int get_status(struct igsc_device_handle *handle)
 {
@@ -2424,7 +2466,7 @@ int get_status(struct igsc_device_handle *handle)
     return ret;
 }
 
-static int do_ifr_get_status(int argc, char *argv[])
+static int do_no_special_args_func(int argc, char *argv[], int (*func_ptr)(struct igsc_device_handle *))
 {
     struct igsc_device_handle handle;
     int ret;
@@ -2476,11 +2518,21 @@ static int do_ifr_get_status(int argc, char *argv[])
         igsc_device_update_device_info(&handle, &dev_info);
     }
 
-    ret = get_status(&handle);
+    ret = (*func_ptr)(&handle);
 
 out:
     igsc_device_close(&handle);
     return ret;
+}
+
+static int do_gfsp_get_mem_err(int argc, char *argv[])
+{
+    return do_no_special_args_func(argc, argv, get_mem_err);
+}
+
+static int do_ifr_get_status(int argc, char *argv[])
+{
+    return do_no_special_args_func(argc, argv, get_status);
 }
 
 static void print_run_test_status(uint8_t run_status)
@@ -2690,6 +2742,29 @@ static int do_ifr(int argc, char *argv[])
     if (arg_is_token(sub_command, "run-test"))
     {
         return do_ifr_run_test(argc, argv);
+    }
+
+    fwupd_error("Wrong argument %s\n", sub_command);
+    return ERROR_BAD_ARGUMENT;
+}
+
+static int do_gfsp(int argc, char *argv[])
+{
+    const char *sub_command = NULL;
+
+    if (argc <= 0)
+    {
+        fwupd_error("Missing arguments\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    sub_command = argv[0];
+
+    arg_next(&argc, &argv);
+
+    if (arg_is_token(sub_command, "get-mem-err"))
+    {
+        return do_gfsp_get_mem_err(argc, argv);
     }
 
     fwupd_error("Wrong argument %s\n", sub_command);
@@ -2913,7 +2988,16 @@ static const struct gsc_op g_ops[] = {
                  "            specify a tile to run test on\n"
                  "    -r | --test <[scan|array]>\n"
                  "            specify the test to run\n"
-
+    },
+    {
+        .name  = "gfsp",
+        .op    = do_gfsp,
+        .usage = {"get-mem-err [--device <dev>]",
+                  NULL},
+        .help  = "Get number of memory errors for each tile\n"
+                 "\nOPTIONS:\n\n"
+                 "    -d | --device <device>\n"
+                 "            device to communicate with\n"
     },
 
     {
