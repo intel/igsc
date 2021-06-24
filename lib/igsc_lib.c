@@ -23,6 +23,7 @@
 #include "igsc_perf.h"
 #include "igsc_log.h"
 #include "igsc_internal.h"
+#include "fw_data_parser.h"
 
 #include "utils.h"
 
@@ -261,7 +262,7 @@ static bool is_empty(const uint8_t *buf, size_t size)
 }
 
 static int gsc_fwu_img_layout_parse(struct gsc_fwu_img_layout *layout,
-                                    const uint8_t *buffer, uint32_t buffer_len)
+                                    const uint8_t *buffer, uint32_t buffer_len, uint32_t payload_type)
 {
     int status;
     uint32_t i;
@@ -413,6 +414,12 @@ static int gsc_fwu_img_layout_parse(struct gsc_fwu_img_layout *layout,
             case IMGI_HEADER_MARKER:
                 entry_id = FWU_FPT_ENTRY_IMAGE_INSTANCE;
                 break;
+            case SDTA_HEADER_MARKER:
+                entry_id = FWU_FPT_ENTRY_FW_DATA_IMAGE;
+                break;
+            case CKSM_HEADER_MARKER:
+                entry_id = FWU_FPT_ENTRY_CKSM;
+                break;
             default:
                 entry_id = FWU_FPT_ENTRY_NUM;
                 break;
@@ -444,11 +451,23 @@ static int gsc_fwu_img_layout_parse(struct gsc_fwu_img_layout *layout,
         gsc_debug("FPT entries %d len %d\n", entry_id, entry->length);
     }
 
-    if ((entries_found_bitmask & MANDATORY_ENTRY_BITMASK) != MANDATORY_ENTRY_BITMASK)
+    if (payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA)
     {
-        gsc_debug("Mandatory FPT entries missing from update image\n");
-        status = IGSC_ERROR_BAD_IMAGE;
-        goto exit;
+        if ((entries_found_bitmask & MANDATORY_FWDATA_ENTRY_BITMASK) != MANDATORY_FWDATA_ENTRY_BITMASK)
+        {
+            gsc_debug("Mandatory FPT entries missing from update image\n");
+            status = IGSC_ERROR_BAD_IMAGE;
+            goto exit;
+        }
+    }
+    else
+    {
+        if ((entries_found_bitmask & MANDATORY_ENTRY_BITMASK) != MANDATORY_ENTRY_BITMASK)
+        {
+            gsc_debug("Mandatory FPT entries missing from update image\n");
+            status = IGSC_ERROR_BAD_IMAGE;
+            goto exit;
+        }
     }
 
     status = IGSC_SUCCESS;
@@ -778,7 +797,14 @@ static int gsc_fwu_start(struct igsc_lib_ctx *lib_ctx, uint32_t payload_type)
     memset(req, 0, request_len);
     req->header.command_id = command_id;
 
-    req->update_img_length = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].size;
+    if (payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA)
+    {
+        req->update_img_length = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_DATA_IMAGE].size;
+    }
+    else
+    {
+        req->update_img_length = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].size;
+    }
     req->payload_type = payload_type;
     req->flags = 0;
     memset(req->reserved, 0, sizeof(req->reserved));
@@ -1453,7 +1479,7 @@ int igsc_image_fw_version(IN  const uint8_t *buffer,
      * Parse the image, check that the image layout is correct and store it in
      * the library context
      */
-    ret = gsc_fwu_img_layout_parse(&layout, buffer, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, buffer, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
     if (ret != IGSC_SUCCESS)
     {
         return ret;
@@ -1521,7 +1547,7 @@ int igsc_image_hw_config(IN  const uint8_t *buffer,
      * Parse the image, check that the image layout is correct and store it in
      * the library context
      */
-    ret = gsc_fwu_img_layout_parse(&layout, buffer, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, buffer, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
     if (ret != IGSC_SUCCESS)
     {
         return ret;
@@ -1582,6 +1608,7 @@ int igsc_image_get_type(IN const uint8_t *buffer,
 {
     struct gsc_fwu_img_layout layout;
     struct igsc_oprom_image *oimg = NULL;
+    struct igsc_fwdata_image *fwdata_image = NULL;
     int ret;
     uint8_t img_type = IGSC_IMAGE_TYPE_UNKNOWN;
     uint32_t oimg_type;
@@ -1593,7 +1620,14 @@ int igsc_image_get_type(IN const uint8_t *buffer,
 
     gsc_fwu_img_layout_reset(&layout);
 
-    ret = gsc_fwu_img_layout_parse(&layout, buffer, buffer_len);
+    ret = igsc_image_fwdata_init(&fwdata_image, buffer, buffer_len);
+    if (ret == IGSC_SUCCESS)
+    {
+        img_type = IGSC_IMAGE_TYPE_FW_DATA;
+        goto exit;
+    }
+
+    ret = gsc_fwu_img_layout_parse(&layout, buffer, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
     if (ret == IGSC_SUCCESS)
     {
         img_type = IGSC_IMAGE_TYPE_GFX_FW;
@@ -1632,6 +1666,8 @@ exit:
     gsc_fwu_img_layout_reset(&layout);
 
     igsc_image_oprom_release(oimg);
+
+    igsc_image_fwdata_release(fwdata_image);
 
     *type = img_type;
 
@@ -1712,9 +1748,9 @@ static int gsc_update(IN struct igsc_device_handle *handle,
     gsc_pref_cnt_init(perf_ctx);
     gsc_pref_cnt_checkpoint(perf_ctx, "Program start");
 
-    if (payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW)
+    if (payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW || payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA)
     {
-        ret = gsc_fwu_img_layout_parse(&lib_ctx->layout, buffer, buffer_len);
+        ret = gsc_fwu_img_layout_parse(&lib_ctx->layout, buffer, buffer_len, payload_type);
         if (ret != IGSC_SUCCESS)
         {
             goto exit;
@@ -1730,8 +1766,16 @@ static int gsc_update(IN struct igsc_device_handle *handle,
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
-    fpt_size = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].size;
-    fpt_data = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].content;
+    if (payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA)
+    {
+        fpt_size = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_DATA_IMAGE].size;
+        fpt_data = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_DATA_IMAGE].content;
+    }
+    else
+    {
+        fpt_size = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].size;
+        fpt_data = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].content;
+    }
 
     gsc_debug("Update Image Payload size: %d bytes\n", fpt_size);
 
@@ -1811,7 +1855,7 @@ retry:
 
     gsc_pref_cnt_checkpoint(perf_ctx, "After FWU_END");
 
-    if (payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW)
+    if (payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW || payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA)
     {
         get_version_loop(lib_ctx);
     }
@@ -2173,4 +2217,334 @@ const char *igsc_translate_firmware_status(IN  uint32_t firmware_status)
     }
 
     return msg;
+}
+
+
+// In Field Data
+static int gsc_fwdata_get_version(struct igsc_lib_ctx *lib_ctx, struct igsc_fwdata_version *version)
+{
+    int status;
+    size_t request_len;
+    size_t response_len;
+    size_t received_len = 0;
+    size_t buf_len;
+
+    struct gsc_fw_data_heci_version_resp *resp;
+    struct gsc_fw_data_heci_version_req *req;
+    uint8_t command_id = GSC_FWU_HECI_COMMAND_ID_GET_GFX_DATA_UPDATE_INFO;
+
+    if (version == NULL)
+    {
+        return IGSC_ERROR_INTERNAL;
+    }
+
+    req = (struct gsc_fw_data_heci_version_req *)lib_ctx->working_buffer;
+    request_len = sizeof(*req);
+
+    resp = (struct gsc_fw_data_heci_version_resp *)lib_ctx->working_buffer;
+    response_len = sizeof(*resp) - sizeof((resp->response.header));
+    buf_len = lib_ctx->working_buffer_length;
+
+    status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
+    if (status != IGSC_SUCCESS)
+    {
+        return status;
+    }
+
+    memset(req, 0, request_len);
+    req->header.command_id = command_id;
+    status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response (%d)\n", status);
+        goto exit;
+    }
+
+    if (received_len < sizeof(resp->response))
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    status = gsc_fwu_heci_validate_response_header(lib_ctx, &resp->response, command_id);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response (%d)\n", status);
+        goto exit;
+    }
+
+    if (received_len != response_len)
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    version->major_vcn = resp->major_vcn;
+    version->major_version = resp->major_version;
+
+    if (resp->oem_manuf_data_version_fitb_valid)
+    {
+        version->oem_manuf_data_version = resp->oem_manuf_data_version_fitb;
+    }
+    else
+    {
+        version->oem_manuf_data_version = resp->oem_manuf_data_version_nvm;
+    }
+
+    status = IGSC_SUCCESS;
+
+exit:
+    return status;
+}
+
+
+static bool fwdata_match_device(struct igsc_device_info *device,
+                                struct igsc_fwdata_device_info *fwdata_device)
+{
+    return (device->vendor_id == fwdata_device->vendor_id) &&
+           (device->device_id == fwdata_device->device_id) &&
+           (device->subsys_vendor_id == fwdata_device->subsys_vendor_id) &&
+           (device->subsys_device_id == fwdata_device->subsys_device_id);
+}
+
+//In Field Data API
+int igsc_device_fwdata_update(IN  struct igsc_device_handle *handle,
+                              IN  const uint8_t *buffer,
+                              IN  const uint32_t buffer_len,
+                              IN  igsc_progress_func_t progress_f,
+                              IN  void *ctx)
+{
+    struct igsc_fwdata_image *img;
+    int ret;
+
+    ret = igsc_image_fwdata_init(&img, buffer, buffer_len);
+    if (ret != IGSC_SUCCESS)
+    {
+        return ret;
+    }
+
+    return gsc_update(handle, buffer, buffer_len, progress_f, ctx,
+                      GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA);
+}
+
+int igsc_device_fwdata_image_update(IN  struct igsc_device_handle *handle,
+                                    IN  struct igsc_fwdata_image *img,
+                                    IN  igsc_progress_func_t progress_f,
+                                    IN  void *ctx)
+{
+    int ret;
+    const uint8_t *buffer = NULL;
+    uint32_t buffer_len;
+
+    ret = image_fwdata_get_buffer(img, &buffer, &buffer_len);
+    if (ret != IGSC_SUCCESS)
+    {
+        return ret;
+    }
+
+    if (buffer == NULL || buffer_len == 0 || buffer_len > IGSC_MAX_IMAGE_SIZE)
+    {
+        gsc_error("Image size (%d) too big\n", buffer_len);
+        return IGSC_ERROR_BAD_IMAGE;
+    }
+    return gsc_update(handle, buffer, buffer_len, progress_f, ctx,
+                      GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA);
+}
+
+
+int igsc_image_fwdata_init(IN OUT struct igsc_fwdata_image **img,
+                           IN const uint8_t *buffer,
+                           IN uint32_t buffer_len)
+{
+    int ret;
+    if (img == NULL || buffer == NULL || buffer_len == 0)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    ret = image_fwdata_alloc_handle(img, buffer, buffer_len);
+    if (ret != IGSC_SUCCESS)
+    {
+       return ret;
+    }
+
+    gsc_fwu_img_layout_reset(&(*img)->layout);
+    ret = gsc_fwu_img_layout_parse(&(*img)->layout, buffer, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA);
+    if (ret != IGSC_SUCCESS)
+    {
+        igsc_image_fwdata_release(*img);
+        *img = NULL;
+        return ret;
+    }
+
+    ret = image_fwdata_parse(*img);
+    if (ret != IGSC_SUCCESS)
+    {
+        igsc_image_fwdata_release(*img);
+        *img = NULL;
+    }
+    return ret;
+}
+
+int igsc_device_fwdata_version(IN  struct igsc_device_handle *handle,
+                               OUT struct igsc_fwdata_version *version)
+{
+    struct igsc_lib_ctx *lib_ctx;
+    int ret;
+
+    if (handle == NULL || handle->ctx == NULL || version == NULL)
+    {
+        gsc_error("Bad parameters\n");
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    lib_ctx = handle->ctx;
+    ret = gsc_driver_init(lib_ctx, &GUID_METEE_FWU);
+    if (ret != IGSC_SUCCESS)
+    {
+        gsc_error("Failed to init HECI driver\n");
+        return ret;
+    }
+
+    ret = gsc_fwdata_get_version(lib_ctx, version);
+
+    gsc_driver_deinit(lib_ctx);
+
+    return ret;
+}
+
+int igsc_image_fwdata_version(IN struct igsc_fwdata_image *img,
+                              OUT struct igsc_fwdata_version *version)
+{
+    if (img == NULL || version == NULL)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    return image_fwdata_get_version(img, version);
+}
+
+uint8_t igsc_fwdata_version_compare(IN struct igsc_fwdata_version *image_ver,
+                                    IN struct igsc_fwdata_version *device_ver)
+{
+    if (image_ver == NULL || device_ver == NULL)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    if (image_ver->major_version != device_ver->major_version)
+    {
+        return IGSC_FWDATA_VERSION_REJECT_DIFFERENT_PROJECT;
+    }
+    if (image_ver->major_vcn > device_ver->major_vcn)
+    {
+        return IGSC_FWDATA_VERSION_REJECT_VCN;
+    }
+    if (image_ver->oem_manuf_data_version <= device_ver->oem_manuf_data_version)
+    {
+        return IGSC_FWDATA_VERSION_REJECT_OEM_MANUF_DATA_VERSION;
+    }
+    if (image_ver->major_vcn < device_ver->major_vcn)
+    {
+        return IGSC_FWDATA_VERSION_OLDER_VCN;
+    }
+
+    return IGSC_FWDATA_VERSION_ACCEPT;
+}
+
+int igsc_image_fwdata_count_devices(IN struct igsc_fwdata_image *img,
+                                    OUT uint32_t *count)
+{
+    if (img == NULL || count == NULL)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    *count = image_fwdata_count_devices(img);
+    return IGSC_SUCCESS;
+}
+
+int igsc_image_fwdata_supported_devices(IN struct igsc_fwdata_image *img,
+                                        OUT struct igsc_fwdata_device_info *devices,
+                                        IN OUT uint32_t *count)
+{
+    int ret;
+    uint32_t pos = 0;
+
+    if (img == NULL || devices == NULL || count == NULL || *count == 0)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    while (((ret = image_fwdata_get_next(img, &devices[pos++])) == IGSC_SUCCESS) && (pos < *count))
+    {
+        /* empty */
+    }
+
+    if (ret == IGSC_ERROR_DEVICE_NOT_FOUND)
+    {
+        ret = IGSC_SUCCESS;
+    }
+    *count = pos;
+
+    return ret;
+}
+
+int igsc_image_fwdata_match_device(IN struct igsc_fwdata_image *img,
+                                   IN struct igsc_device_info *device)
+{
+    int ret;
+    struct igsc_fwdata_device_info fwdata_device;
+
+    if (img == NULL || device == NULL)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+    /* search the device list for a match */
+    while ((ret = image_fwdata_get_next(img, &fwdata_device)) == IGSC_SUCCESS)
+    {
+        if (fwdata_match_device(device, &fwdata_device))
+        {
+            break;
+        }
+    }
+
+    return ret;
+}
+
+int igsc_image_fwdata_iterator_reset(IN struct igsc_fwdata_image *img)
+{
+    if (img == NULL)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    image_fwdata_iterator_reset(img);
+
+    return IGSC_SUCCESS;
+
+}
+
+int igsc_image_fwdata_iterator_next(IN struct igsc_fwdata_image *img,
+                                    OUT struct igsc_fwdata_device_info *device)
+{
+    if (img == NULL || device == NULL)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    return image_fwdata_get_next(img, device);
+}
+
+int igsc_image_fwdata_release(IN struct igsc_fwdata_image *img)
+{
+    if (img != NULL)
+    {
+        gsc_fwu_img_layout_reset(&(img->layout));
+    }
+    image_fwdata_free_handle(img);
+
+    return IGSC_SUCCESS;
 }

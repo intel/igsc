@@ -25,6 +25,7 @@ set(LIBSOURCES
     ifr.c
     oprom.c
     oprom_parser.c
+    fw_data_parser.c
     ${ENUM_SOURCES}
     $<$<BOOL:${ENABLE_PERF}>:igsc_perf.c>
     $<$<BOOL:${WIN32}>:${PROJECT_BINARY_DIR}/igsc_lib.rc>
