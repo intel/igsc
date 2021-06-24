@@ -20,10 +20,7 @@
 #include "msvc/config.h"
 
 #include "igsc_lib.h"
-
-#ifdef __linux__
-#define _countof(a) (sizeof(a)/sizeof((a)[0]))
-#endif // __linux__
+#include "../lib/utils.h"
 
 bool verbose = false;
 bool quiet = false;
@@ -115,6 +112,32 @@ static inline void print_img_fw_version(const struct igsc_fw_version *fw_version
 	print_fw_version("Image:  ", fw_version);
 }
 
+static void print_fwdata_device_info(struct igsc_fwdata_device_info *info)
+{
+    printf("Vendor Id: %04X Device Id: %04X\n Subsys Vendor Id: %04X Subsys Device Id: %04X\n",
+           info->vendor_id, info->device_id,
+           info->subsys_vendor_id, info->subsys_device_id);
+}
+
+static void print_fwdata_version(const char *prefix, const struct igsc_fwdata_version *fwdata_version)
+{
+    printf("%sFw Data Version: %d->%d->%d\n",
+           prefix,
+           fwdata_version->major_version,
+           fwdata_version->oem_manuf_data_version,
+           fwdata_version->major_vcn);
+}
+
+static inline void print_dev_fwdata_version(const struct igsc_fwdata_version *fwdata_version)
+{
+    print_fwdata_version("Device: ", fwdata_version);
+}
+
+static inline void print_img_fwdata_version(const struct igsc_fwdata_version *fwdata_version)
+{
+    print_fwdata_version("Image:  ", fwdata_version);
+}
+
 const char *oprom_type_to_str(uint32_t type)
 {
     if (type == IGSC_OPROM_NONE)
@@ -141,7 +164,7 @@ static void print_oprom_version(enum igsc_oprom_type type,
            oprom_version->version[7]);
 }
 
-static void print_device_info(struct igsc_oprom_device_info *info)
+static void print_oprom_device_info(struct igsc_oprom_device_info *info)
 {
     printf("Vendor Id: %04X Device Id: %04X\n",
            info->subsys_vendor_id, info->subsys_device_id);
@@ -1353,7 +1376,7 @@ int oprom_data_image_supported_devices(const char *image_path)
     fwupd_msg("OPROM Data supported devices:\n");
     for (i = 0; i < count; i++)
     {
-         print_device_info(&devices[i]);
+         print_oprom_device_info(&devices[i]);
     }
 
 out:
@@ -1589,7 +1612,8 @@ const char *type_table[] = {
     [IGSC_IMAGE_TYPE_GFX_FW] = "GFX FW Update image",
     [IGSC_IMAGE_TYPE_OPROM] = "Oprom Code and Data Update image",
     [IGSC_IMAGE_TYPE_OPROM_CODE] = "Oprom Code Update image",
-    [IGSC_IMAGE_TYPE_OPROM_DATA] = "Oprom Data Update image"
+    [IGSC_IMAGE_TYPE_OPROM_DATA] = "Oprom Data Update image",
+    [IGSC_IMAGE_TYPE_FW_DATA] = "Firmware Data update image"
 };
 
 const char *image_type_to_str(uint8_t type)
@@ -1825,6 +1849,521 @@ static int do_oprom_code(int argc, char *argv[])
     }
 
     fwupd_error("Wrong argument %s\n", sub_command);
+    return ERROR_BAD_ARGUMENT;
+}
+
+int fwdata_image_supported_devices(const char *image_path)
+{
+    struct img *img = NULL;
+    struct igsc_fwdata_image *oimg = NULL;
+    int ret;
+    unsigned int i;
+    uint32_t count;
+    struct igsc_fwdata_device_info *devices = NULL;
+
+    img = image_read_from_file(image_path);
+    if (img == NULL)
+    {
+        fwupd_error("Failed to read :%s\n", image_path);
+        return EXIT_FAILURE;
+    }
+
+    ret = igsc_image_fwdata_init(&oimg, img->blob, img->size);
+    if (ret == IGSC_ERROR_BAD_IMAGE)
+    {
+        fwupd_error("Invalid image format: %s\n", image_path);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Failed to parse image: %s\n", image_path);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    ret = igsc_image_fwdata_count_devices(oimg, &count);
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Failed to count supported devices on image: %s\n",
+                    image_path);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+    fwupd_verbose("Found %d supported devices in image %s\n", count, image_path);
+
+    if (count == 0)
+    {
+       fwupd_msg("Image %s does not include supported devices data\n", image_path);
+       ret = EXIT_SUCCESS;
+       goto out;
+    }
+
+    devices = calloc(count, sizeof(struct igsc_fwdata_device_info));
+    if (devices == NULL) {
+        fwupd_error("Out of memory\n");
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    ret = igsc_image_fwdata_supported_devices(oimg, devices, &count);
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Failed to get %d supported devices from image: %s\n",
+                    count, image_path);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+    fwupd_verbose("Retrieved %d supported devices in image %s\n", count, image_path);
+
+    fwupd_msg("firmware data supported devices:\n");
+    for (i = 0; i < count; i++)
+    {
+         print_fwdata_device_info(&devices[i]);
+    }
+
+out:
+    igsc_image_fwdata_release(oimg);
+    free(img);
+    free(devices);
+
+    return ret;
+}
+
+mockable_static
+int fwdata_image_version(const char *image_path)
+{
+    struct img *img = NULL;
+    struct igsc_fwdata_image *oimg = NULL;
+    struct igsc_fwdata_version fwdata_version;
+    int ret;
+
+    img = image_read_from_file(image_path);
+    if (img == NULL)
+    {
+        fwupd_error("Failed to read :%s\n", image_path);
+        return EXIT_FAILURE;
+    }
+
+    ret = igsc_image_fwdata_init(&oimg, img->blob, img->size);
+    if (ret == IGSC_ERROR_BAD_IMAGE)
+    {
+        fwupd_error("Invalid image format: %s\n", image_path);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Failed to parse image: %s\n", image_path);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    ret = igsc_image_fwdata_version(oimg, &fwdata_version);
+    if (ret == IGSC_SUCCESS)
+    {
+        print_img_fwdata_version(&fwdata_version);
+    }
+    else
+    {
+        fwupd_error("Failed to get firmware data version from image: %s\n", image_path);
+    }
+
+out:
+    igsc_image_fwdata_release(oimg);
+    free(img);
+
+    return ret;
+}
+
+
+mockable_static
+int fwdata_device_version(const char *device_path)
+{
+    struct igsc_fwdata_version fwdata_version;
+    struct igsc_device_handle handle;
+    int ret;
+
+    memset(&handle, 0, sizeof(handle));
+    ret = igsc_device_init_by_device(&handle, device_path);
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Failed to initialize device: %s\n", device_path);
+        return ret;
+    }
+
+    memset(&fwdata_version, 0, sizeof(fwdata_version));
+    ret = igsc_device_fwdata_version(&handle, &fwdata_version);
+    if (ret != IGSC_SUCCESS)
+    {
+        if (ret == IGSC_ERROR_PERMISSION_DENIED)
+        {
+            fwupd_error("Permission denied: missing required credentials to access the device %s\n", device_path);
+        }
+        else
+        {
+            fwupd_error("Failed to get fwdata version from device: %s\n", device_path);
+        }
+        goto exit;
+    }
+
+    print_dev_fwdata_version(&fwdata_version);
+
+exit:
+    (void)igsc_device_close(&handle);
+    return ret;
+}
+
+mockable_static
+int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
+                  struct igsc_device_info *dev_info, bool allow_downgrade)
+{
+    struct img *img = NULL;
+    struct igsc_fwdata_image *oimg = NULL;
+    struct igsc_fwdata_version dev_version;
+    struct igsc_fwdata_version img_version;
+    igsc_progress_func_t progress_func = NULL;
+    uint8_t cmp;
+    bool update = false;
+    int ret;
+
+    img = image_read_from_file(image_path);
+    if (img == NULL)
+    {
+        ret = EXIT_FAILURE;
+        fwupd_error("Failed to read: %s\n", image_path);
+        goto exit;
+    }
+
+    ret = igsc_image_fwdata_init(&oimg, img->blob, img->size);
+    if (ret == IGSC_ERROR_BAD_IMAGE)
+    {
+        fwupd_error("Invalid image format: %s\n", image_path);
+        ret = EXIT_FAILURE;
+        goto exit;
+    }
+
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Failed to parse image: %s\n", image_path);
+        ret = EXIT_FAILURE;
+        goto exit;
+    }
+
+    ret = igsc_image_fwdata_version(oimg, &img_version);
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Failed to get firmware data version from image: %s\n", image_path);
+        goto exit;
+    }
+    print_img_fwdata_version(&img_version);
+
+    ret = igsc_device_fwdata_version(handle, &dev_version);
+    if (ret != IGSC_SUCCESS)
+    {
+        if (ret == IGSC_ERROR_PERMISSION_DENIED)
+        {
+            fwupd_error("Permission denied: missing required credentials to access the device %s\n", dev_info->name);
+        }
+        else
+        {
+            fwupd_error("Cannot initialize device: %s\n", dev_info->name);
+        }
+        goto exit;
+    }
+    print_dev_fwdata_version(&dev_version);
+
+    ret = igsc_image_fwdata_match_device(oimg, dev_info);
+    if (ret == IGSC_SUCCESS)
+    {
+        update = true;
+    }
+    else if (ret == IGSC_ERROR_NOT_SUPPORTED)
+    {
+        update = allow_downgrade;
+    }
+    else if (ret == IGSC_ERROR_DEVICE_NOT_FOUND)
+    {
+        fwupd_error("The image is not compatible with the device\nDevice info doesn't match image device Id extension\n");
+        goto exit;
+    }
+    else
+    {
+        fwupd_error("Internal error\n");
+        goto exit;
+    }
+
+    if (!update)
+    {
+        fwupd_msg("In order to update run with -a | --allow-downgrade\n");
+        ret = EXIT_FAILURE;
+        goto exit;
+    }
+
+    cmp = igsc_fwdata_version_compare(&img_version, &dev_version);
+    switch (cmp)
+    {
+    case IGSC_FWDATA_VERSION_ACCEPT:
+        update = true;
+        break;
+    case IGSC_FWDATA_VERSION_OLDER_VCN:
+        fwupd_msg("Installed VCN version is newer\n");
+        update = allow_downgrade;
+        break;
+    case IGSC_FWDATA_VERSION_REJECT_DIFFERENT_PROJECT:
+        fwupd_error("firmware data version is not compatible with the installed one (project version)\n");
+        ret = EXIT_FAILURE;
+        goto exit;
+    case IGSC_FWDATA_VERSION_REJECT_VCN:
+        fwupd_error("firmware data version is not compatible with the installed one (VCN version)\n");
+        ret = EXIT_FAILURE;
+        goto exit;
+    case IGSC_FWDATA_VERSION_REJECT_OEM_MANUF_DATA_VERSION:
+        fwupd_error("firmware data version is not compatible with the installed one (OEM version)\n");
+        ret = EXIT_FAILURE;
+        goto exit;
+    default:
+        fwupd_error("firmware data version error in comparison\n");
+        ret = EXIT_FAILURE;
+        goto exit;
+    }
+
+    if (!update)
+    {
+        fwupd_msg("In order to update run with -a | --allow-downgrade\n");
+        goto exit;
+    }
+
+    if (!quiet)
+    {
+        if (use_progress_bar)
+        {
+            progress_func = progress_bar_func;
+        }
+        else
+        {
+            progress_func = progress_percentage_func;
+        }
+    }
+
+    ret = igsc_device_fwdata_image_update(handle, oimg, progress_func, NULL);
+
+    /* new line after progress bar */
+    if (!quiet)
+    {
+        printf("\n");
+    }
+    if (ret)
+    {
+        fwupd_error("fwdata update failed\n");
+    }
+
+    ret = igsc_device_fwdata_version(handle, &dev_version);
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Failed to get firmware version after update\n");
+        goto exit;
+    }
+    print_dev_fwdata_version(&dev_version);
+
+exit:
+    igsc_image_fwdata_release(oimg);
+    free(img);
+
+    return ret;
+}
+
+static int do_fwdata_update(int argc, char *argv[])
+{
+    bool allow_downgrade = false;
+    const char *image_path = NULL;
+    const char *device_path = NULL;
+    struct igsc_device_info dev_info;
+    struct igsc_device_handle handle;
+    int ret;
+
+    memset(&dev_info, 0, sizeof(dev_info));
+    memset(&handle, 0, sizeof(handle));
+
+    if (argc <= 0)
+    {
+        fwupd_error("No image to update\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    do
+    {
+        if (arg_is_allow(argv[0]))
+        {
+            allow_downgrade = true;
+            continue;
+        }
+        if (arg_is_quiet(argv[0]))
+        {
+            quiet = true;
+            continue;
+        }
+        if (arg_is_device(argv[0]))
+        {
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No device to update\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            device_path = argv[0];
+        }
+        else if (arg_is_image(argv[0]))
+        {
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No image to update\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            image_path = argv[0];
+        }
+        else
+        {
+            fwupd_error("Wrong argument %s\n", argv[0]);
+            return ERROR_BAD_ARGUMENT;
+        }
+    } while (arg_next(&argc, &argv));
+
+    if (!device_path)
+    {
+        if (get_first_device_info(&dev_info))
+        {
+            ret = EXIT_FAILURE;
+            fwupd_error("No device to update\n");
+            goto out;
+        }
+
+        ret = igsc_device_init_by_device_info(&handle, &dev_info);
+        if (ret)
+        {
+            ret = EXIT_FAILURE;
+            fwupd_error("Cannot initialize device: %s\n", dev_info.name);
+            goto out;
+        }
+    }
+    else
+    {
+        ret = igsc_device_init_by_device(&handle, device_path);
+        if (ret != IGSC_SUCCESS)
+        {
+            ret = EXIT_FAILURE;
+            fwupd_error("Cannot initialize device: %s\n", dev_info.name);
+            goto out;
+        }
+
+        ret = igsc_device_get_device_info(&handle, &dev_info);
+        if (ret != IGSC_SUCCESS)
+        {
+            ret = EXIT_FAILURE;
+            fwupd_error("No device to update\n");
+            goto out;
+        }
+    }
+
+    if (image_path == NULL)
+    {
+        ret = ERROR_BAD_ARGUMENT;
+        fwupd_error("No image to update\n");
+        goto out;
+    }
+
+    ret = fwdata_update(image_path, &handle, &dev_info, allow_downgrade);
+
+out:
+    igsc_device_close(&handle);
+    return ret;
+}
+
+
+static int do_fwdata_supported_devices(int argc, char *argv[])
+{
+    if (argc == 2)
+    {
+        if (arg_is_image(argv[0]))
+        {
+            return fwdata_image_supported_devices(argv[1]);
+        }
+        fwupd_error("Wrong argument %s\n", argv[0]);
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    fwupd_error("Wrong number of arguments\n");
+    return ERROR_BAD_ARGUMENT;
+}
+
+static int do_fwdata_version(int argc, char *argv[])
+{
+    char *device_path_found = NULL;
+
+    if (argc == 2)
+    {
+        if (arg_is_device(argv[0]))
+        {
+            return fwdata_device_version(argv[1]);
+        }
+        if (arg_is_image(argv[0]))
+        {
+            return fwdata_image_version(argv[1]);
+        }
+        fwupd_error("Wrong argument %s\n", argv[0]);
+        return ERROR_BAD_ARGUMENT;
+    }
+    else if (argc == 0)
+    {
+        int ret;
+
+        if (get_first_device(&device_path_found) != IGSC_SUCCESS ||
+            device_path_found == NULL)
+        {
+            fwupd_error("No device or image\n");
+            return EXIT_FAILURE;
+        }
+
+        ret = fwdata_device_version(device_path_found);
+        free(device_path_found);
+        return ret;
+    }
+    fwupd_error("Wrong number of arguments\n");
+    return ERROR_BAD_ARGUMENT;
+}
+
+static int do_firmware_data(int argc, char *argv[])
+{
+    const char *sub_command = NULL;
+
+    if (argc <= 0)
+    {
+        fwupd_error("Missing arguments\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    sub_command = argv[0];
+
+    arg_next(&argc, &argv);
+
+    if (arg_is_token(sub_command, "version"))
+    {
+        return do_fwdata_version(argc, argv);
+    }
+
+    if (arg_is_token(sub_command, "update"))
+    {
+        return do_fwdata_update(argc, argv);
+    }
+
+    if (arg_is_token(sub_command, "supported-devices"))
+    {
+        return do_fwdata_supported_devices(argc, argv);
+    }
+
+    fwupd_error("Wrong argument %s\n", sub_command);
+
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -2278,6 +2817,24 @@ static const struct gsc_op g_ops[] = {
                   "version [--device <dev>] | --image <file>",
                   NULL},
         .help  = "Update oprom code partition or retrieve version from the devices or the supplied image\n"
+                 "\nOPTIONS:\n\n"
+                 "    -a | --allow-downgrade\n"
+                 "            allow downgrade or override the same version\n"
+                 "    -d | --device <device>\n"
+                 "            device to be updated\n"
+                 "    -i | --image <image file>\n"
+                 "            supplied image\n",
+    },
+    {
+        .name  = "fw-data",
+        .op    = do_firmware_data,
+        .usage = {"update [options] [--device <dev>] --image <image>",
+                  "version [--device <dev>] | --image <file>",
+                  "supported-devices --image <file>",
+                  NULL},
+        .help  = "Update firmware data partition\n"
+                 "or retrieve version from the device or the supplied image\n"
+                 "or retrieve list of supported devices from the supplied image\n"
                  "\nOPTIONS:\n\n"
                  "    -a | --allow-downgrade\n"
                  "            allow downgrade or override the same version\n"
