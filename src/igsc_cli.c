@@ -394,6 +394,12 @@ static bool arg_is_allow(const char *arg)
            arg_is_token(arg, "--allow-downgrade");
 }
 
+static bool arg_is_force(const char *arg)
+{
+    return arg_is_token(arg, "-f") ||
+           arg_is_token(arg, "--force");
+}
+
 static bool arg_is_info(const char *arg)
 {
     return arg_is_token(arg, "-i") ||
@@ -551,7 +557,8 @@ int firmware_check_hw_config(struct igsc_device_handle *handle, const struct img
 mockable_static
 int firmware_update(const char *device_path,
                     const char *image_path,
-                    bool allow_downgrade)
+                    bool allow_downgrade,
+                    bool force_update)
 {
     struct img *img = NULL;
     struct igsc_device_handle handle;
@@ -561,6 +568,7 @@ int firmware_update(const char *device_path,
     igsc_progress_func_t progress_func = NULL;
     int ret;
     uint8_t cmp;
+    struct igsc_fw_update_flags flags = {0};
 
     memset(&handle, 0, sizeof(handle));
 
@@ -667,8 +675,12 @@ int firmware_update(const char *device_path,
         goto exit;
     }
 
-    ret = igsc_device_fw_update(&handle, img->blob, img->size,
-                                progress_func, NULL);
+    if (force_update)
+    {
+        flags.force_update = 1;
+    }
+    ret = igsc_device_fw_update_ex(&handle, img->blob, img->size,
+                                   progress_func, NULL, flags);
 
     /* new line after progress bar */
     if (!quiet)
@@ -1073,6 +1085,7 @@ static int do_iaf_psc_update(int argc, char *argv[])
 
 static int do_firmware_update(int argc, char *argv[])
 {
+    bool force_update = false;
     bool allow_downgrade = false;
     const char *device_path = NULL;
     const char *image_path = NULL;
@@ -1113,6 +1126,11 @@ static int do_firmware_update(int argc, char *argv[])
             }
             image_path = argv[0];
         }
+        else if (arg_is_force(argv[0]))
+        {
+            force_update = true;
+            continue;
+        }
         else
         {
             fwupd_error("Wrong argument %s\n", argv[0]);
@@ -1122,7 +1140,7 @@ static int do_firmware_update(int argc, char *argv[])
 
     if (image_path)
     {
-        return firmware_update(device_path, image_path, allow_downgrade);
+        return firmware_update(device_path, image_path, allow_downgrade, force_update);
     }
 
     fwupd_error("No image to update\n");
@@ -2784,7 +2802,10 @@ static const struct gsc_op g_ops[] = {
                  "    -i | --image <image file>\n"
                  "            supplied image\n"
                  "    -c | --check\n"
-                 "            check whether firmware is compatible with the device\n",
+                 "            check whether firmware is compatible with the device\n"
+                 "    -f | --force\n"
+                 "            force fw update\n",
+
     },
     {
         .name  = "iaf",
