@@ -61,6 +61,8 @@ enum gsc_fwu_heci_command_id {
     GSC_FWU_HECI_COMMAND_ID_NO_UPDATE,      /**< Do not wait for firmware update */
     GSC_FWU_HECI_COMMAND_ID_GET_IP_VERSION, /**< retrieve version of a partition */
     GSC_FWU_HECI_COMMAND_ID_GET_CONFIG,     /**< get config command              */
+    GSC_FWU_HECI_COMMAND_ID_STATUS,
+    GSC_FWU_HECI_COMMAND_ID_GET_GFX_DATA_UPDATE_INFO,
     GSC_FWU_HECI_COMMAND_MAX                /**< upper sentinel command          */
 };
 
@@ -74,6 +76,7 @@ enum gsc_fwu_heci_payload_type {
     GSC_FWU_HECI_PAYLOAD_TYPE_OPROM_DATA = 2, /**< oprom data partition                 */
     GSC_FWU_HECI_PAYLOAD_TYPE_OPROM_CODE = 3, /**< oprom code partition                 */
     GSC_FWU_HECI_PAYLOAD_TYPE_IAF_PSC    = 4, /**< acclerator fabric configuration data */
+    GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA     = 5, /**< firmware data partition              */
 };
 
 #pragma pack(1)
@@ -148,6 +151,42 @@ struct gsc_fwu_heci_version_resp {
     uint32_t                     version_length;
     uint8_t                      version[];
 };
+
+/**
+ * @brief fwdata get version request
+ *
+ * @param header @ref gsc_fwu_heci_header
+ * @param reserved
+ */
+struct gsc_fw_data_heci_version_req {
+    struct gsc_fwu_heci_header header;
+    uint32_t                   reserved[2];
+};
+
+/**
+ * @brief fwdata get version response
+ *
+ * @param response @ref gsc_fwu_heci_response
+ * @param format_version response format version
+ * @param oem_manuf_data_version_nvm oem version in nvm
+ * @param oem_manuf_data_version_fitb oem version in fitb
+ * @param major_version project major version
+ * @param oem_manuf_data_version_fitb_valid
+ * @param flags fwdata get version flags
+ * @param reserved
+ */
+struct gsc_fw_data_heci_version_resp {
+    struct gsc_fwu_heci_response response;
+    uint32_t                     format_version;
+    uint32_t                     oem_manuf_data_version_nvm;
+    uint32_t                     oem_manuf_data_version_fitb;
+    uint16_t                     major_version;
+    uint16_t                     major_vcn;
+    uint32_t                     oem_manuf_data_version_fitb_valid;
+    uint32_t                     flags;
+    uint32_t                     reserved[8];
+};
+
 
 /** @} */
 

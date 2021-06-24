@@ -10,6 +10,7 @@ srcs = [
   'ifr.c',
   'oprom.c',
   'oprom_parser.c',
+  'fw_data_parser.c',
 ]
 
 deps = []
