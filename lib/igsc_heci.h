@@ -241,23 +241,36 @@ struct gsc_fwu_heci_image_metadata {
 /**
  * @struct gsc_fwu_heci_start_req
  *
+ * @brief fw update start heci message flags
+ *
+ * @param force_update whether forced update is requested
+ * @param reserved reserved
+*/
+struct gsc_fwu_heci_start_flags {
+        uint32_t  force_update     : 1;
+        uint32_t  reserved         : 31;
+};
+
+/**
+ * @struct gsc_fwu_heci_start_req
+ *
  * @brief firmware update start message
  *
  * @param header @ref gsc_fwu_heci_header
  * @param update_img_length overall message length
  * @param payload_type firmware payload type @ref gsc_fwu_heci_payload_type
- * @param flags start message flags (set to 0)
+ * @param flags start message flags @ref struct gsc_fwu_heci_start_flags
  * @param reserved[8] reserved
  * @param data @ref gsc_fwu_heci_image_metadata
  * @see enum gsc_fwu_heci_payload_type
  */
 struct gsc_fwu_heci_start_req {
-    struct gsc_fwu_heci_header header;
-    uint32_t                   update_img_length;
-    uint32_t                   payload_type;
-    uint32_t                   flags;
-    uint32_t                   reserved[8];
-    uint8_t                    data[];
+    struct gsc_fwu_heci_header      header;
+    uint32_t                        update_img_length;
+    uint32_t                        payload_type;
+    struct gsc_fwu_heci_start_flags flags;
+    uint32_t                        reserved[8];
+    uint8_t                         data[];
 };
 
 /**

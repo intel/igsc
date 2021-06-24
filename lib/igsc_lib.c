@@ -755,7 +755,7 @@ static int gsc_fwu_get_oprom_version(struct igsc_lib_ctx *lib_ctx,
                                (uint8_t *)version, sizeof(*version));
 }
 
-static int gsc_fwu_start(struct igsc_lib_ctx *lib_ctx, uint32_t payload_type)
+static int gsc_fwu_start(struct igsc_lib_ctx *lib_ctx, uint32_t payload_type, bool force_update)
 {
     int status;
     size_t request_len;
@@ -765,6 +765,7 @@ static int gsc_fwu_start(struct igsc_lib_ctx *lib_ctx, uint32_t payload_type)
     const uint8_t *fpt_info;
     uint32_t fpt_info_len;
     struct gsc_fwu_heci_image_metadata zero_meta_data = {0};
+    struct gsc_fwu_heci_start_flags flags = {0};
 
     struct gsc_fwu_heci_start_req  *req;
     struct gsc_fwu_heci_start_resp *resp;
@@ -806,7 +807,13 @@ static int gsc_fwu_start(struct igsc_lib_ctx *lib_ctx, uint32_t payload_type)
         req->update_img_length = lib_ctx->layout.table[FWU_FPT_ENTRY_FW_IMAGE].size;
     }
     req->payload_type = payload_type;
-    req->flags = 0;
+
+    if (force_update)
+    {
+        flags.force_update = 1;
+    }
+    req->flags = flags;
+
     memset(req->reserved, 0, sizeof(req->reserved));
     if (gsc_memcpy_s(&req->data, buf_len - sizeof(*req), fpt_info, fpt_info_len))
     {
@@ -1719,7 +1726,8 @@ static int gsc_update(IN struct igsc_device_handle *handle,
                       IN const uint32_t buffer_len,
                       IN igsc_progress_func_t progress_f,
                       IN void *ctx,
-                      IN uint32_t payload_type)
+                      IN uint32_t payload_type,
+                      IN bool force_update)
 {
     struct igsc_lib_ctx *lib_ctx;
     int      ret;
@@ -1805,7 +1813,7 @@ retry:
 
     gsc_pref_cnt_checkpoint(perf_ctx, "Before FWU_START");
 
-    ret = gsc_fwu_start(lib_ctx, payload_type);
+    ret = gsc_fwu_start(lib_ctx, payload_type, force_update);
     if (ret != IGSC_SUCCESS)
     {
         goto exit;
@@ -1925,6 +1933,19 @@ exit:
     return ret;
 }
 
+int igsc_device_fw_update_ex(IN struct igsc_device_handle *handle,
+                             IN const uint8_t *buffer,
+                             IN const uint32_t buffer_len,
+                             IN igsc_progress_func_t progress_f,
+                             IN void *ctx,
+                             IN struct igsc_fw_update_flags flags)
+{
+    bool force_update = (flags.force_update == 1);
+
+    return gsc_update(handle, buffer, buffer_len, progress_f, ctx,
+                      GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW, force_update);
+}
+
 int igsc_device_fw_update(IN struct igsc_device_handle *handle,
                           IN const uint8_t *buffer,
                           IN const uint32_t buffer_len,
@@ -1932,7 +1953,7 @@ int igsc_device_fw_update(IN struct igsc_device_handle *handle,
                           IN void *ctx)
 {
     return gsc_update(handle, buffer, buffer_len, progress_f, ctx,
-                      GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
+                      GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW, false);
 }
 
 int igsc_iaf_psc_update(IN struct igsc_device_handle *handle,
@@ -1942,7 +1963,7 @@ int igsc_iaf_psc_update(IN struct igsc_device_handle *handle,
                         IN void *ctx)
 {
     return gsc_update(handle, buffer, buffer_len, progress_f, ctx,
-                      GSC_FWU_HECI_PAYLOAD_TYPE_IAF_PSC);
+                      GSC_FWU_HECI_PAYLOAD_TYPE_IAF_PSC, false);
 }
 
 uint8_t igsc_fw_version_compare(IN struct igsc_fw_version *image_version,
@@ -2075,7 +2096,7 @@ static int igsc_oprom_update_from_buffer(IN  struct igsc_device_handle *handle,
 
     gsc_pref_cnt_checkpoint(perf_ctx, "Before FWU_START");
 
-    ret = gsc_fwu_start(lib_ctx, partition);
+    ret = gsc_fwu_start(lib_ctx, partition, false);
     if (ret != IGSC_SUCCESS)
     {
         goto exit;
@@ -2326,7 +2347,7 @@ int igsc_device_fwdata_update(IN  struct igsc_device_handle *handle,
     }
 
     return gsc_update(handle, buffer, buffer_len, progress_f, ctx,
-                      GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA);
+                      GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA, false);
 }
 
 int igsc_device_fwdata_image_update(IN  struct igsc_device_handle *handle,
@@ -2350,7 +2371,7 @@ int igsc_device_fwdata_image_update(IN  struct igsc_device_handle *handle,
         return IGSC_ERROR_BAD_IMAGE;
     }
     return gsc_update(handle, buffer, buffer_len, progress_f, ctx,
-                      GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA);
+                      GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA, false);
 }
 
 

@@ -441,6 +441,33 @@ igsc_device_fw_update(IN  struct igsc_device_handle *handle,
                       IN  igsc_progress_func_t progress_f,
                       IN  void *ctx);
 
+/* flags with which the update should be performed */
+struct igsc_fw_update_flags {
+    uint32_t  force_update     : 1;
+    uint32_t  reserved         : 31;
+};
+
+/**
+ *  @brief Perform the firmware update with flags from the provided firmware update image.
+ *
+ *  @param handle A handle to the device.
+ *  @param buffer A pointer to the buffer with the firmware update image.
+ *  @param buffer_len Length of the buffer with the firmware update image.
+ *  @param progress_f Pointer to the callback function for firmware update
+ *         progress monitor.
+ *  @param ctx Context passed to progress_f function.
+ *  @param flags flags with which the update should be performed
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT int
+igsc_device_fw_update_ex(IN  struct igsc_device_handle *handle,
+                         IN  const uint8_t *buffer,
+                         IN  const uint32_t buffer_len,
+                         IN  igsc_progress_func_t progress_f,
+                         IN  void *ctx,
+                         IN  struct igsc_fw_update_flags flags);
+
 /**
  *  @brief Perform Intel Accelerator Fabric Platform Specific
  *         Configuration (PSC) update from the provided update data
