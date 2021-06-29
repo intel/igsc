@@ -533,7 +533,7 @@ int gsc_tee_command(struct igsc_lib_ctx *lib_ctx,
     int status;
     TEESTATUS tee_status;
 
-    gsc_debug_hex_dump("Sending:", req_buf, buf_size);
+    gsc_debug_hex_dump("Sending:", req_buf, request_len);
 
     num_bytes = 0;
     tee_status = TeeWrite(&lib_ctx->driver_handle, req_buf, request_len, &num_bytes, TEE_WRITE_TIMEOUT);
