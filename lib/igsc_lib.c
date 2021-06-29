@@ -1256,15 +1256,15 @@ static int gsc_device_hw_config(struct igsc_lib_ctx *lib_ctx,
     hw_config_1->hw_step = resp->hw_step;
 
     /* convert to firmware bit mask for easier comparison */
-    if (resp->hw_step == GSC_DG2_SKUID_512)
+    if (resp->hw_sku == GSC_DG2_SKUID_512)
     {
         hw_config_1->hw_sku = GSC_IFWI_TAG_512_SKU_BIT;
     }
-    else if (resp->hw_step == GSC_DG2_SKUID_256)
+    else if (resp->hw_sku == GSC_DG2_SKUID_256)
     {
         hw_config_1->hw_sku = GSC_IFWI_TAG_256_SKU_BIT;
     }
-    else if (resp->hw_step == GSC_DG2_SKUID_128)
+    else if (resp->hw_sku == GSC_DG2_SKUID_128)
     {
         hw_config_1->hw_sku = GSC_IFWI_TAG_128_SKU_BIT;
     }
