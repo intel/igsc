@@ -33,9 +33,9 @@ DEFINE_GUID(GUID_METEE_FWU, 0x87d90ca5, 0x3495, 0x4559,
             0x81, 0x05, 0x3f, 0xbf, 0xa3, 0x7b, 0x8b, 0x79);
 
 enum gsc_dg2_sku_id {
-    GSC_DG2_SKUID_512 = 0,
-    GSC_DG2_SKUID_128 = 1,
-    GSC_DG2_SKUID_256 = 2
+    GSC_DG2_SKUID_SOC1 = 0,
+    GSC_DG2_SKUID_SOC2 = 1,
+    GSC_DG2_SKUID_SOC3 = 2
 };
 
 enum gsc_soc_step_id {
@@ -1256,17 +1256,17 @@ static int gsc_device_hw_config(struct igsc_lib_ctx *lib_ctx,
     hw_config_1->hw_step = resp->hw_step;
 
     /* convert to firmware bit mask for easier comparison */
-    if (resp->hw_sku == GSC_DG2_SKUID_512)
+    if (resp->hw_sku == GSC_DG2_SKUID_SOC1)
     {
-        hw_config_1->hw_sku = GSC_IFWI_TAG_512_SKU_BIT;
+        hw_config_1->hw_sku = GSC_IFWI_TAG_SOC1_SKU_BIT;
     }
-    else if (resp->hw_sku == GSC_DG2_SKUID_256)
+    else if (resp->hw_sku == GSC_DG2_SKUID_SOC3)
     {
-        hw_config_1->hw_sku = GSC_IFWI_TAG_256_SKU_BIT;
+        hw_config_1->hw_sku = GSC_IFWI_TAG_SOC3_SKU_BIT;
     }
-    else if (resp->hw_sku == GSC_DG2_SKUID_128)
+    else if (resp->hw_sku == GSC_DG2_SKUID_SOC2)
     {
-        hw_config_1->hw_sku = GSC_IFWI_TAG_128_SKU_BIT;
+        hw_config_1->hw_sku = GSC_IFWI_TAG_SOC2_SKU_BIT;
     }
     else
     {
@@ -1355,9 +1355,9 @@ int igsc_hw_config_to_string(IN const struct igsc_hw_config *hw_config,
     else
     {
         ret = snprintf(buf, length, "hw sku: [ %s%s%s]",
-                       (GSC_IFWI_TAG_128_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "128 " : "",
-                       (GSC_IFWI_TAG_256_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "256 " : "",
-                       (GSC_IFWI_TAG_512_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "512 " : "");
+                       (GSC_IFWI_TAG_SOC2_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "SOC2 " : "",
+                       (GSC_IFWI_TAG_SOC3_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "SOC3 " : "",
+                       (GSC_IFWI_TAG_SOC1_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "SOC1 " : "");
     }
     if (ret < 0)
     {
