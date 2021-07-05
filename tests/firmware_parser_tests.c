@@ -66,7 +66,7 @@ static void test_layout_parse_buffer_heder_length_is_zero(void **state)
     fpt->header.header_length = 0;
     buffer_len = __buffer_len(fpt);
 
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
     assert_true(ret != IGSC_SUCCESS);
 }
 
@@ -86,7 +86,7 @@ static void test_layout_parse_buffer_header_length_less_than_min(void **state)
     fpt->header.header_length = sizeof(fpt->header) - 1;
     buffer_len = __buffer_len(fpt);
 
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
     assert_true(ret != IGSC_SUCCESS);
 }
 
@@ -106,7 +106,7 @@ static void test_layout_parse_buffer_header_len_max_int(void **state)
     fpt->header.header_length =(uint8_t) INT_MAX;
     buffer_len = __buffer_len(fpt);
 
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
     assert_true(ret != IGSC_SUCCESS);
 }
 
@@ -126,7 +126,7 @@ static void test_layout_parse_buffer_header_len_more_than_max(void **state)
     fpt->header.header_length = (uint8_t)IGSC_MAX_IMAGE_SIZE + 1;;
     buffer_len = __buffer_len(fpt);
 
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
 
     assert_true(ret != IGSC_SUCCESS);
 }
@@ -145,7 +145,7 @@ static void test_layout_parse_buffer_less_than_min(void **state)
     int ret;
 
     buffer_len = sizeof(fpt->header) - 1;
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
     assert_true(ret != IGSC_SUCCESS);
 }
 
@@ -163,7 +163,7 @@ static void test_layout_parse_buffer_is_zero(void **state)
     int ret;
 
     buffer_len = 0;
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
     assert_true(ret != IGSC_SUCCESS);
 }
 
@@ -181,7 +181,7 @@ static void test_layout_parse_buffer_len_max_int(void **state)
     int ret;
 
     buffer_len = INT_MAX;
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
     assert_true(ret != IGSC_SUCCESS);
 }
 
@@ -201,7 +201,7 @@ static void test_layout_parse_buffer_more_than_max(void **state)
     /* buffer_len > IGSC_MAX_IMAGE_SIZE */
     buffer_len = IGSC_MAX_IMAGE_SIZE + 1;
 
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
 
     assert_true(ret != IGSC_SUCCESS);
 }
@@ -221,7 +221,7 @@ static void test_layout_parse_buffer_too_small(void **state)
 
     buffer_len = __buffer_len(fpt) - 1;
 
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
 
     assert_true(ret != IGSC_SUCCESS);
 }
@@ -242,7 +242,7 @@ static void test_layout_parse_header_bad_marker(void **state)
     fpt->header.header_marker = 0;
     buffer_len = __buffer_len(fpt);
 
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
 
     assert_true(ret != IGSC_SUCCESS);
 }
@@ -263,7 +263,7 @@ static void test_layout_parse_header_entries_too_little(void **state)
     fpt->header.num_of_entries = FWU_FPT_ENTRY_NUM - 1;
     buffer_len = __buffer_len(fpt);
 
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
 
     assert_true(ret != IGSC_SUCCESS);
 }
@@ -284,7 +284,7 @@ static void test_layout_parse_header_entries_too_big(void **state)
     fpt->header.num_of_entries = FPT_MAX_ENTERIES + 1;
     buffer_len = __buffer_len(fpt);
 
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
 
     assert_true(ret != IGSC_SUCCESS);
 }
@@ -305,7 +305,7 @@ static void test_layout_parser_header_bad_version(void **state)
     fpt->header.header_version = FPT_HEADER_VERSION - 1;
     buffer_len = __buffer_len(fpt);
 
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
 
     assert_true(ret != IGSC_SUCCESS);
 }
@@ -326,7 +326,7 @@ static void test_layout_parser_header_entry_bad_version(void **state)
     fpt->header.entry_version = FPT_ENTRY_VERSION + 1;
     buffer_len = __buffer_len(fpt);
 
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
 
     assert_true(ret != IGSC_SUCCESS);
 }
@@ -347,7 +347,7 @@ static void test_layout_parser_header_bad_length(void **state)
     fpt->header.header_length = FPT_HEADER_LENGTH + 1;
     buffer_len = __buffer_len(fpt);
 
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
 
     assert_true(ret != IGSC_SUCCESS);
 }
@@ -368,7 +368,7 @@ static void test_layout_parser_entry_reserved_not_empty(void **state)
     buffer_len = __buffer_len(fpt);
     fpt->entry[0].reserved1[0]=1;
 
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
 
     assert_true(ret != IGSC_SUCCESS);
 }
@@ -389,7 +389,7 @@ static void test_layout_parser_entry_offset_small(void **state)
     fpt->entry[0].offset = 0;
     buffer_len = __buffer_len(fpt);
 
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
 
     assert_true(ret != IGSC_SUCCESS);
 }
@@ -410,7 +410,7 @@ static void test_layout_parser_entry_offset_big(void **state)
     buffer_len = __buffer_len(fpt);
     fpt->entry[0].offset= buffer_len + 1;
 
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
 
     assert_true(ret != IGSC_SUCCESS);
 }
@@ -431,7 +431,7 @@ static void test_layout_parser_entry_length_big(void **state)
     buffer_len = __buffer_len(fpt);
     fpt->entry[0].length = buffer_len + 1;
 
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
 
     assert_true(ret != IGSC_SUCCESS);
 }
@@ -453,7 +453,7 @@ static void test_layout_parser_entry_length_and_offset_big(void **state)
     fpt->entry[0].offset = buffer_len;
     fpt->entry[0].length = buffer_len;
 
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
 
     assert_true(ret != IGSC_SUCCESS);
 }
@@ -474,7 +474,7 @@ static void test_layout_parser_entry_reserved2_not_empty(void **state)
     fpt->entry[0].reserved2[0]=1;
     buffer_len = __buffer_len(fpt);
 
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
 
     assert_true(ret != IGSC_SUCCESS);
 }
@@ -495,7 +495,7 @@ static void test_layout_parser_entry_bad_partition_flag(void **state)
     buffer_len = __buffer_len(fpt);
     fpt->entry[0].partition_flags.entry_valid = 0xFF;
 
-    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len);
+    ret = gsc_fwu_img_layout_parse(&layout, (uint8_t *)fpt, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW);
 
     assert_true(ret != IGSC_SUCCESS);
 }
