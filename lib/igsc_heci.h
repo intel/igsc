@@ -171,6 +171,10 @@ struct gsc_fwu_heci_version_resp {
 #define HECI1_CSE_FS_FWUPD_PERCENT_SHIFT  16
 /** Firmware status register - firmware update percentage bits mask */
 #define HECI1_CSE_FS_FWUPD_PERCENT_MASK  0xFF
+/** Firmware status register 5 - CP/Chassis mode bits mask */
+#define HECI1_CSE_FS_MODE_MASK  0x3
+/** Firmware status register 5 - CP mode value */
+#define HECI1_CSE_FS_CP_MODE  0x3
 
 enum gsc_fwu_heci_metadata_version {
     /** GSC Firmware Update metadata version for no metadata case */
