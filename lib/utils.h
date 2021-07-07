@@ -45,7 +45,7 @@ static inline int gsc_memcpy_s(void *dest, size_t dest_size,
 
 static inline void gsc_msleep(uint32_t msecs)
 {
-    usleep(msecs * 10);
+    usleep(msecs * 1000);
 }
 #ifndef igsc_strdup
 #define igsc_strdup strdup
