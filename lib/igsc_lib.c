@@ -1657,6 +1657,27 @@ static int reconnect_loop(struct igsc_lib_ctx *lib_ctx)
     return ret;
 }
 
+static void get_version_loop(struct igsc_lib_ctx *lib_ctx)
+{
+    /* In order for the underlying library to detect the firmware reset
+     * and to update its state for the current handle a dummy command
+     * (get fw version) needs to be performed. The expectation is
+     * that it will fail eventually.
+     */
+    #define MAX_GET_VERSION_RETRIES 20
+    struct igsc_fw_version version;
+    unsigned int i;
+
+    for (i = 0; i < MAX_GET_VERSION_RETRIES; i++)
+    {
+        if (gsc_get_fw_version(lib_ctx, &version) != IGSC_SUCCESS)
+        {
+           break;
+        }
+        gsc_msleep(100);
+    }
+}
+
 static int gsc_update(IN struct igsc_device_handle *handle,
                       IN const void *buffer,
                       IN const uint32_t buffer_len,
@@ -1673,6 +1694,8 @@ static int gsc_update(IN struct igsc_device_handle *handle,
     uint32_t fpt_size = 0;
     const uint8_t *fpt_data = NULL;
     bool retry_update = false;
+    bool cp_mode;
+    uint32_t sts5;
 
     struct gsc_perf_cnt _perf_ctx;
     struct gsc_perf_cnt *perf_ctx = &_perf_ctx;
@@ -1720,6 +1743,14 @@ static int gsc_update(IN struct igsc_device_handle *handle,
     {
         goto exit;
     }
+
+    ret = get_fwsts(lib_ctx, FWSTS(5), &sts5);
+    if (ret != IGSC_SUCCESS)
+    {
+        goto exit;
+    }
+    cp_mode = (sts5 & HECI1_CSE_FS_MODE_MASK) == HECI1_CSE_FS_CP_MODE;
+    gsc_debug("cp_mode %d, heci sts5 value 0x%x\n", cp_mode, sts5);
 
     gsc_pref_cnt_checkpoint(perf_ctx, "Before FWU_START");
 
@@ -1781,22 +1812,7 @@ retry:
 
     if (payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW)
     {
-    /* In order for the underlying library to detect the firmware reset
-     * and to update its state for the current handle a dummy command
-     * (get fw version) needs to be performed. The expectation is
-     * that it will fail eventually.
-     */
-        #define MAX_GET_VERSION_RETRIES 20
-        struct igsc_fw_version version;
-        unsigned int i;
-        for (i = 0; i < MAX_GET_VERSION_RETRIES; i++)
-        {
-            if (gsc_get_fw_version(lib_ctx, &version) != IGSC_SUCCESS)
-            {
-               break;
-            }
-            gsc_msleep(100);
-        }
+        get_version_loop(lib_ctx);
     }
 
     while (gsc_fwu_is_in_progress(lib_ctx))
@@ -1834,8 +1850,12 @@ retry:
      */
     if (payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW)
     {
-        ret = reconnect_loop(lib_ctx);
+        if (cp_mode)
+        {
+            get_version_loop(lib_ctx);
+        }
 
+        ret = reconnect_loop(lib_ctx);
         if (ret == IGSC_SUCCESS)
         {
             /* After the reconnect - send 'no update' message */
