@@ -190,7 +190,7 @@ static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
         header = (struct mft_ext_header_with_data *)(img->cpd_ptr + cur_offset);
 
         if (header->extension_length < sizeof(*header) ||
-            header->extension_length > ext_end - ext_start)
+            header->extension_length > ext_end - cur_offset)
         {
             gsc_error("Illegal oprom cpd image (extension length %u)\n",
                       header->extension_length);
@@ -333,7 +333,8 @@ static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len, u
 
     debug_print_struct_sizes();
 
-    if (cpd_img->public_key_offset + sizeof(struct mft_rsa_3k_key) > buf_len)
+    if (cpd_img->public_key_offset > buf_len ||
+       (cpd_img->public_key_offset + sizeof(struct mft_rsa_3k_key) > buf_len))
     {
         gsc_error("Illegal oprom cpd image (public key offset %lu)\n",
                   cpd_img->public_key_offset);
@@ -342,7 +343,8 @@ static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len, u
     cpd_img->public_key =  (struct mft_rsa_3k_key *)
                    (img->cpd_ptr + cpd_img->public_key_offset);
 
-    if (cpd_img->signature_offset + sizeof(struct rsa_3072_pss_signature) > buf_len)
+    if (cpd_img->signature_offset > buf_len ||
+       (cpd_img->signature_offset + sizeof(struct rsa_3072_pss_signature) > buf_len))
     {
         gsc_error("Illegal oprom cpd image (signature offset %lu)\n",
                   cpd_img->signature_offset);
