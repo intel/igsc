@@ -378,9 +378,12 @@ static void igsc_device_fw_update_null_inputs(void **status)
     const uint32_t buffer_len = 10;
     igsc_progress_func_t progress_f;
     int ctx;
+    struct igsc_fw_update_flags flags = {0};
 
     assert_int_equal(igsc_device_fw_update(NULL, &buffer, buffer_len, progress_f, (void *)&ctx),IGSC_ERROR_INVALID_PARAMETER);
     assert_int_equal(igsc_device_fw_update(&handle, NULL, buffer_len, progress_f, (void *)&ctx),IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_device_fw_update_ex(NULL, &buffer, buffer_len, progress_f, (void *)&ctx, flags),IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_device_fw_update_ex(&handle, NULL, buffer_len, progress_f, (void *)&ctx, flags),IGSC_ERROR_INVALID_PARAMETER);
 }
 
 static void igsc_device_fw_update_buffer_len_zero(void **status)
@@ -390,8 +393,10 @@ static void igsc_device_fw_update_buffer_len_zero(void **status)
     const uint32_t buffer_len = 0;
     igsc_progress_func_t progress_f;
     int ctx;
+    struct igsc_fw_update_flags flags = {0};
 
     assert_int_equal(igsc_device_fw_update(&handle, &buffer, buffer_len, progress_f, (void *)&ctx),IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_device_fw_update_ex(&handle, &buffer, buffer_len, progress_f, (void *)&ctx, flags),IGSC_ERROR_INVALID_PARAMETER);
 }
 
 static void igsc_device_oprom_update_null_inputs(void **status)
