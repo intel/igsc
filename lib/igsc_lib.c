@@ -1261,6 +1261,25 @@ exit:
     return ret;
 }
 
+static int reconnect_loop(struct igsc_lib_ctx *lib_ctx)
+{
+    #define MAX_RECONNECT_RETRIES 20
+    unsigned int j;
+    int ret;
+
+    for (j = 0; j < MAX_RECONNECT_RETRIES; j++)
+    {
+        ret = driver_reconnect(lib_ctx);
+        if (ret == IGSC_SUCCESS)
+        {
+            break;
+        }
+        gsc_debug("reconnect failed #%d\n", j);
+        gsc_msleep(300);
+    }
+    return ret;
+}
+
 static int gsc_update(IN struct igsc_device_handle *handle,
                       IN const void *buffer,
                       IN const uint32_t buffer_len,
@@ -1431,7 +1450,7 @@ retry:
     */
     if (payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW)
     {
-        ret = driver_reconnect(lib_ctx);
+        ret = reconnect_loop(lib_ctx);
 
         if (ret == IGSC_SUCCESS)
         {
