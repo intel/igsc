@@ -1,7 +1,7 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
  *
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  */
 
 /**
@@ -63,6 +63,7 @@ enum gsc_fwu_heci_command_id {
     GSC_FWU_HECI_COMMAND_ID_GET_CONFIG,     /**< get config command              */
     GSC_FWU_HECI_COMMAND_ID_STATUS,
     GSC_FWU_HECI_COMMAND_ID_GET_GFX_DATA_UPDATE_INFO,
+    GSC_FWU_HECI_COMMAND_ID_GET_SUBSYSTEM_IDS, /**< get subsystem ids command    */
     GSC_FWU_HECI_COMMAND_MAX                /**< upper sentinel command          */
 };
 
@@ -376,6 +377,33 @@ struct gsc_fwu_heci_get_config_message_resp {
     uint32_t                     hw_sku;
     uint32_t                     reserved[8];
     uint32_t                     debug_config;
+};
+
+/**
+ * @brief get the Subsystem Vendor ID (SSVID) and Subsystem Device ID (SSDID) of the card
+ *
+ * @param header @ref gsc_fwu_heci_header
+ * @param reserved
+ */
+struct gsc_fwu_heci_get_subsystem_ids_message_req {
+   struct gsc_fwu_heci_header header;
+   uint32_t                   reserved[2];
+};
+
+/**
+ * @brief firmware get the Subsystem IDs message response
+ *
+ * @param response @ref gsc_fwu_heci_response
+ * @param ssvid Subsystem Vendor ID (SSVID)
+ * @param ssdid Subsystem Device ID (SSDID)
+ * @param reserved
+ */
+struct gsc_fwu_heci_get_subsystem_ids_message_resp
+{
+    struct gsc_fwu_heci_response    response;
+    uint16_t                        ssvid;
+    uint16_t                        ssdid;
+    uint32_t                        reserved[2];
 };
 
 /** @} */
