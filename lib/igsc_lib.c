@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  */
 
 #include <stdint.h>
@@ -1143,6 +1143,9 @@ int igsc_device_init_by_device_info(IN OUT struct igsc_device_handle *handle,
 int igsc_device_get_device_info(IN  struct igsc_device_handle *handle,
                                 OUT struct igsc_device_info *dev_info)
 {
+    int ret;
+    struct igsc_subsystem_ids ssids;
+
     if (handle == NULL || dev_info == NULL)
     {
         gsc_error("Bad parameters\n");
@@ -1155,7 +1158,55 @@ int igsc_device_get_device_info(IN  struct igsc_device_handle *handle,
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
-    return get_device_info_by_devpath(handle->ctx->device_path, dev_info);
+    ret = get_device_info_by_devpath(handle->ctx->device_path, dev_info);
+    if (ret != IGSC_SUCCESS)
+    {
+        return ret;
+    }
+
+    /* try to get the true subsystem vendor id and subsystem device id from the firmware */
+    ret = igsc_device_subsystem_ids(handle, &ssids);
+    if (ret != IGSC_SUCCESS)
+    {
+        /* can fail by design with legacy firmware, so return SUCCESS */
+        return IGSC_SUCCESS;
+    }
+    gsc_debug("ssvid/ssdid PCI: %04x/%04x, FW: %04x/%04x\n",
+              dev_info->subsys_vendor_id, dev_info->subsys_device_id,
+              ssids.ssvid, ssids.ssdid);
+
+    dev_info->subsys_device_id = ssids.ssdid;
+    dev_info->subsys_vendor_id = ssids.ssvid;
+
+    return ret;
+}
+
+int igsc_device_update_device_info(IN  struct igsc_device_handle *handle,
+                                   OUT struct igsc_device_info *dev_info)
+{
+    struct igsc_subsystem_ids ssids;
+    int ret;
+
+    if (handle == NULL || dev_info == NULL)
+    {
+        gsc_error("Bad parameters\n");
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    /* try to get the true subsystem vendor id and subsystem device id from the firmware */
+    ret = igsc_device_subsystem_ids(handle, &ssids);
+    if (ret != IGSC_SUCCESS)
+    {
+        return ret;
+    }
+    gsc_debug("ssvid/ssdid PCI: %04x/%04x, FW: %04x/%04x\n",
+              dev_info->subsys_vendor_id, dev_info->subsys_device_id,
+              ssids.ssvid, ssids.ssdid);
+
+    dev_info->subsys_device_id = ssids.ssdid;
+    dev_info->subsys_vendor_id = ssids.ssvid;
+
+    return ret;
 }
 
 int igsc_device_close(IN OUT struct igsc_device_handle *handle)
@@ -1202,6 +1253,86 @@ int igsc_device_fw_version(IN struct igsc_device_handle *handle,
     gsc_driver_deinit(lib_ctx);
 
     return ret;
+}
+
+static int gsc_device_subsystem_ids(struct igsc_lib_ctx  *lib_ctx,
+                                    struct igsc_subsystem_ids *ids)
+{
+    int status;
+    size_t request_len;
+    size_t response_len;
+    size_t received_len;
+    size_t buf_len;
+    struct gsc_fwu_heci_get_subsystem_ids_message_req  *req;
+    struct gsc_fwu_heci_get_subsystem_ids_message_resp *resp;
+    uint8_t command_id = GSC_FWU_HECI_COMMAND_ID_GET_SUBSYSTEM_IDS;
+
+    if (ids == NULL)
+    {
+        gsc_error("Invalid parameter\n");
+        return IGSC_ERROR_INTERNAL;
+    }
+
+    memset(ids, 0, sizeof(*ids));
+    req = (struct gsc_fwu_heci_get_subsystem_ids_message_req *)lib_ctx->working_buffer;
+    request_len = sizeof(*req);
+
+    resp = (struct gsc_fwu_heci_get_subsystem_ids_message_resp *)lib_ctx->working_buffer;
+    response_len = sizeof(*resp);
+    buf_len = lib_ctx->working_buffer_length;
+
+    status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Buffer validation failed\n");
+        return status;
+    }
+
+    memset(req, 0, request_len);
+    req->header.command_id = command_id;
+
+    status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response (%d)\n", status);
+        goto exit;
+    }
+
+    if (received_len < sizeof(resp->response))
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    status = gsc_fwu_heci_validate_response_header(lib_ctx, &resp->response, command_id);
+    if (status != IGSC_SUCCESS)
+    {
+        /* In older versions this command wasn't supported which is legitimate*/
+        if (status != GSC_FWU_STATUS_INVALID_COMMAND)
+        {
+            gsc_error("Invalid HECI message response (%d)\n", status);
+        }
+        goto exit;
+    }
+
+    if (received_len != response_len)
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    gsc_debug("ssvid/ssdid 0x%04x/0x%04x\n", resp->ssvid, resp->ssdid);
+
+    ids->ssvid = resp->ssvid;
+    ids->ssdid = resp->ssdid;
+
+    status = IGSC_SUCCESS;
+
+exit:
+    return status;
+
 }
 
 static int gsc_device_hw_config(struct igsc_lib_ctx *lib_ctx,
@@ -1311,6 +1442,42 @@ static int gsc_device_hw_config(struct igsc_lib_ctx *lib_ctx,
 
 exit:
     return status;
+}
+
+int igsc_device_subsystem_ids(IN struct  igsc_device_handle *handle,
+                              OUT struct igsc_subsystem_ids *ssids)
+{
+    struct igsc_lib_ctx *lib_ctx;
+    int ret;
+
+    if (handle == NULL || handle->ctx == NULL || ssids == NULL)
+    {
+        gsc_error("Bad parameters\n");
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    lib_ctx = handle->ctx;
+    ret = gsc_driver_init(lib_ctx, &GUID_METEE_FWU);
+    if (ret != IGSC_SUCCESS)
+    {
+        gsc_error("Failed to init HECI driver\n");
+        return ret;
+    }
+
+    memset(ssids, 0, sizeof(*ssids));
+
+    ret = gsc_device_subsystem_ids(lib_ctx, ssids);
+    if (ret != IGSC_SUCCESS && ret != GSC_FWU_STATUS_INVALID_COMMAND)
+    {
+        gsc_error("Failed to retrieve subsystem ids: %d\n", ret);
+    }
+    if (ret == GSC_FWU_STATUS_INVALID_COMMAND) {
+        ret = IGSC_ERROR_NOT_SUPPORTED;
+    }
+
+    gsc_driver_deinit(lib_ctx);
+
+    return ret;
 }
 
 int igsc_device_hw_config(IN struct igsc_device_handle *handle,

@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  */
 
 /**
@@ -206,6 +206,16 @@ struct igsc_hw_config {
 };
 
 /**
+ * @brief structure to store device subsystem ids
+ * @param ssvid subsystem vendor id
+ * @param ssdid subsystem device id
+ */
+struct igsc_subsystem_ids {
+    uint16_t ssvid;
+    uint16_t ssdid;
+};
+
+/**
  * @def IGSC_MAX_IMAGE_SIZE
  * @brief Maximum firmware image size
  */
@@ -299,6 +309,23 @@ IGSC_EXPORT
 int igsc_device_get_device_info(IN  struct igsc_device_handle *handle,
                                 OUT struct igsc_device_info *dev_info);
 
+
+/**
+ *  @brief Update device information from the firmware
+ *         The subsystem device id and the subsystem vendor id,
+ *         reported by the PCI system, may be different from the ones
+ *         reported by the firmware and so the device information
+ *         should be updated by with the values receind from the firmware.
+ *
+ *  @param handle An initialized handle to the device.
+ *  @param dev_info A device info structure
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_device_update_device_info(IN  struct igsc_device_handle *handle,
+                                   OUT struct igsc_device_info *dev_info);
+
 /**
  *  @brief Closes a GSC Firmware Update device.
  *
@@ -349,6 +376,18 @@ IGSC_EXPORT
 int igsc_device_hw_config(IN  struct igsc_device_handle *handle,
                           OUT struct igsc_hw_config *hw_config);
 
+/**
+ *  @brief Retrieves the subsystem ids (vid/did) from the device
+ *
+ *  @param handle A handle to the device.
+ *  @param hw_config The memory to store obtained subsystem ids
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ *  @return IGSC_ERROR_NOT_SUPPORTED if feature is not supported
+ */
+IGSC_EXPORT
+int igsc_device_subsystem_ids(IN struct  igsc_device_handle *handle,
+                              OUT struct igsc_subsystem_ids *ssids);
 
 /**
  *  @brief Retrieves the hw configurations from the provided
