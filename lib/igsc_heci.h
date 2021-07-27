@@ -53,18 +53,18 @@
  * @brief list of HECI commands accepted by the GSC firmware update client
  */
 enum gsc_fwu_heci_command_id {
-    GSC_FWU_HECI_COMMAND_ID_INVALID = 0,    /**< lower sentinel command          */
-    GSC_FWU_HECI_COMMAND_ID_START,          /**< start firmware updated flow     */
-    GSC_FWU_HECI_COMMAND_ID_DATA,           /**< send firmware data to device    */
-    GSC_FWU_HECI_COMMAND_ID_END,            /**< last command in update          */
-    GSC_FWU_HECI_COMMAND_ID_GET_VERSION,    /**< retrieve version of a firmware  */
-    GSC_FWU_HECI_COMMAND_ID_NO_UPDATE,      /**< Do not wait for firmware update */
-    GSC_FWU_HECI_COMMAND_ID_GET_IP_VERSION, /**< retrieve version of a partition */
-    GSC_FWU_HECI_COMMAND_ID_GET_CONFIG,     /**< get config command              */
-    GSC_FWU_HECI_COMMAND_ID_STATUS,
-    GSC_FWU_HECI_COMMAND_ID_GET_GFX_DATA_UPDATE_INFO,
-    GSC_FWU_HECI_COMMAND_ID_GET_SUBSYSTEM_IDS, /**< get subsystem ids command    */
-    GSC_FWU_HECI_COMMAND_MAX                /**< upper sentinel command          */
+    GSC_FWU_HECI_COMMAND_ID_INVALID = 0,              /**< lower sentinel command           */
+    GSC_FWU_HECI_COMMAND_ID_START,                    /**< start firmware updated flow      */
+    GSC_FWU_HECI_COMMAND_ID_DATA,                     /**< send firmware data to device     */
+    GSC_FWU_HECI_COMMAND_ID_END,                      /**< last command in update           */
+    GSC_FWU_HECI_COMMAND_ID_GET_VERSION,              /**< retrieve version of a firmware   */
+    GSC_FWU_HECI_COMMAND_ID_NO_UPDATE,                /**< Do not wait for firmware update  */
+    GSC_FWU_HECI_COMMAND_ID_GET_IP_VERSION,           /**< retrieve version of a partition  */
+    GSC_FWU_HECI_COMMAND_ID_GET_CONFIG,               /**< get hardwre config               */
+    GSC_FWU_HECI_COMMAND_ID_STATUS,                   /**< get status of most recent update */
+    GSC_FWU_HECI_COMMAND_ID_GET_GFX_DATA_UPDATE_INFO, /**< get signed firmware data info    */
+    GSC_FWU_HECI_COMMAND_ID_GET_SUBSYSTEM_IDS,        /**< get subsystem ids (vid/did)      */
+    GSC_FWU_HECI_COMMAND_MAX                          /**< upper sentinel command           */
 };
 
 /**
