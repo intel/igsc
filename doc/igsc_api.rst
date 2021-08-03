@@ -273,8 +273,8 @@ The structure represents the device firmware version.
                               IN  igsc_progress_func_t progress_f,
                               IN  void *ctx);
 
-10. Function that implements version comparison logic, it returns
-   one of values of `enum igsc_version_compare_result`
+10. The function implements firmware version comparison logic, it returns
+    one of values of `enum igsc_version_compare_result`
 
 .. code-block:: c
 
@@ -299,13 +299,6 @@ The structure represents the device firmware version.
 
 
 .. code-block:: c
-
-    struct compare_version {
-        uint16_t  major;
-        uint16_t  minor;
-        uint16_t  hotfix;
-        uint16_t  build;
-    };
 
     if ((Image major version != Device major version) &&
         (Device Major version != 0)):
@@ -426,14 +419,13 @@ which holds paring state of the OPROM image information.
                                         IN igsc_device_info *device)
 
 
-  h. The function resets the oprom device iterator over supported devices
+  h. The function resets the OPROM device iterator over supported devices
 
     .. code-block:: c
 
       int igsc_image_oprom_iterator_reset(IN struct igsc_oprom_image *img);
 
   i. The function releases image handle `img`
-
 
     .. code-block:: c
 
@@ -517,7 +509,7 @@ which holds paring state of the OPROM image information.
          igsc_image_oprom_relese(img);
       }
 
-8. The function that implements firmware version comparison logic, it returns
+8. The function implements OPROM version comparison logic, it returns
    one of values of `enum igsc_version_compare_result`
 
    .. code-block:: c
