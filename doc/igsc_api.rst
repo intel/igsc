@@ -515,7 +515,8 @@ which holds paring state of the OPROM image information.
    uint8_t igsc_oprom_version_compare(const struct igsc_oprom_version *image_ver,
                                       const struct igsc_oprom_version *device_ver);
 
-9. IFR (In-Field Repair) functions
+2.6 IFR (In-Field Repair) functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   In order to increase the lifetime of the discrete GFX die, there is some redundancy added to it.
   In case of failures, CSC firmware will enable reserved HW instead of malfunctioning HW if possible. 
@@ -525,7 +526,7 @@ which holds paring state of the OPROM image information.
 
   The following commands for querying and triggering the IFR flow are supported:
 
-  a. Get IFR Status:
+1. Get IFR Status:
 
     This API returns which IFR tests are supported, how many tiles exist and whether IFR
     repairs were previously applied by the firmware.
@@ -578,7 +579,7 @@ which holds paring state of the OPROM image information.
       }
 
 
-  b. Run IFR Test:
+2. Run IFR Test:
 
     Provides API for triggering the IFR flow and returns the status
     of the requested test.
@@ -631,7 +632,7 @@ which holds paring state of the OPROM image information.
           return 0;
       }
 
-2.6 Device Enumeration API
+2.7 Device Enumeration API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The device enumeration API provides access to GSC devices installed on the
@@ -673,7 +674,7 @@ done via SetupDi interface.
     int igsc_device_iterator_next(struct igsc_device_iterator *iter,
                                   struct igsc_device_info *info);
 
-2.7 Retrieving firmware status
+2.8 Retrieving firmware status
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Retrieve the firmware status code of the last operation.
