@@ -77,18 +77,17 @@ image.
 .. code-block:: c
 
    struct igsc_device_info {
-         const igsc_path_t  *device_path;
-         uint16_t   domain;                /**< linux only */
-         uint8_t    bus;
-         uint8_t    dev;
-         uint8_t    func;
+         char name[256];                  /**< the device node path */
 
-         uint16_t   vendor_id;
-         uint16_t   device_id;
-         uint16_t   subvendor_id;
-         uint16_t   subdevice_id;
+         uint16_t domain;                 /**< pci domain (Linux only) */
+         uint8_t  bus;                    /**< pci bus number for GFX device */
+         uint8_t  dev;                    /**< device number on pci bus */
+         uint8_t  func;                   /**< func the device function of the */
 
-         uint8_t    data[TBD];
+         uint16_t device_id;              /**< gfx device id */
+         uint16_t vendor_id;              /**< gfx device vendor id */
+         uint16_t subsys_device_id;       /**< gfx device subsystem device id */
+         uint16_t subsys_vendor_id;       /**< gfx device subsystem vendor id */
    }
 
 5. Version comparison return values
@@ -175,9 +174,9 @@ The structure represents the device firmware version.
 .. code-block:: c
 
     struct igsc_fw_version {
-        char       Project[4];
-        uint16_t   Hotfix;
-        uint16_t   Build;
+        char       project[4]; /**< Project code name */
+        uint16_t   hotfix;     /**< FW Hotfix Number */
+        uint16_t   build;      /**< FW Build Number */
     };
 
 
@@ -274,8 +273,8 @@ The structure represents the device firmware version.
                               IN  igsc_progress_func_t progress_f,
                               IN  void *ctx);
 
-10. Function that implements version comparison logic, it returns
-   one of values of `enum igsc_version_compare_result`
+10. The function implements firmware version comparison logic, it returns
+    one of values of `enum igsc_version_compare_result`
 
 .. code-block:: c
 
@@ -300,13 +299,6 @@ The structure represents the device firmware version.
 
 
 .. code-block:: c
-
-    struct compare_version {
-        uint16_t  major;
-        uint16_t  minor;
-        uint16_t  hotfix;
-        uint16_t  build;
-    };
 
     if ((Image major version != Device major version) &&
         (Device Major version != 0)):
@@ -346,15 +338,14 @@ The structure represents the device firmware version.
 
 4. OPROM Image info
 
-The structure `igsc_image_oprom` is an opaque structure
-representing used to hold paring state of the OPROM image
-information.
+The structure `igsc_oprom_image` is an opaque structure
+which holds paring state of the OPROM image information.
 
   .. code-block:: c
 
-    struct igsc_image_oprom;
+    struct igsc_oprom_image;
 
-5. Retrieve device device OPROM version for data and code.
+5. Retrieve device OPROM version for data and code.
 
 
   .. code-block:: c
@@ -392,7 +383,7 @@ information.
 
     .. code-block:: c
 
-      int igsc_image_oprom_type(IN struct igsc_image_oprom_info *img
+      int igsc_image_oprom_type(IN struct igsc_oprom_image *img
                                 OUT uint32_t *type);
 
   d. The function provides number of supported devices by the image
@@ -417,16 +408,21 @@ information.
       int igsc_image_oprom_next_device(IN struct igsc_oprom_image *img,
                                        OUT igsc_device_info *device);
 
-
-  f. The function returns `TBD`: **found** if device is on the list of supported
-     devices.
+  g. The function returns IGSC_SUCCESS if device is on the list of supported
+     devices, otherwise it returns IGSC_ERROR_DEVICE_NOT_FOUND
 
     .. code-block:: c
 
       int igsc_image_oprom_match_device(IN struct igsc_oprom_image *img,
                                         IN igsc_device_info *device)
 
-  g. The function releases image handle `img`
+  h. The function resets the oprom device iterator over supported devices
+
+    .. code-block:: c
+
+      int igsc_image_oprom_iterator_reset(IN struct igsc_oprom_image *img);
+
+  i. The function releases image handle `img`
 
     .. code-block:: c
 
@@ -473,6 +469,7 @@ information.
            if (compare(device, info))
            {
              igsc_device_oprom_update(handle, IGSC_OPROM_DATA, buf, buf_len);
+             break;
            }
          }
 
@@ -510,10 +507,10 @@ information.
          igsc_image_oprom_relese(img);
       }
 
-8. Function that implements version comparison logic, it returns
+8. The function implements oprom version comparison logic, it returns
    one of values of `enum igsc_version_compare_result`
 
-.. code-block:: c
+   .. code-block:: c
 
    uint8_t igsc_oprom_version_compare(const struct igsc_oprom_version *image_ver,
                                       const struct igsc_oprom_version *device_ver);
