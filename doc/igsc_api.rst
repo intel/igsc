@@ -692,3 +692,177 @@ done via SetupDi interface.
 .. code-block:: c
 
    const char *igsc_translate_firmware_status(IN uint32_t firmware_status);
+
+2.9 Signed in-field firmware data update API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Support SKU specific signed in-field data update.  It allows OEMs to perform
+secure in-field update of the configuration data.
+
+1. Firmware Data Version
+
+The structure represents the device firmware data version.
+
+  .. code-block:: c
+
+     struct igsc_fwdata_version {
+        uint32_t oem_manuf_data_version; /**< GSC in-field data firmware OEM manufacturing data version */
+        uint16_t major_version;          /**< GSC in-field data firmware major version */
+        uint16_t major_vcn;              /**< GSC in-field data firmware major VCN */
+     };
+
+  .. note::
+
+**Version comparison logic is**
+
+  .. code-block:: c
+
+     if ((Image major version != Device major version) &&
+         Incompatible Image
+
+     if (Image major vcn > Device major vcn)
+         Incompatible Image
+
+     if (Image oem manufacturing data version <= Device manufacturing data version)
+         Incompatible Image
+
+     if (Image major vcn < Device major vcn)
+         Downgrade()
+     else
+         Upgrade()
+
+
+2. Firmware Data Device Info
+
+  .. code-block:: c
+
+     struct igsc_fwdata_device_info {
+        uint16_t vendor_id; /**< vendor id */
+        uint16_t device_id; /**< device id */
+        uint16_t subsys_vendor_id; /**< subsystem vendor id */
+        uint16_t subsys_device_id; /**< subsystem device id */
+     }
+
+3. Firmware Data Image info
+
+  The structure `igsc_fwdata_image` is an opaque structure
+  which holds parsing state of the firmware data image information.
+
+  .. code-block:: c
+
+     struct igsc_fwdata_image;
+
+4. Firmware data version comparison return values
+
+  .. code-block:: c
+
+     enum igsc_fwdata_version_compare_result {
+         IGSC_FWDATA_VERSION_REJECT_VCN = 0,                    /**< VCN version is bigger than device VCN */
+         IGSC_FWDATA_VERSION_REJECT_OEM_MANUF_DATA_VERSION = 1, /**< OEM manufacturing data version is not bigger than device OEM version */
+         IGSC_FWDATA_VERSION_REJECT_DIFFERENT_PROJECT = 2,      /**< major version is different from device major version */
+         IGSC_FWDATA_VERSION_ACCEPT = 3,                        /**< update image VCN version is equal than the one on the device, and OEM is bigger */
+        IGSC_FWDATA_VERSION_OLDER_VCN = 4,                     /**< update image VCN version is smaller to the one on the device */
+     };
+
+5. Retrieve device firmware data version
+
+
+  .. code-block:: c
+
+     int igsc_device_fwdata_version(IN  struct igsc_device_handle *handle,
+                                    OUT struct igsc_fwdata_version *version);
+
+6. Firmware data image information retrieval:
+
+   a. The function allocates and initializes an opaque
+      structure `struct igsc_fwdata_image` for the supplied
+      firmware data image.
+
+    .. code-block:: c
+
+       int igsc_image_fwdata_init(IN OUT struct igsc_fwdata_image **img,
+                                  IN const uint8_t *buffer,
+                                  IN uint32_t buffer_len);
+
+  b. The function retrieve firmware data version from the firmware data image
+     associated with the image handle `img`.
+
+    .. code-block:: c
+
+       int igsc_image_fwdata_version(IN struct igsc_fwdata_image *img,
+                                     OUT struct igsc_fwdata_version *version);
+
+  c. The function provides number of supported devices by the image
+
+    .. code-block:: c
+
+       int igsc_image_fwdata_count_devices(IN struct igsc_fwdata_image *img,
+                                           OUT uint32_t *count);
+
+  d. The function retrieves list of supported devices by the image
+
+    .. code-block:: c
+
+       int igsc_image_fwdata_supported_devices(IN struct igsc_fwdata_image *img,
+                                               OUT struct igsc_fwdata_device_info *devices,
+                                               IN OUT uint32_t *count);
+
+  e. The function resets the oprom device iterator over supported devices
+
+    .. code-block:: c
+
+       int igsc_image_fwdata_iterator_reset(IN struct igsc_fwdata_image *img);
+
+  f. The function provides an iteration step over supported devices.
+
+    .. code-block:: c
+
+       int igsc_image_fwdata_iterator_next(IN struct igsc_fwdata_image *img,
+                                           OUT struct igsc_fwdata_device_info *device);
+
+  g. The function returns IGSC_SUCCESS if device is on the list of supported
+     devices, otherwise it returns IGSC_ERROR_DEVICE_NOT_FOUND
+
+    .. code-block:: c
+
+       int igsc_image_fwdata_match_device(IN struct igsc_fwdata_image *img,
+                                          IN struct igsc_device_info *device);
+
+  i. The function releases image handle `img`
+
+    .. code-block:: c
+
+       int igsc_image_fwdata_release(IN struct igsc_fwdata_image *img);
+
+7. The function implements oprom version comparison logic, it returns
+   one of values of `igsc_fwdata_version_compare_result`
+
+   .. code-block:: c
+
+      uint8_t igsc_fw_version_compare(IN struct igsc_fw_version *image_ver,
+                                      IN struct igsc_fw_version *device_ver);
+8. Update firmware data using parsed image:
+
+   The function gets a parsed firmware data image and sends it to the device.
+   It calls progress function handler for each chunk it sends.
+
+  .. code-block:: c
+
+     int igsc_device_fwdata_image_update(IN  struct igsc_device_handle *handle,
+                                         IN  struct igsc_fwdata_image *img,
+                                         IN  igsc_progress_func_t progress_f,
+                                         IN  void *ctx);
+
+9. Update firmware data from a buffer:
+
+   The function gets a buffer that contains a firmware data image, parses it
+   and sends it to the device.
+   It calls progress function handler for each chunk it sends.
+
+  .. code-block:: c
+
+     int igsc_device_fwdata_update(IN  struct igsc_device_handle *handle,
+                                   IN  const uint8_t *buffer,
+                                   IN  const uint32_t buffer_len,
+                                   IN  igsc_progress_func_t progress_f,
+                                   IN  void *ctx);
