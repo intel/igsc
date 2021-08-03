@@ -866,3 +866,22 @@ The structure represents the device firmware data version.
                                    IN  const uint32_t buffer_len,
                                    IN  igsc_progress_func_t progress_f,
                                    IN  void *ctx);
+
+2.10 IAF Update API
+~~~~~~~~~~~~~~~~~~
+Intel Accelerator Fabric Platform Specific Configuration (PSC) update is
+done as a blob, without parsing the image and with zero metadata.
+
+1. Update PSC partition:
+
+   The function performs Intel Accelerator Fabric Platform Specific
+   Configuration (PSC) update from the provided update data image.
+
+   .. code-block:: c
+
+      int igsc_iaf_psc_update(IN struct igsc_device_handle *handle,
+                              IN const uint8_t *buffer,
+                              IN const uint32_t buffer_len,
+                              IN igsc_progress_func_t progress_f,
+                              IN void *ctx);
+
