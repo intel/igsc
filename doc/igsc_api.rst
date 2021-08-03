@@ -79,10 +79,10 @@ image.
    struct igsc_device_info {
          char name[256];                  /**< the device node path */
 
-         uint16_t domain;                 /**< pci domain for GFX device */
+         uint16_t domain;                 /**< pci domain (Linux only) */
          uint8_t  bus;                    /**< pci bus number for GFX device */
          uint8_t  dev;                    /**< device number on pci bus */
-         uint8_t  func;                   /**< device function number */
+         uint8_t  func;                   /**< func the device function of the */
 
          uint16_t device_id;              /**< gfx device id */
          uint16_t vendor_id;              /**< gfx device vendor id */
@@ -362,7 +362,7 @@ The structure represents the device firmware version.
     **Version comparison logic is**
 
 
-  .. code-block:: c
+.. code-block:: c
 
     if ((Image major version != Device major version) &&
         (Device Major version != 0)):
@@ -402,13 +402,12 @@ The structure represents the device firmware version.
 
 4. OPROM Image info
 
-
 The structure `igsc_oprom_image` is an opaque structure
 which holds paring state of the OPROM image information.
 
   .. code-block:: c
 
-    struct igsc_oprom_image
+    struct igsc_oprom_image;
 
 5. Retrieve device OPROM version for data and code.
 
@@ -473,7 +472,6 @@ which holds paring state of the OPROM image information.
       int igsc_image_oprom_next_device(IN struct igsc_oprom_image *img,
                                        OUT igsc_device_info *device);
 
-
   g. The function returns IGSC_SUCCESS if device is on the list of supported
      devices, otherwise it returns IGSC_ERROR_DEVICE_NOT_FOUND
 
@@ -482,8 +480,7 @@ which holds paring state of the OPROM image information.
       int igsc_image_oprom_match_device(IN struct igsc_oprom_image *img,
                                         IN igsc_device_info *device)
 
-
-  h. The function resets the OPROM device iterator over supported devices
+  h. The function resets the oprom device iterator over supported devices
 
     .. code-block:: c
 
@@ -574,7 +571,7 @@ which holds paring state of the OPROM image information.
          igsc_image_oprom_relese(img);
       }
 
-8. The function implements OPROM version comparison logic, it returns
+8. The function implements oprom version comparison logic, it returns
    one of values of `enum igsc_version_compare_result`
 
    .. code-block:: c
