@@ -572,11 +572,11 @@ int igsc_image_fwdata_version(IN struct igsc_fwdata_image *img,
  *  @param device_ver pointer to the device GSC data firmware version
  *
  *  @return
- *  * IGSC_VERSION_NOT_COMPATIBLE if update image is for a different platform
- *  * IGSC_VERSION_NEWER          if update image version is newer than the one on the device
- *  * IGSC_VERSION_EQUAL          if update image version is equal to the one on the device
- *  * IGSC_VERSION_OLDER          if update image version is older than the one on the device
- *  * IGSC_VERSION_ERROR          if NULL parameters were provided
+ *  * IGSC_FWDATA_VERSION_REJECT_VCN                    if image VCN version is bigger than device VCN
+ *  * IGSC_FWDATA_VERSION_REJECT_OEM_MANUF_DATA_VERSION if OEM manufacturing data version is not bigger than device OEM version
+ *  * IGSC_FWDATA_VERSION_REJECT_DIFFERENT_PROJECT      if major version is different from device major version
+ *  * IGSC_FWDATA_VERSION_ACCEPT                        if VCN version is equal to the device's one, and OEM is bigger
+ *  * IGSC_FWDATA_VERSION_OLDER_VCN                     if VCN version is smaller than the one on the device
  */
 IGSC_EXPORT
 uint8_t igsc_fwdata_version_compare(IN struct igsc_fwdata_version *image_ver,
