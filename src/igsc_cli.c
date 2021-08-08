@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  */
 #include <stdint.h>
 #include <stdbool.h>
@@ -1774,6 +1774,8 @@ static int do_oprom_update(int argc, char *argv[], enum igsc_oprom_type type)
             fwupd_error("Cannot initialize device: %s\n", dev_info.name);
             goto out;
         }
+
+        igsc_device_update_device_info(&handle, &dev_info);
     }
     else
     {
@@ -2264,6 +2266,8 @@ static int do_fwdata_update(int argc, char *argv[])
             fwupd_error("Cannot initialize device: %s\n", dev_info.name);
             goto out;
         }
+
+        igsc_device_update_device_info(&handle, &dev_info);
     }
     else
     {
@@ -2462,6 +2466,8 @@ static int do_ifr_get_status(int argc, char *argv[])
             fwupd_error("Cannot initialize device: %s\n", dev_info.name);
             goto out;
         }
+
+        igsc_device_update_device_info(&handle, &dev_info);
     }
 
     ret = get_status(&handle);
@@ -2639,6 +2645,8 @@ static int do_ifr_run_test(int argc, char *argv[])
             fwupd_error("Cannot initialize device: %s\n", dev_info.name);
             goto out;
         }
+
+        igsc_device_update_device_info(&handle, &dev_info);
     }
 
     printf("requesting to run test %u (%s) for tiles: (%u,%u)\n",
@@ -2727,15 +2735,6 @@ static int do_list_devices(int argc, char *argv[])
     info.name[0] = '\0';
     while((ret = igsc_device_iterator_next(iter, &info)) == IGSC_SUCCESS)
     {
-        printf("Device [%d] '%s': %04hx:%04hx %04hx:%04hx %02u:%02u:%02u\n",
-               ndevices,
-               info.name,
-               info.vendor_id, info.device_id,
-               info.subsys_vendor_id, info.subsys_device_id,
-               info.bus, info.dev, info.func);
-
-        ndevices++;
-
         ret = igsc_device_init_by_device_info(&handle, &info);
         if (ret != IGSC_SUCCESS)
         {
@@ -2743,6 +2742,17 @@ static int do_list_devices(int argc, char *argv[])
             info.name[0] = '\0';
             continue;
         }
+
+        igsc_device_update_device_info(&handle, &info);
+
+        ndevices++;
+
+        printf("Device [%d] '%s': %04hx:%04hx %04hx:%04hx %02u:%02u:%02u\n",
+               ndevices,
+               info.name,
+               info.vendor_id, info.device_id,
+               info.subsys_vendor_id, info.subsys_device_id,
+               info.bus, info.dev, info.func);
 
         if (do_info)
         {
