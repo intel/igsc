@@ -111,6 +111,15 @@ image.
        uint8_t blob[48];
    };
 
+7. Structure to store device subsystem ids
+
+.. code-block:: c
+
+   struct igsc_subsystem_ids {
+       uint16_t ssvid;
+       uint16_t ssdid;
+   };
+
 
 2.3 Device Access:
 ~~~~~~~~~~~~~~~~~~
@@ -157,12 +166,30 @@ image.
     int igsc_device_close(IN OUT struct igsc_device_handle *handle);
 
 
-3. Retrieve device information from the system
+3. Retrieve device information
 
-.. code-block:: c
+  * Retrieve device information from the PCIe system
 
-    int igsc_device_get_device_info(IN  struct igsc_device_handle *handle,
-                                    OUT struct igsc_info_device *info);
+  .. code-block:: c
+
+       int igsc_device_get_device_info(IN  struct igsc_device_handle *handle,
+                                       OUT struct igsc_info_device *info);
+
+  * Update device information from the firmware
+
+  .. code-block:: c
+
+       int igsc_device_update_device_info(IN  struct igsc_device_handle *handle,
+                                          OUT struct igsc_device_info *dev_info);
+
+   * Retrieve the subsystem ids (vid/did) from the device
+
+  .. code-block:: c
+
+       int igsc_device_subsystem_ids(IN struct  igsc_device_handle *handle,
+                                     OUT struct igsc_subsystem_ids *ssids);
+
+
 
 2.4 GSC Firmware Update
 ~~~~~~~~~~~~~~~~~~~~~~~~
