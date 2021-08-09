@@ -560,6 +560,34 @@ static void test_params_version_compare_equal(void **state)
     assert_int_equal(igsc_fw_version_compare(&img_ver, &dev_ver), IGSC_VERSION_EQUAL);
 }
 
+static void igsc_device_update_device_info_bad_handle(void **status)
+{
+    struct igsc_device_info dev_info;
+
+    assert_int_equal(igsc_device_update_device_info(NULL, &dev_info), IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_device_update_device_info_bad_info(void **status)
+{
+    struct igsc_device_handle handle;
+
+    assert_int_equal(igsc_device_update_device_info(&handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_device_subsystem_ids_bad_handle(void **status)
+{
+    struct igsc_subsystem_ids ids;
+
+    assert_int_equal(igsc_device_subsystem_ids(NULL, &ids), IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_device_subsystem_ids_bad_ids(void **status)
+{
+    struct igsc_device_handle handle;
+
+    assert_int_equal(igsc_device_subsystem_ids(&handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
+}
+
 int main(void)
 {
     const struct CMUnitTest device_image_tests[] = {
@@ -585,6 +613,10 @@ int main(void)
         cmocka_unit_test(igsc_device_oprom_update_null_inputs),
         cmocka_unit_test(igsc_device_oprom_update_buffer_len_zero),
         cmocka_unit_test(igsc_device_oprom_update_bad_type),
+        cmocka_unit_test(igsc_device_update_device_info_bad_handle),
+        cmocka_unit_test(igsc_device_update_device_info_bad_info),
+        cmocka_unit_test(igsc_device_subsystem_ids_bad_handle),
+        cmocka_unit_test(igsc_device_subsystem_ids_bad_ids),
     };
 
     const struct CMUnitTest version_cmp_tests[] = {
