@@ -1,0 +1,22 @@
+name: gitlint
+on: [pull_request]
+
+jobs:
+  gitlint:
+    runs-on: self-hosted
+    name: Lint commits, branches, and pull requests
+    container:
+      image: ger-registry.caas.intel.com/sfip-sw/meswci-python
+      options: --user 1001
+    steps:
+      - name: Checkout the the PR branch
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Run gitlint
+        run: |
+          base=origin/${GITHUB_BASE_REF}
+          merge_base=$(git merge-base --fork-point ${base} HEAD)
+          git log --oneline ${merge_base}..${head}
+          gitlint --commits ${merge_base}..${head}
+
