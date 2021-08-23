@@ -1308,11 +1308,7 @@ static int gsc_device_subsystem_ids(struct igsc_lib_ctx  *lib_ctx,
     status = gsc_fwu_heci_validate_response_header(lib_ctx, &resp->response, command_id);
     if (status != IGSC_SUCCESS)
     {
-        /* In older versions this command wasn't supported which is legitimate*/
-        if (status != GSC_FWU_STATUS_INVALID_COMMAND)
-        {
-            gsc_error("Invalid HECI message response (%d)\n", status);
-        }
+        gsc_debug("Invalid HECI message response (%d)\n", status);
         goto exit;
     }
 
@@ -1467,12 +1463,9 @@ int igsc_device_subsystem_ids(IN struct  igsc_device_handle *handle,
     memset(ssids, 0, sizeof(*ssids));
 
     ret = gsc_device_subsystem_ids(lib_ctx, ssids);
-    if (ret != IGSC_SUCCESS && ret != GSC_FWU_STATUS_INVALID_COMMAND)
+    if (ret != IGSC_SUCCESS)
     {
         gsc_error("Failed to retrieve subsystem ids: %d\n", ret);
-    }
-    if (ret == GSC_FWU_STATUS_INVALID_COMMAND) {
-        ret = IGSC_ERROR_NOT_SUPPORTED;
     }
 
     gsc_driver_deinit(lib_ctx);
