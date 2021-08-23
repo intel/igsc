@@ -2507,11 +2507,13 @@ int igsc_device_fwdata_update(IN  struct igsc_device_handle *handle,
     struct igsc_fwdata_image *img;
     int ret;
 
+    /* Calling igsc_image_fwdata_init() only for parsing and validation of the buffer */
     ret = igsc_image_fwdata_init(&img, buffer, buffer_len);
     if (ret != IGSC_SUCCESS)
     {
         return ret;
     }
+    igsc_image_fwdata_release(img);
 
     return gsc_update(handle, buffer, buffer_len, progress_f, ctx,
                       GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA, false);
