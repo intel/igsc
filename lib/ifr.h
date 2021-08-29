@@ -6,8 +6,6 @@
 #ifndef __IGSC_IFR_HECI_H__
 #define __IGSC_IFR_HECI_H__
 
-#include "igsc_lib.h"
-
 #pragma pack(1)
 
 enum gfx_diag_group
