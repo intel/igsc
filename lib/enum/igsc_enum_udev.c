@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  */
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -123,7 +123,8 @@ static int get_device_info(struct udev_device *dev,
     prop = udev_device_get_sysname(parent);
     if (prop)
     {
-        sscanf(prop, "%*4d:%2" SCNu8 ":%2" SCNu8 ".%2" SCNu8,
+        sscanf(prop, "%4" SCNu16 ":%2" SCNx8 ":%2" SCNx8 ".%2" SCNx8,
+	       &info->domain,
                &info->bus,
                &info->dev,
                &info->func);
