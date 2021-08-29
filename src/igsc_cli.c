@@ -2721,12 +2721,12 @@ static int do_list_devices(int argc, char *argv[])
 
         ndevices++;
 
-        printf("Device [%d] '%s': %04hx:%04hx %04hx:%04hx %02u:%02u:%02u\n",
+        printf("Device [%d] '%s': %04hx:%04hx %04hx:%04hx %04hu:%02x:%02x.%02x\n",
                ndevices,
                info.name,
                info.vendor_id, info.device_id,
                info.subsys_vendor_id, info.subsys_device_id,
-               info.bus, info.dev, info.func);
+               info.domain, info.bus, info.dev, info.func);
 
         if (do_info)
         {
