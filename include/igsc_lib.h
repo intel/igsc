@@ -1079,6 +1079,73 @@ int igsc_gfsp_memory_errors(IN struct igsc_device_handle *handle,
  */
 
 /**
+ *  memory PPR status structures
+ */
+
+/**
+ * PPR test status bit masks
+ */
+enum igsc_ppr_test_status_mask
+{
+    IGSC_PPR_STATUS_TEST_EXECUTED_MASK = 0x1,
+    IGSC_PPR_STATUS_TEST_SUCCESS_MASK = 0x2,
+    IGSC_PPR_STATUS_FOUND_HW_ERROR_MASK = 0x4,
+    IGSC_PPR_STATUS_HW_ERROR_REPAIRED_MASK = 0x8,
+};
+
+/**
+ * Device PPR status structure
+ */
+struct igsc_device_mbist_ppr_status
+{
+    uint32_t mbist_test_status; /**< 0 – Pass, Any set bit represents that MBIST on the matching channel has failed */
+    uint32_t num_of_ppr_fuses_used_by_fw; /**< Number of PPR fuses used by the firmware */
+    uint32_t num_of_remaining_ppr_fuses; /**< Number of remaining PPR fuses */
+};
+
+/**
+ * PPR status structure
+ */
+struct igsc_ppr_status
+{
+    uint8_t  boot_time_memory_correction_pending; /**< 0 - No pending boot time memory correction, */
+                                                  /**< 1 - Pending boot time memory correction     */
+    uint8_t  ppr_mode; /**< 0 – PPR enabled, 1 – PPR disabled, 2 – PPR test mode, */
+                       /**< 3 – PPR auto run on next boot */
+    uint8_t  test_run_status; /**< test status @see enum igsc_ppr_test_status_mask */
+    uint8_t  reserved;
+    uint32_t ras_ppr_applied; /**< 0 - ppr not applied, 1 - ppr applied, 2 - ppr exhausted */
+    uint32_t mbist_completed; /**< 0 - Not Applied, Any set bit represents mbist completed */
+    uint32_t num_devices; /**< real number of devices in the array (on Xe_HP SDV, PVC <= 8) */
+    struct   igsc_device_mbist_ppr_status device_mbist_ppr_status[]; /* Array of PPR statuses per device */
+};
+
+/**
+ *  @brief Retrieves GFSP number of memory PPR devices
+ *
+ *  @param handle A handle to the device.
+ *  @param count pointer to number of memory PPR devices, the number is returned by the FW
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_memory_ppr_devices(IN struct igsc_device_handle *handle,
+                            OUT uint32_t *device_count);
+
+/**
+ *  @brief Retrieves GFSP memory PPR status structure data
+ *
+ *  @param handle A handle to the device.
+ *  @param ppr_status pointer to PPR status structure, which contains num_devices field
+ *         representing the number of allocated items in the device_mbist_ppr_status[] array.
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_memory_ppr_status(IN struct  igsc_device_handle *handle,
+                           OUT struct igsc_ppr_status *ppr_status);
+
+/**
  * @}
  */
 #ifdef __cplusplus
