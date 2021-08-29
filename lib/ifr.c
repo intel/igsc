@@ -356,6 +356,168 @@ exit:
     return status;
 }
 
+#define MAX_SUPPORTED_NUM_OF_DEVICE 8 /* In Xe_HP SDV / PVC - should be 8 */
+
+static int gsc_memory_ppr(struct igsc_device_handle *handle,
+                          uint32_t *count,
+                          struct igsc_ppr_status *ppr_status)
+{
+    int status;
+    size_t request_len;
+    size_t response_len;
+    size_t received_len;
+    size_t buf_len;
+    struct igsc_lib_ctx *lib_ctx;
+    uint32_t i;
+
+    struct gfsp_get_memory_ppr_status_req *req;
+    struct gfsp_get_memory_ppr_status_res *resp;
+
+
+    if (!handle || !handle->ctx || !count)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    lib_ctx = handle->ctx;
+
+    gsc_debug("in get memory ppr status, initializing driver\n");
+
+    status = gsc_driver_init(lib_ctx, &GUID_METEE_MKHI);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("IFR is not supported on this device, status %d\n", status);
+        return status;
+    }
+
+    req = (struct gfsp_get_memory_ppr_status_req *)lib_ctx->working_buffer;
+    request_len = sizeof(*req);
+
+    resp = (struct gfsp_get_memory_ppr_status_res *)lib_ctx->working_buffer;
+    response_len = sizeof(*resp);
+    buf_len = lib_ctx->working_buffer_length;
+
+    gsc_debug("validating buffer\n");
+
+    status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Internal error - failed to validate buffer %d\n", status);
+        goto exit;
+    }
+
+    memset(req, 0, request_len);
+    req->header.group_id = MKHI_GROUP_ID_GFSP;
+    req->header.command = 0;
+    req->gfsp_heci_header = GFSP_MEM_PRP_STAT_CMD;
+
+    gsc_debug("sending command\n");
+
+    status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        goto exit;
+    }
+
+    if (received_len < sizeof(resp->header))
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    status = gfsp_heci_validate_response_header(lib_ctx, &resp->header,
+                                                resp->gfsp_heci_header,
+                                                req->gfsp_heci_header);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        goto exit;
+    }
+
+    if (resp->header.result != 0)
+    {
+       gsc_debug("Get memory PPR status command failed with result 0x%x\n", resp->header.result);
+       status = IGSC_ERROR_PROTOCOL;
+       goto exit;
+    }
+
+    if (received_len < response_len)
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp->num_devices > MAX_SUPPORTED_NUM_OF_DEVICE)
+    {
+        gsc_error("Received bad number of devices %u, must not be bigger than %u\n",
+                  resp->num_devices, MAX_SUPPORTED_NUM_OF_DEVICE);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (received_len < response_len +
+                  resp->num_devices * sizeof(struct gfsp_device_mbist_ppr_status))
+    {
+        gsc_error("Message size (%zu) cannot contain %u devices\n",
+                  received_len, resp->num_devices);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    *count = resp->num_devices;
+    if (ppr_status)
+    {
+        if (resp->num_devices > ppr_status->num_devices)
+        {
+            gsc_error("Get memory PPR status command failed: buffer too small\n");
+            status = IGSC_ERROR_BUFFER_TOO_SMALL;
+            goto exit;
+        }
+
+        /* copy reply to the external structure */
+        ppr_status->boot_time_memory_correction_pending = resp->boot_time_memory_correction_pending;
+        ppr_status->ppr_mode = resp->ppr_mode;
+
+        ppr_status->test_run_status = resp->test_run_status;
+        ppr_status->ras_ppr_applied = resp->ras_ppr_applied;
+        ppr_status->mbist_completed = resp->mbist_completed;
+        ppr_status->num_devices = resp->num_devices;
+        for (i = 0; i < resp->num_devices; i++)
+        {
+            ppr_status->device_mbist_ppr_status[i].mbist_test_status =
+                                resp->device_mbist_ppr_status[i].mbist_test_status;
+            ppr_status->device_mbist_ppr_status[i].num_of_ppr_fuses_used_by_fw =
+                                resp->device_mbist_ppr_status[i].num_of_ppr_fuses_used_by_fw;
+            ppr_status->device_mbist_ppr_status[i].num_of_remaining_ppr_fuses =
+                                resp->device_mbist_ppr_status[i].num_of_remaining_ppr_fuses;
+        }
+    }
+    gsc_debug("get status success\n");
+
+exit:
+    gsc_driver_deinit(lib_ctx);
+
+    gsc_debug("ret = %d\n", status);
+
+    return status;
+}
+
+int igsc_memory_ppr_devices(IN struct igsc_device_handle *handle,
+                            OUT uint32_t *count)
+{
+    return gsc_memory_ppr(handle, count, NULL);
+}
+
+int igsc_memory_ppr_status(IN struct  igsc_device_handle *handle,
+                           OUT struct igsc_ppr_status *ppr_status)
+{
+   uint32_t device_count = 0;
+   return gsc_memory_ppr(handle, &device_count, ppr_status);
+}
+
 #define MAX_SUPPORTED_NUM_OF_TILES 4 /* In Xe_HP SDV - 4, In PVC - 2 */
 
 static int gsc_gfsp_memory_errors(IN  struct  igsc_device_handle *handle,
