@@ -9,6 +9,8 @@
 #include <cfgmgr32.h>
 #include <devpkey.h>
 
+#include "msvc/config.h"
+
 #include "igsc_lib.h"
 #include "igsc_log.h"
 

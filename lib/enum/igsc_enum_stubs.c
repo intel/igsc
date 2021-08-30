@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (C) 2019-2020 Intel Corporation
  */
+#include "msvc/config.h"
 #include "igsc_lib.h"
 
 struct igsc_device_iterator
