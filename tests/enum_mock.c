@@ -128,9 +128,3 @@ int run_ifr_test(struct igsc_device_handle *handle, uint8_t test_type,
     fprintf(stderr, "mock %s\n", __func__);
     return EXIT_SUCCESS;
 }
-
-int read_ifr_file(struct igsc_device_handle *handle, const char *output_file)
-{
-    fprintf(stderr, "mock %s\n", __func__);
-    return EXIT_SUCCESS;
-}
