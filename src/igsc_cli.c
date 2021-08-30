@@ -2437,6 +2437,79 @@ int get_mem_err(struct igsc_device_handle *handle)
     return ret;
 }
 
+void print_mem_ppr_status(struct igsc_ppr_status *sts)
+{
+    printf("PPR status:\n");
+    printf("Boot time memory correction pending: %u\n",
+           sts->boot_time_memory_correction_pending);
+    printf("PPR mode: %u\n", sts->ppr_mode);
+    printf("Test run status: executed: %u\n",
+           (sts->test_run_status & IGSC_PPR_STATUS_TEST_EXECUTED_MASK) ? 1 : 0);
+    printf("Test run status: finished successfully: %u\n",
+           (sts->test_run_status & IGSC_PPR_STATUS_TEST_SUCCESS_MASK) ? 1 : 0);
+    printf("Test run status: found hw error: %u\n",
+           (sts->test_run_status & IGSC_PPR_STATUS_FOUND_HW_ERROR_MASK) ? 1 : 0);
+    printf("Test run status: hw error repaired: %u\n",
+           (sts->test_run_status & IGSC_PPR_STATUS_HW_ERROR_REPAIRED_MASK) ? 1 : 0);
+    printf("RAS PPR test applied: %u\n", sts->ras_ppr_applied);
+    printf("mbist completed: %u\n", sts->mbist_completed);
+    printf("Number of PPR devices: %u\n", sts->num_devices);
+
+    for (uint32_t i = 0; i < sts->num_devices; i++)
+    {
+        printf("Device[%u]:\n", i);
+        printf("\t mbist test status: %u\n",
+               sts->device_mbist_ppr_status[i].mbist_test_status);
+        printf("\t Number of PPR fuses used by fw: %u\n",
+               sts->device_mbist_ppr_status[i].num_of_ppr_fuses_used_by_fw);
+        printf("\t Number of remaining PPR fuses: %u\n",
+               sts->device_mbist_ppr_status[i].num_of_remaining_ppr_fuses);
+    }
+}
+
+mockable_static
+int get_mem_ppr_status(struct igsc_device_handle *handle)
+{
+    int      ret;
+    uint32_t device_num = 0;
+    struct igsc_ppr_status *ppr_status;
+
+    /* call the igsc library routine to get number of memory ppr devices */
+    ret = igsc_memory_ppr_devices(handle, &device_num);
+    if (ret)
+    {
+        fwupd_error("Failed to retrieve memory ppr devices number, return code %d\n", ret);
+        return EXIT_FAILURE;
+    }
+
+    fwupd_msg("Retrieved memory ppr devices number: %u", device_num);
+
+    /* allocate ppr_status structure according to the number of ppr devices */
+    ppr_status = (struct igsc_ppr_status *) malloc(sizeof(struct igsc_ppr_status) +
+                                                   device_num * sizeof(struct igsc_device_mbist_ppr_status));
+    if (!ppr_status)
+    {
+        fwupd_error("Failed to allocate memory\n");
+        return EXIT_FAILURE;
+    }
+    /* set number of devices in the buffer structure that will be passed as parameter */
+    ppr_status->num_devices = device_num;
+
+    /* call the igsc library routine to get ppr status */
+    ret = igsc_memory_ppr_status(handle, ppr_status);
+    if (ret)
+    {
+        fwupd_error("Failed to retrieve ppr status, return code %d\n", ret);
+    }
+    else
+    {
+        print_mem_ppr_status(ppr_status);
+    }
+
+    free (ppr_status);
+    return ret;
+}
+
 mockable_static
 int get_status(struct igsc_device_handle *handle)
 {
@@ -2528,6 +2601,11 @@ out:
 static int do_gfsp_get_mem_err(int argc, char *argv[])
 {
     return do_no_special_args_func(argc, argv, get_mem_err);
+}
+
+static int do_gfsp_get_mem_ppr_status(int argc, char *argv[])
+{
+    return do_no_special_args_func(argc, argv, get_mem_ppr_status);
 }
 
 static int do_ifr_get_status(int argc, char *argv[])
@@ -2766,6 +2844,10 @@ static int do_gfsp(int argc, char *argv[])
     {
         return do_gfsp_get_mem_err(argc, argv);
     }
+    if (arg_is_token(sub_command, "get-mem-ppr-status"))
+    {
+        return do_gfsp_get_mem_ppr_status(argc, argv);
+    }
 
     fwupd_error("Wrong argument %s\n", sub_command);
     return ERROR_BAD_ARGUMENT;
@@ -2993,6 +3075,7 @@ static const struct gsc_op g_ops[] = {
         .name  = "gfsp",
         .op    = do_gfsp,
         .usage = {"get-mem-err [--device <dev>]",
+                  "get-mem-ppr-status [--device <dev>]",
                   NULL},
         .help  = "Get number of memory errors for each tile\n"
                  "\nOPTIONS:\n\n"
