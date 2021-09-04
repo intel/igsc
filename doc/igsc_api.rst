@@ -555,7 +555,7 @@ which holds paring state of the OPROM image information.
 
   The following commands for querying and triggering the IFR flow are supported:
 
-1. Get IFR Status:
+  a. Get IFR Status:
 
     This API returns which IFR tests are supported, how many tiles exist and whether IFR
     repairs were previously applied by the firmware.
@@ -608,7 +608,7 @@ which holds paring state of the OPROM image information.
       }
 
 
-2. Run IFR Test:
+  b. Run IFR Test:
 
     Provides API for triggering the IFR flow and returns the status
     of the requested test.
@@ -660,6 +660,110 @@ which holds paring state of the OPROM image information.
           igsc_device_close(handle);
           return 0;
       }
+
+  c. Get PPR test results status:
+
+    Provides API for retrieving results of the Post Package Repair (PPR) test.
+    If a specific row has constant or sporadic failures, PPR can be used to
+    replace a malfunctioning memory row with a redundant memory row.
+    This row replacement is permanent and irreversible.
+
+    .. code-block:: c
+
+     /**
+      * PPR test status bit masks
+      */
+     enum igsc_ppr_test_status_mask
+     {
+         IGSC_PPR_STATUS_TEST_EXECUTED_MASK = 0x1,
+         IGSC_PPR_STATUS_TEST_SUCCESS_MASK = 0x2,
+         IGSC_PPR_STATUS_FOUND_HW_ERROR_MASK = 0x4,
+         IGSC_PPR_STATUS_HW_ERROR_REPAIRED_MASK = 0x8,
+      };
+
+
+      /**
+       * Device PPR status structure
+       */
+      struct igsc_device_mbist_ppr_status
+      {
+          uint32_t mbist_test_status; /**< 0 – Pass, Any set bit represents that MBIST on the matching channel has failed */
+          uint32_t num_of_ppr_fuses_used_by_fw; /**< Number of PPR fuses used by the firmware */
+          uint32_t num_of_remaining_ppr_fuses; /**< Number of remaining PPR fuses */
+      };
+
+      /**
+       * PPR status structure
+       */
+      struct igsc_ppr_status
+      {
+         uint8_t  boot_time_memory_correction_pending; /**< 0 - No pending boot time memory correction, */
+                                                       /**< 1 - Pending boot time memory correction     */
+         uint8_t  ppr_mode; /**< 0 – PPR enabled, 1 – PPR disabled, 2 – PPR test mode, */
+                            /**< 3 – PPR auto run on next boot */
+         uint8_t  test_run_status;
+         uint8_t  reserved;
+         uint32_t ras_ppr_applied; /**< 0 - ppr not applied, 1 - ppr applied, 2 - ppr exhausted */
+         uint32_t mbist_completed; /**< 0 - Not Applied, Any set bit represents mbist completed */
+         uint32_t num_devices;     /**< real number of devices in the array (on Xe_HP SDV / PVC <= 8) */
+         struct   igsc_device_mbist_ppr_status device_mbist_ppr_status[];
+      };
+
+      /* Retrieves number of memory PPR devices */
+      int igsc_memory_ppr_devices(IN struct igsc_device_handle *handle,
+                                  OUT uint32_t *count);
+
+      /*  Retrieves memory PPR status structure data*/
+      int igsc_memory_ppr_status(IN struct  igsc_device_handle *handle,
+                                 OUT struct igsc_ppr_status *ppr_status);
+
+    *Example 3:*
+
+    .. code-block:: c
+
+      int main(int argc, char *argv[])
+      {
+          struct igsc_device_handle *hadnle;
+          int ret;
+          char *device_path;
+          uint32_t device_num = 0;
+          struct igsc_ppr_status *ppr_status;
+
+          device_path = argv[1];
+
+          igsc_device_init_by_device(&handle, device_path);
+
+          /* call the igsc library routine to get number of memory ppr devices */
+          ret = igsc_memory_ppr_devices(handle, &device_num);
+          if (ret)
+          {
+             fprintf(stderr,"Failed to retrieve memory ppr devices number, return code %d\n", ret);
+             return -1;
+          }
+
+          /* allocate ppr_status structure according to the number of ppr devices */
+          ppr_status = (struct igsc_ppr_status *) malloc(sizeof(struct igsc_ppr_status) +
+                                                   device_num * sizeof(struct igsc_device_mbist_ppr_status));
+          if (!ppr_status)
+          {
+              fprintf(stderr, "Failed to allocate memory\n");
+              return -1;
+          }
+
+          /* call the igsc library routine to get ppr status */
+          ret = igsc_memory_ppr_status(handle, device_num, ppr_status);
+          if (ret)
+          {
+              fprintf(stderr, "Failed to retrieve ppr status, return code %d\n", ret);
+          }
+
+          free (ppr_status);
+          igsc_device_close(handle);
+          return ret;
+      }
+
+
+
 
 2.7 Device Enumeration API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
