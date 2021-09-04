@@ -761,7 +761,37 @@ which holds paring state of the OPROM image information.
           return ret;
       }
 
+  d. Get number of memory errors:
 
+    Provides API for retrieving the number of memory errors.
+
+    .. code-block:: c
+
+      /**
+       * gfsp number of memory errors per tile
+       */
+      struct igsc_gfsp_mem_err
+      {
+          uint32_t corr_err;   /**<  Correctable memory errors on this boot and tile */
+          uint32_t uncorr_err; /**<  Uncorrectable memory errors on this boot and tile */
+      };
+
+      /**
+       * gfsp number of memory errors on the card
+       */
+      struct igsc_gfsp_mem_err
+      {
+          uint32_t num_of_tiles; /**< Number of entries in errors array(number of available entries */
+                                 /**< when passed to function and number of filled entries when returned) */
+          struct igsc_gfsp_tile_mem_err errors[]; /**< array of memory errors structs for each tile */
+      };
+
+      int igsc_gfsp_count_tiles(IN  struct  igsc_device_handle *handle,
+                                OUT uint32_t  *num_of_tiles);
+
+
+      int igsc_gfsp_memory_errors_num(IN  struct  igsc_device_handle *handle,
+                                      OUT struct igsc_gfsp_mem_err *tiles);
 
 
 2.7 Device Enumeration API
