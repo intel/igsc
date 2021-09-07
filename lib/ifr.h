@@ -145,6 +145,78 @@ struct gfsp_get_memory_ppr_status_res
     struct   gfsp_device_mbist_ppr_status device_mbist_ppr_status[]; /* Array length is num_devices */
 };
 
+/* IFR extended commands */
+
+enum
+{
+    IFR_TEST_ARRAY_AND_SCAN = 1,
+    IFR_TEST_MEMORY_PPR = 2
+};
+
+/* New ifr run test request */
+struct ifr_run_test_ext_req
+{
+    struct mkhi_msg_hdr header; /**< IFR header */
+    uint8_t test; /**< IFR_TEST_ARRAY_AND_SCAN or IFR_TEST_MEMORY_PPR */
+    uint8_t reserved[11];
+};
+
+enum ifr_pending_reset
+{
+    IFR_PENDING_RESET_NONE,
+    IFR_PENDING_RESET_SHALLOW,
+    IFR_PENDING_RESET_DEEP
+};
+
+/* New ifr run test response for array_and_scan test command */
+struct ifr_run_test_array_scan_res
+{
+    struct mkhi_msg_hdr               header;
+    uint8_t                           finished_test; /**< ARRAY_AND_SCAN */
+    uint8_t                           reserved1[3];
+    uint8_t                           status;
+    uint8_t                           extended_status;
+    uint8_t                           reserved2[2];
+    uint8_t                           pending_reset; /**< enum ifr_pending_reset */
+    uint8_t                           reserved3[3];
+    uint32_t                          error_code;
+    uint32_t                          reserved4;
+};
+
+/* New ifr run test response for memory ppr test command */
+struct ifr_run_test_mem_ppr_res
+{
+    struct mkhi_msg_hdr header;
+    uint8_t             finished_test; /**< MEMORY_PPR */
+    uint8_t             reserved1[3];
+    uint8_t             status;
+    uint8_t             reserved2[3];
+    uint8_t             pending_reset; /**< enum ifr_pending_reset */
+    uint8_t             reserved3[3];
+    uint32_t            error_code;
+    uint32_t            reserved4;
+};
+
+/* New ifr get status request */
+struct ifr_get_status_ext_req
+{
+    struct mkhi_msg_hdr header;
+};
+
+/* New ifr get status response */
+struct ifr_get_status_ext_res
+{
+    struct mkhi_msg_hdr header;
+    uint32_t supported_tests;
+    uint32_t hw_capabilities;
+    uint32_t ifr_applied;
+    uint8_t pending_reset; /**< enum ifr_pending_reset */
+    uint8_t reserved1[3];
+    uint32_t prev_errors;
+    uint32_t reserved2[2];
+
+};
+
 #pragma pack()
 
 #endif /* !__IGSC_IFR_HECI_H__ */
