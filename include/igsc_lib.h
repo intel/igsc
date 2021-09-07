@@ -1146,6 +1146,75 @@ int igsc_ifr_run_mem_ppr_test(IN struct igsc_device_handle *handle,
                               OUT uint32_t *error_code);
 
 /**
+ * IFR supported tests masks
+ */
+enum igsc_ifr_supported_tests_masks
+{
+   IGSC_IFR_SUPPORTED_TESTS_ARRAY_AND_SCAN = 0x1, /**< 1 - Array and Scan test */
+   IGSC_IFR_SUPPORTED_TESTS_MEMORY_PPR = 0x2, /**< 2 - Memory PPR */
+};
+
+/**
+ * IFR hw capabilities masks
+ */
+enum igsc_ifr_hw_capabilities_masks
+{
+    IGSC_IRF_HW_CAPABILITY_IN_FIELD_REPAIR = 0x1, /**< 1: both in field tests and in field repairs are supported. */
+                                                  /**< 0: only in field tests are supported */
+    IGSC_IRF_HW_CAPABILITY_FULL_EU_MODE_SWITCH = 0x2, /**< 1: Full EU mode switch is supported */
+};
+
+/**
+ * IFR previous errors masks
+ */
+enum igsc_ifr_previous_errors_masks
+{
+    IGSC_IFR_PREV_ERROR_DSS_ERR_ARR_STS_PKT = 0x1, /**< DSS Engine error in an array test status packet */
+    IGSC_IFR_PREV_ERROR_NON_DSS_ERR_ARR_STS_PKT = 0x2, /**< Non DSS Engine error in an array test status packet */
+    IGSC_IFR_PREV_ERROR_DSS_REPAIRABLE_PKT = 0x4, /**< DSS Repairable repair packet in an array test */
+    IGSC_IFR_PREV_ERROR_DSS_UNREPAIRABLE_PKT = 0x8, /**< DSS Unrepairable repair packet in an array test */
+    IGSC_IFR_PREV_ERROR_NON_DSS_REPAIRABLE_PKT = 0x10, /**< Non DSS Repairable repair packet in an array test */
+    IGSC_IFR_PREV_ERROR_NON_DSS_UNREPAIRABLE_PKT = 0x20, /**< Non DSS Unrepairable repair packet in an array test */
+    IGSC_IFR_PREV_ERROR_DSS_ERR_SCAN_STS_PKT = 0x40, /**< DSS failure in a scan test packet */
+    IGSC_IFR_PREV_ERROR_NON_DSS_ERR_SCAN_STS_PKT = 0x80, /**< Non DSS failure in a scan test packet */
+    IGSC_IFR_PREV_ERROR_UNEXPECTED = 0x8000, /**< Unexpected test failure */
+};
+
+/**
+ * IFR repairs masks
+ */
+enum igsc_ifr_repairs_mask
+{
+    IGSC_IFR_REPAIRS_MASK_DSS_EN_REPAIR = 0x1, /**< DSS enable repair applied */
+    IGSC_IFR_REPAIRS_MASK_ARRAY_REPAIR = 0x2, /**< Array repair applied */
+};
+
+/**
+ *  @brief Retrieves the status of GSC IFR device.
+ *
+ *  @param handle A handle to the device.
+ *  @param supported_tests Bitmap holding the tests supported on the platform,
+                           @see enum igsc_ifr_supported_tests_masks
+ *  @param hw_capabilities Bitmap holdinf hw capabilities on the platform,
+                           @see enum igsc_ifr_hw_capabilities_masks
+ *  @param ifr_applied Bitmap holding the in-field-repairs applied during boot,
+                           @see enum igsc_ifr_repairs_mask
+ *  @param prev_errors Bitmap holding which errors were seen on this SOC in previous tests,
+                           @see enum igsc_ifr_previous_errors_masks
+ *  @param pending_reset Whether a reset is pending after running the test,
+                           @see enum igsc_ifr_pending_reset
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_ifr_get_status_ext(IN  struct igsc_device_handle *handle,
+                            OUT uint32_t *supported_tests,
+                            OUT uint32_t *hw_capabilities,
+                            OUT uint32_t *ifr_applied,
+                            OUT uint32_t *prev_errors,
+                            OUT uint32_t *pending_reset);
+
+/**
  * @}
  */
 

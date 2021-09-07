@@ -41,6 +41,9 @@ enum mkhi_group_id {
     MKHI_GROUP_ID_GFSP = 0x31,
 };
 
+#define GFX_SRV_MKHI_RUN_IFR_TEST_CMD   0x30
+#define GFX_SRV_MKHI_GET_IFR_STATUS_CMD 0x31
+
 struct mkhi_msg_hdr {
     uint8_t  group_id;      /**< the target client id registered to process the message */
     uint8_t  command    :7; /**< command specific to HECI client */
@@ -103,21 +106,18 @@ struct gfsp_get_num_memory_errors_res {
     struct gfsp_num_memory_errors_per_tile num_memory_errors[];
 };
 
-struct gfsp_get_memory_ppr_status_req
-{
+struct gfsp_get_memory_ppr_status_req {
     struct mkhi_msg_hdr header; /* mkhi heci header */
     uint32_t gfsp_heci_header;  /* gfsp header */
 };
 
-struct gfsp_device_mbist_ppr_status
-{
+struct gfsp_device_mbist_ppr_status {
     uint32_t mbist_test_status;           /* 0 – Pass, Any set bit represents that MBIST on the matching channel has failed */
     uint32_t num_of_ppr_fuses_used_by_fw; /* Number of PPR fuses used by the FW */
     uint32_t num_of_remaining_ppr_fuses;  /* Number of remaining PPR fuses */
 };
 
-struct gfsp_get_memory_ppr_status_res
-{
+struct gfsp_get_memory_ppr_status_res {
     struct mkhi_msg_hdr header;                   /* 0x31 for GFSP MKHI command */
     uint32_t gfsp_heci_header;                    /* 4 for Get memory PPR status */
     uint8_t  boot_time_memory_correction_pending; /* 0 - No pending boot time memory correction, */
@@ -134,30 +134,26 @@ struct gfsp_get_memory_ppr_status_res
 
 /* IFR extended commands */
 
-enum
-{
+enum {
     IFR_TEST_ARRAY_AND_SCAN = 1,
     IFR_TEST_MEMORY_PPR = 2
 };
 
 /* New ifr run test request */
-struct ifr_run_test_ext_req
-{
+struct ifr_run_test_ext_req {
     struct mkhi_msg_hdr header; /**< IFR header */
     uint8_t test; /**< IFR_TEST_ARRAY_AND_SCAN or IFR_TEST_MEMORY_PPR */
     uint8_t reserved[11];
 };
 
-enum ifr_pending_reset
-{
+enum ifr_pending_reset {
     IFR_PENDING_RESET_NONE,
     IFR_PENDING_RESET_SHALLOW,
     IFR_PENDING_RESET_DEEP
 };
 
 /* New ifr run test response for array_and_scan test command */
-struct ifr_run_test_array_scan_res
-{
+struct ifr_run_test_array_scan_res {
     struct mkhi_msg_hdr               header;
     uint8_t                           finished_test; /**< ARRAY_AND_SCAN */
     uint8_t                           reserved1[3];
@@ -171,8 +167,7 @@ struct ifr_run_test_array_scan_res
 };
 
 /* New ifr run test response for memory ppr test command */
-struct ifr_run_test_mem_ppr_res
-{
+struct ifr_run_test_mem_ppr_res {
     struct mkhi_msg_hdr header;
     uint8_t             finished_test; /**< MEMORY_PPR */
     uint8_t             reserved1[3];
@@ -185,14 +180,12 @@ struct ifr_run_test_mem_ppr_res
 };
 
 /* New ifr get status request */
-struct ifr_get_status_ext_req
-{
+struct ifr_get_status_ext_req {
     struct mkhi_msg_hdr header;
 };
 
 /* New ifr get status response */
-struct ifr_get_status_ext_res
-{
+struct ifr_get_status_ext_res {
     struct mkhi_msg_hdr header;
     uint32_t supported_tests;
     uint32_t hw_capabilities;
