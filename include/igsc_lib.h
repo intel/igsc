@@ -1011,7 +1011,7 @@ int igsc_ifr_get_status(IN  struct igsc_device_handle *handle,
                         OUT uint8_t   *tiles_num);
 
 /**
- *  @brief Runs IFT test on GSC IFR device.
+ *  @brief Runs IFR test on GSC IFR device.
  *
  *  @param handle A handle to the device.
  *  @param test_type Requested test to run
@@ -1139,6 +1139,77 @@ int igsc_memory_ppr_devices(IN struct igsc_device_handle *handle,
 IGSC_EXPORT
 int igsc_memory_ppr_status(IN struct  igsc_device_handle *handle,
                            OUT struct igsc_ppr_status *ppr_status);
+
+/**
+ * IFR pending reset values definition
+ */
+enum igsc_ifr_pending_reset
+{
+    IGSC_IFR_PENDING_RESET_NONE = 0, /**< 0 - No reset needed */
+    IGSC_IFR_PENDING_RESET_SHALLOW = 1, /**< 1 - Need to perform a shallow reset */
+    IGSC_IFR_PENDING_RESET_DEEP = 2, /**< 2 - Need to perform a deep reset */
+};
+
+/**
+ * IFR array and scan test status bit masks
+ */
+enum igsc_ifr_array_scan_test_status_mask
+{
+    IGSC_ARRAY_SCAN_STATUS_TEST_EXECUTION_MASK = 0x1, /**< 0 - Test executed, 1 - Test not executed */
+    IGSC_ARRAY_SCAN_STATUS_TEST_RESULT_MASK = 0x2, /**< 0 - Test finished successfully, 1 - Error occurred during test execution */
+    IGSC_ARRAY_SCAN_STATUS_FOUND_HW_ERROR_MASK = 0x4, /**< 0 - HW error not found, 1 - HW error found*/
+    IGSC_ARRAY_SCAN_STATUS_HW_REPAIR_MASK = 0x8, /**< 0 - HW error will be fully repaired or no HW error found, 1 - HW error will not be fully repaired */
+};
+
+enum igsc_ifr_array_scan_extended_status
+{
+    IGSC_IFR_EXT_STS_PASSED = 0, /**< Test passed successfully, no repairs needed */
+    IGSC_IFR_EXT_STS_SHALLOW_RST_PENDING = 1, /**< Shallow reset already pending from previous test, aborting test */
+    IGSC_IFR_EXT_STS_DEEP_RST_PENDING = 2, /**< Deep reset already pending from previous test, aborting test */
+    IGSC_IFR_EXT_STS_NO_REPAIR_NEEDED = 3, /**< Test passed, recoverable error found, no repair needed */
+    IGSC_IFR_EXT_STS_REPAIRED_ARRAY = 4, /**< est passed, recoverable error found and repaired using array repairs */
+    IGSC_IFR_EXT_STS_REPAIRED_SUBSLICE = 5, /**< Test passed, recoverable error found and repaired using Subslice swaps */
+    IGSC_IFR_EXT_STS_REPAIRED_ARRAY_SUBSLICE = 6, /**< Test passed, recoverable error found and repaired using array repairs and Subslice swaps */
+    IGSC_IFR_EXT_STS_REPAIR_NOT_SUPPORTED = 7, /**< Test completed, unrecoverable error found, part doesn't support in field repair */
+    IGSC_IFR_EXT_STS_NO_RESORCES = 8, /**< Test completed, unrecoverable error found, not enough repair resources available */
+    IGSC_IFR_EXT_STS_NON_SUBSLICE = 9, /**< Test completed, unrecoverable error found, non-Subslice failure */
+    IGSC_IFR_EXT_STS_TEST_ERROR = 10, /**< Test error */
+};
+
+/**
+ *  @brief Runs IFR Array and Scan tests on GSC IFR device.
+ *
+ *  @param handle A handle to the device.
+ *  @param status Test run status, @see enum igsc_ifr_array_scan_test_status_mask
+ *  @param extended_status Test run extended status, @see enum igsc_ifr_array_scan_extended_status
+ *  @param pending_reset Whether a reset is pending, @see enum igsc_ifr_pending_reset
+ *  @param error_code The error code of the test (0 - no error)
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_ifr_run_array_scan_test(IN struct igsc_device_handle *handle,
+                                 OUT uint32_t *status,
+                                 OUT uint32_t *extended_status,
+                                 OUT uint32_t *pending_reset,
+                                 OUT uint32_t *error_code);
+
+/**
+ *  @brief Runs IFR memory Post Package Repair (PPR) test on GSC IFR device.
+ *
+ *  @param handle A handle to the device.
+ *  @param status Test run status,0 - Test is available and will be run after a reset
+ *                                Other values - error
+ *  @param pending_reset Whether a reset is pending, @see enum igsc_ifr_pending_reset
+ *  @param error_code The error code of the test (0 - no error)
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_ifr_run_mem_ppr_test(IN struct igsc_device_handle *handle,
+                              OUT uint32_t *status,
+                              OUT uint32_t *pending_reset,
+                              OUT uint32_t *error_code);
 
 /**
  * @}
