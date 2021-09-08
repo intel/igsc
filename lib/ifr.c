@@ -678,3 +678,165 @@ int igsc_gfsp_memory_errors(IN struct igsc_device_handle *handle,
 
     return gsc_gfsp_memory_errors (handle, &num_of_tiles, tiles);
 }
+
+static int mkhi_heci_validate_response_header(struct igsc_lib_ctx *lib_ctx,
+                                              struct mkhi_msg_hdr *resp_header,
+                                              uint32_t command)
+{
+    int status;
+
+    if (resp_header == NULL)
+    {
+        status = IGSC_ERROR_INTERNAL;
+        goto exit;
+    }
+
+    lib_ctx->last_firmware_status = resp_header->result;
+
+    if (resp_header->command != command)
+    {
+        gsc_error("Invalid command %d\n", resp_header->command);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp_header->is_response == false)
+    {
+        gsc_error("HECI Response not marked as response\n");
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp_header->reserved != 0)
+    {
+        gsc_error("HECI message response is leaking data\n");
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    status = IGSC_SUCCESS;
+
+exit:
+    return status;
+}
+
+int igsc_ifr_run_array_scan_test(IN struct igsc_device_handle *handle,
+                                 OUT uint32_t *test_status,
+                                 OUT uint32_t *extended_status,
+                                 OUT uint32_t *pending_reset,
+                                 OUT uint32_t *error_code)
+{
+    int status;
+    size_t request_len;
+    size_t response_len;
+    size_t received_len;
+    size_t buf_len;
+    struct igsc_lib_ctx *lib_ctx;
+    struct ifr_run_test_ext_req *req;
+    struct ifr_run_test_array_scan_res *resp;
+
+    if (!handle || !handle->ctx || !test_status || !extended_status || !pending_reset || !error_code)
+    {
+        gsc_error("Bad parameters\n");
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    lib_ctx = handle->ctx;
+
+    gsc_debug("in run array/scan test, initializing driver\n");
+
+    status = gsc_driver_init(lib_ctx, &GUID_METEE_MKHI);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("IFR is not supported on this device, status %d\n", status);
+        return status;
+    }
+
+    req = (struct ifr_run_test_ext_req *)lib_ctx->working_buffer;
+    request_len = sizeof(*req);
+
+    resp = (struct ifr_run_test_array_scan_res *)lib_ctx->working_buffer;
+    response_len = sizeof(*resp);
+    buf_len = lib_ctx->working_buffer_length;
+
+    gsc_debug("validating buffer\n");
+
+    status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Internal error - failed to validate buffer %d\n", status);
+        goto exit;
+    }
+
+    memset(req, 0, request_len);
+    req->header.group_id = MKHI_GROUP_ID_GFX_SRV;
+    req->header.command = GFX_SRV_MKHI_RUN_IFR_TEST_CMD;
+    req->test = IFR_TEST_ARRAY_AND_SCAN;
+
+    gsc_debug("sending command\n");
+
+    status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        goto exit;
+    }
+
+    if (received_len < sizeof(resp->header))
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    status = mkhi_heci_validate_response_header(lib_ctx, &resp->header,
+                                               req->header.command);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp->header.result != 0)
+    {
+       gsc_debug("Run test command failed with result 0x%x\n", resp->header.result);
+       status = IGSC_ERROR_PROTOCOL;
+       goto exit;
+    }
+
+    if (received_len < response_len)
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp->finished_test != IFR_TEST_ARRAY_AND_SCAN)
+    {
+        gsc_error("Error in IFR Run Test response - test type do not match %u %u\n",
+                  resp->finished_test, IFR_TEST_ARRAY_AND_SCAN);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp->reserved1[0] || resp->reserved1[1] || resp->reserved1[2] ||
+        resp->reserved2[0] || resp->reserved2[1] ||
+        resp->reserved3[0] || resp->reserved3[1] || resp->reserved3[2])
+    {
+        gsc_error("IFR Status response is leaking data\n");
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    *test_status = resp->status;
+    *error_code = resp->error_code;
+    *extended_status = resp->extended_status;
+    *pending_reset = resp->pending_reset;
+
+    gsc_debug("run test success\n");
+
+exit:
+    gsc_driver_deinit(lib_ctx);
+    return status;
+}
