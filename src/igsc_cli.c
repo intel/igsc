@@ -453,7 +453,7 @@ typedef int (*gsc_op)(int argc, char *argv[]);
 struct gsc_op {
     const char *name;
     gsc_op    op;
-    const char *usage[4]; /* up to 3 subcommands*/
+    const char *usage[6]; /* up to 5 subcommands*/
     const char  *help;  /* help */
 };
 
