@@ -960,3 +960,118 @@ exit:
     return status;
 }
 
+int igsc_ifr_get_status_ext(IN struct igsc_device_handle *handle,
+                            OUT uint32_t *supported_tests,
+                            OUT uint32_t *hw_capabilities,
+                            OUT uint32_t *ifr_applied,
+                            OUT uint32_t *prev_errors,
+                            OUT uint32_t *pending_reset)
+{
+    int status;
+    size_t request_len;
+    size_t response_len;
+    size_t received_len;
+    size_t buf_len;
+    struct igsc_lib_ctx *lib_ctx;
+    struct ifr_get_status_ext_req *req;
+    struct ifr_get_status_ext_res *resp;
+
+    if (!handle || !handle->ctx || !supported_tests || !hw_capabilities ||
+        !ifr_applied || !prev_errors || !pending_reset)
+    {
+        gsc_error("Bad parameters\n");
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    lib_ctx = handle->ctx;
+
+    gsc_debug("in run get ifr ext status, initializing driver\n");
+
+    status = gsc_driver_init(lib_ctx, &GUID_METEE_MKHI);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("IFR is not supported on this device, status %d\n", status);
+        return status;
+    }
+
+    req = (struct ifr_get_status_ext_req *)lib_ctx->working_buffer;
+    request_len = sizeof(*req);
+
+    resp = (struct ifr_get_status_ext_res *)lib_ctx->working_buffer;
+    response_len = sizeof(*resp);
+    buf_len = lib_ctx->working_buffer_length;
+
+    gsc_debug("validating buffer\n");
+
+    status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Internal error - failed to validate buffer %d\n", status);
+        goto exit;
+    }
+
+    memset(req, 0, request_len);
+    req->header.group_id = MKHI_GROUP_ID_GFX_SRV;
+    req->header.command = GFX_SRV_MKHI_GET_IFR_STATUS_CMD;
+
+    gsc_debug("sending command\n");
+
+    status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        goto exit;
+    }
+
+    if (received_len < sizeof(resp->header))
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    status = mkhi_heci_validate_response_header(lib_ctx, &resp->header,
+                                               req->header.command);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp->header.result != 0)
+    {
+       gsc_debug("IFR get status command failed with result 0x%x\n", resp->header.result);
+       status = IGSC_ERROR_PROTOCOL;
+       goto exit;
+    }
+
+    if (received_len < response_len)
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp->reserved1[0] || resp->reserved1[1] || resp->reserved1[2] ||
+        resp->reserved2[0] || resp->reserved2[1])
+    {
+        gsc_error("IFR Status response is leaking data\n");
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    *supported_tests = resp->supported_tests;
+    *hw_capabilities = resp->hw_capabilities;
+    *ifr_applied = resp->ifr_applied;
+    *prev_errors = resp->prev_errors;
+    *pending_reset = resp->pending_reset;
+
+    gsc_debug("IFR get status success\n");
+
+exit:
+    gsc_driver_deinit(lib_ctx);
+    return status;
+
+}
+
