@@ -2509,6 +2509,38 @@ int get_status(struct igsc_device_handle *handle)
     return ret;
 }
 
+mockable_static
+int array_scan_test(struct igsc_device_handle *handle)
+{
+    int      ret;
+    uint32_t status;
+    uint32_t extended_status;
+    uint32_t pending_reset;
+    uint32_t error_code;
+
+    /* call the igsc library routine to run array&scan tests */
+    ret = igsc_ifr_run_array_scan_test(handle, &status, &extended_status, &pending_reset, &error_code);
+    if (ret)
+    {
+        fwupd_error("Failed to run array and scan ifr test, library return code %d\n",
+                    ret);
+        return EXIT_FAILURE;
+    }
+
+    printf("Test execution status: %u\n",
+           (status & IGSC_ARRAY_SCAN_STATUS_TEST_EXECUTION_MASK) ? 1 : 0);
+    printf("Test result: %u\n",
+           (status & IGSC_ARRAY_SCAN_STATUS_TEST_RESULT_MASK) ? 1 : 0);
+    printf("HW error found: %u\n",
+           (status & IGSC_ARRAY_SCAN_STATUS_FOUND_HW_ERROR_MASK) ? 1 : 0);
+    printf("HW repair status: %u\n",
+           (status & IGSC_ARRAY_SCAN_STATUS_HW_REPAIR_MASK) ? 1 : 0);
+    printf("Extended status: %u, Pending reset %u, Error code %u\n",
+           extended_status, pending_reset, error_code);
+
+    return ret;
+}
+
 static int do_no_special_args_func(int argc, char *argv[], int (*func_ptr)(struct igsc_device_handle *))
 {
     struct igsc_device_handle handle;
@@ -2581,6 +2613,11 @@ static int do_gfsp_get_mem_ppr_status(int argc, char *argv[])
 static int do_ifr_get_status(int argc, char *argv[])
 {
     return do_no_special_args_func(argc, argv, get_status);
+}
+
+static int do_ifr_run_array_scan_test(int argc, char *argv[])
+{
+    return do_no_special_args_func(argc, argv, array_scan_test);
 }
 
 static void print_run_test_status(uint8_t run_status)
@@ -2790,6 +2827,11 @@ static int do_ifr(int argc, char *argv[])
     if (arg_is_token(sub_command, "run-test"))
     {
         return do_ifr_run_test(argc, argv);
+    }
+
+    if (arg_is_token(sub_command, "run-array-scan-test"))
+    {
+        return do_ifr_run_array_scan_test(argc, argv);
     }
 
     fwupd_error("Wrong argument %s\n", sub_command);
@@ -3030,6 +3072,7 @@ static const struct gsc_op g_ops[] = {
         .op    = do_ifr,
         .usage = {"get-status [--device <dev>]",
                   "run-test [--device <dev>] --tile <tile> --test <test>",
+                  "run-array-scan-test [--device <dev>]",
                   NULL},
         .help  = "Get IFR status or run IFR test or read IFR file\n"
                  "\nOPTIONS:\n\n"
