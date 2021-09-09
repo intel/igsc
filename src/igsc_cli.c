@@ -2571,6 +2571,29 @@ int array_scan_test(struct igsc_device_handle *handle)
     return ret;
 }
 
+mockable_static
+int mem_ppr_test(struct igsc_device_handle *handle)
+{
+    int ret;
+    uint32_t status;
+    uint32_t pending_reset;
+    uint32_t error_code;
+
+    /* call the igsc library routine to run memory ppr test */
+    ret = igsc_ifr_run_mem_ppr_test(handle, &status, &pending_reset, &error_code);
+    if (ret)
+    {
+        fwupd_error("Failed to run ppr test, library return code %d\n", ret);
+        return EXIT_FAILURE;
+    }
+
+    printf("Status: %u\n", status);
+    printf("Pending reset %u\n", pending_reset);
+    printf("Error code %u\n", error_code);
+
+    return ret;
+}
+
 static int do_no_special_args_func(int argc, char *argv[], int (*func_ptr)(struct igsc_device_handle *))
 {
     struct igsc_device_handle handle;
@@ -2648,6 +2671,11 @@ static int do_ifr_get_status(int argc, char *argv[])
 static int do_ifr_run_array_scan_test(int argc, char *argv[])
 {
     return do_no_special_args_func(argc, argv, array_scan_test);
+}
+
+static int do_ifr_run_mem_ppr_test(int argc, char *argv[])
+{
+    return do_no_special_args_func(argc, argv, mem_ppr_test);
 }
 
 static void print_run_test_status(uint8_t run_status)
@@ -2862,6 +2890,11 @@ static int do_ifr(int argc, char *argv[])
     if (arg_is_token(sub_command, "run-array-scan-test"))
     {
         return do_ifr_run_array_scan_test(argc, argv);
+    }
+
+    if (arg_is_token(sub_command, "run-mem-ppr-test"))
+    {
+        return do_ifr_run_mem_ppr_test(argc, argv);
     }
 
     fwupd_error("Wrong argument %s\n", sub_command);
@@ -3104,6 +3137,7 @@ static const struct gsc_op g_ops[] = {
         .usage = {"get-status [--device <dev>]",
                   "run-test [--device <dev>] --tile <tile> --test <test>",
                   "run-array-scan-test [--device <dev>]",
+                  "run-mem-ppr-test [--device <dev>]",
                   NULL},
         .help  = "Get IFR status or run IFR test or read IFR file\n"
                  "\nOPTIONS:\n\n"
