@@ -2511,6 +2511,70 @@ int get_mem_ppr_status(struct igsc_device_handle *handle)
 }
 
 mockable_static
+int get_status_ext(struct igsc_device_handle *handle)
+{
+    int      ret;
+    uint32_t supported_tests;
+    uint32_t hw_capabilities;
+    uint32_t ifr_applied;
+    uint32_t prev_errors;
+    uint32_t pending_reset;
+
+    /* call the igsc library routine to get the ifr status (extended) */
+    ret = igsc_ifr_get_status_ext(handle, &supported_tests, &hw_capabilities,
+                                  &ifr_applied, &prev_errors, &pending_reset);
+    if (ret)
+    {
+        fwupd_error("Failed to get ifr status, library return code %d\n", ret);
+        return EXIT_FAILURE;
+    }
+
+    printf("Array and scan test supported: %u\n",
+           (supported_tests & IGSC_IFR_SUPPORTED_TESTS_ARRAY_AND_SCAN) ? 1 : 0);
+    printf("Memory PPR test supported: %u\n\n",
+           (supported_tests & IGSC_IFR_SUPPORTED_TESTS_MEMORY_PPR) ? 1 : 0);
+
+    if (hw_capabilities & IGSC_IRF_HW_CAPABILITY_IN_FIELD_REPAIR)
+    {
+        printf("Both in-field tests and in field repairs are supported\n");
+    }
+    else
+    {
+        printf("Only in-field tests are supported\n");
+    }
+    printf("Full EU mode switch supported: %u\n\n",
+           (hw_capabilities & IGSC_IRF_HW_CAPABILITY_FULL_EU_MODE_SWITCH) ? 1 : 0);
+
+    printf("DSS enable repair applied: %u\n",
+           (ifr_applied & IGSC_IFR_REPAIRS_MASK_DSS_EN_REPAIR) ? 1 : 0);
+    printf("Array repair applied: %u\n\n",
+           (ifr_applied & IGSC_IFR_REPAIRS_MASK_ARRAY_REPAIR) ? 1 : 0);
+
+    printf("DSS Engine error in an array test status packet: %u\n",
+           (prev_errors & IGSC_IFR_PREV_ERROR_DSS_ERR_ARR_STS_PKT) ? 1 : 0 );
+    printf("Non DSS Engine error in an array test status packet: %u\n",
+           (prev_errors & IGSC_IFR_PREV_ERROR_NON_DSS_ERR_ARR_STS_PKT) ? 1 : 0 );
+    printf("DSS Repairable repair packet in an array test: %u\n",
+           (prev_errors & IGSC_IFR_PREV_ERROR_DSS_REPAIRABLE_PKT) ? 1 : 0 );
+    printf("DSS Unrepairable repair packet in an array test: %u\n",
+           (prev_errors & IGSC_IFR_PREV_ERROR_DSS_UNREPAIRABLE_PKT) ? 1 : 0 );
+    printf("Non DSS Repairable repair packet in an array test: %u\n",
+           (prev_errors & IGSC_IFR_PREV_ERROR_NON_DSS_REPAIRABLE_PKT) ? 1 : 0 );
+    printf("Non DSS Unrepairable repair packet in an array test: %u\n",
+           (prev_errors & IGSC_IFR_PREV_ERROR_NON_DSS_UNREPAIRABLE_PKT) ? 1 : 0 );
+    printf("DSS failure in a scan test packet: %u\n",
+           (prev_errors & IGSC_IFR_PREV_ERROR_DSS_ERR_SCAN_STS_PKT) ? 1 : 0 );
+    printf("Non DSS failure in a scan test packet: %u\n",
+           (prev_errors & IGSC_IFR_PREV_ERROR_NON_DSS_ERR_SCAN_STS_PKT) ? 1 : 0 );
+    printf("Unexpected test failure: %u\n\n",
+           (prev_errors & IGSC_IFR_PREV_ERROR_UNEXPECTED) ? 1 : 0 );
+
+    printf("Pending reset: %u\n", pending_reset);
+
+    return ret;
+}
+
+mockable_static
 int get_status(struct igsc_device_handle *handle)
 {
     int      ret;
@@ -2666,6 +2730,11 @@ static int do_gfsp_get_mem_ppr_status(int argc, char *argv[])
 static int do_ifr_get_status(int argc, char *argv[])
 {
     return do_no_special_args_func(argc, argv, get_status);
+}
+
+static int do_ifr_get_status_ext(int argc, char *argv[])
+{
+    return do_no_special_args_func(argc, argv, get_status_ext);
 }
 
 static int do_ifr_run_array_scan_test(int argc, char *argv[])
@@ -2880,6 +2949,11 @@ static int do_ifr(int argc, char *argv[])
     if (arg_is_token(sub_command, "get-status"))
     {
         return do_ifr_get_status(argc, argv);
+    }
+
+    if (arg_is_token(sub_command, "get-status-ext"))
+    {
+        return do_ifr_get_status_ext(argc, argv);
     }
 
     if (arg_is_token(sub_command, "run-test"))
@@ -3138,6 +3212,7 @@ static const struct gsc_op g_ops[] = {
                   "run-test [--device <dev>] --tile <tile> --test <test>",
                   "run-array-scan-test [--device <dev>]",
                   "run-mem-ppr-test [--device <dev>]",
+                  "get-status-ext [--device <dev>]",
                   NULL},
         .help  = "Get IFR status or run IFR test or read IFR file\n"
                  "\nOPTIONS:\n\n"
