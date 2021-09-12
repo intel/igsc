@@ -465,6 +465,45 @@ static void test_gfsp_get_mem_err_bad2(void **state)
     assert_true(ret != EXIT_SUCCESS);
 }
 
+/**
+ * test: igsc get-mem-ppr-stat
+ */
+static void test_gfsp_get_mem_ppr_status_bad1(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("gfsp");
+    argv[argc++] = test_strdup("get-mem-ppr-stat");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc gfsp get-mem-ppr-status --device
+ */
+static void test_gfsp_get_mem_ppr_status_bad2(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("gfsp");
+    argv[argc++] = test_strdup("get-mem-ppsr-status");
+    argv[argc++] = test_strdup("--device");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
 #undef main
 int main(void)
 {
@@ -490,6 +529,8 @@ int main(void)
         cmocka_unit_test(test_ifr_run_test_bad8),
         cmocka_unit_test(test_gfsp_get_mem_err_bad1),
         cmocka_unit_test(test_gfsp_get_mem_err_bad2),
+        cmocka_unit_test(test_gfsp_get_mem_ppr_status_bad1),
+        cmocka_unit_test(test_gfsp_get_mem_ppr_status_bad2),
     };
 
     status += cmocka_run_group_tests(ifr_tests, group_setup, group_teardown);
