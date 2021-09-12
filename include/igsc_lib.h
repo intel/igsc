@@ -1031,6 +1031,49 @@ int igsc_ifr_run_test(IN struct igsc_device_handle *handle,
                       OUT uint32_t *error_code);
 
 /**
+ * gfsp number of memory errors per tile
+ */
+struct igsc_gfsp_tile_mem_err
+{
+    uint32_t corr_err;   /**<  Correctable memory errors on this boot and tile */
+    uint32_t uncorr_err; /**<  Uncorrectable memory errors on this boot and tile */
+};
+
+/**
+ * gfsp number of memory errors on the card
+ */
+struct igsc_gfsp_mem_err
+{
+    uint32_t num_of_tiles; /**< Number of entries in errors array(number of available entries */
+                           /**< when passed to function and number of filled entries when returned) */
+    struct igsc_gfsp_tile_mem_err errors[]; /**< array of memory errors structs for each tile */
+};
+
+/**
+ *  @brief Gets number of tiles
+ *
+ *  @param handle A handle to the device.
+ *  @param num_of_tiles number of tiles
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_gfsp_count_tiles(IN  struct igsc_device_handle *handle,
+                          OUT uint32_t *num_of_tiles);
+
+/**
+ *  @brief Gets GFSP number of memory errors
+ *
+ *  @param handle A handle to the device.
+ *  @param tiles structure to store errors
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_gfsp_memory_errors(IN struct igsc_device_handle *handle,
+                            IN OUT struct igsc_gfsp_mem_err *tiles);
+
+/**
  * @}
  */
 #ifdef __cplusplus
