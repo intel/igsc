@@ -28,6 +28,9 @@
 DEFINE_GUID(GUID_METEE_IFR, 0x865e2b45, 0x8fb5, 0x464a,
             0x97, 0xdc, 0x5d, 0x4a, 0xbf, 0x7b, 0x79, 0xa2);
 
+DEFINE_GUID(GUID_METEE_MKHI, 0xe2c2afa2, 0x3817, 0x4d19,
+            0x9d, 0x95, 0x6, 0xb1, 0x6b, 0x58, 0x8a, 0x5d);
+
 static int ifr_heci_validate_response_header(struct igsc_lib_ctx *lib_ctx,
                                              struct ifr_msg_hdr *resp_header,
                                              uint32_t command)
@@ -149,7 +152,7 @@ int igsc_ifr_get_status(IN  struct igsc_device_handle *handle,
 
     if (resp->header.result != 0)
     {
-       gsc_debug("Get IFR status command failed with result %u\n", resp->header.result);
+       gsc_debug("Get IFR status command failed with result 0x%x\n", resp->header.result);
        status = IGSC_ERROR_PROTOCOL;
        goto exit;
     }
@@ -266,7 +269,7 @@ int igsc_ifr_run_test(IN struct igsc_device_handle *handle,
 
     if (resp->header.result != 0)
     {
-       gsc_debug("Run test command failed with result %u\n", resp->header.result);
+       gsc_debug("Run test command failed with result 0x%x\n", resp->header.result);
        status = IGSC_ERROR_PROTOCOL;
        goto exit;
     }
@@ -309,4 +312,207 @@ int igsc_ifr_run_test(IN struct igsc_device_handle *handle,
 exit:
     gsc_driver_deinit(lib_ctx);
     return status;
+}
+
+static int gfsp_heci_validate_response_header(struct igsc_lib_ctx *lib_ctx,
+                                              struct mkhi_msg_hdr *resp_header,
+                                              uint32_t gfsp_heci_header,
+                                              uint32_t command)
+{
+    int status;
+
+    if (resp_header == NULL)
+    {
+        status = IGSC_ERROR_INTERNAL;
+        goto exit;
+    }
+
+    lib_ctx->last_firmware_status = resp_header->result;
+
+    if (gfsp_heci_header != command)
+    {
+        gsc_error("Invalid command %d\n", resp_header->command);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp_header->is_response == false)
+    {
+        gsc_error("HECI Response not marked as response\n");
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp_header->reserved != 0)
+    {
+        gsc_error("HECI message response is leaking data\n");
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    status = IGSC_SUCCESS;
+
+exit:
+    return status;
+}
+
+#define MAX_SUPPORTED_NUM_OF_TILES 4 /* In Xe_HP SDV - 4, In PVC - 2 */
+
+static int gsc_gfsp_memory_errors(IN  struct  igsc_device_handle *handle,
+                                  IN OUT uint32_t  *num_of_tiles,
+                                  OUT struct igsc_gfsp_mem_err *tiles)
+{
+    int status;
+    size_t request_len;
+    size_t response_len;
+    size_t received_len;
+    size_t buf_len;
+    struct igsc_lib_ctx *lib_ctx;
+    struct gfsp_get_num_memory_errors_req *req;
+    struct gfsp_get_num_memory_errors_res *resp;
+
+    if (!handle || !handle->ctx || !num_of_tiles)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    lib_ctx = handle->ctx;
+
+    gsc_debug("in get number of  memory errors, initializing driver\n");
+
+    status = gsc_driver_init(lib_ctx, &GUID_METEE_MKHI);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("GFSP is not supported on this device, status %d\n", status);
+        return status;
+    }
+
+    req = (struct gfsp_get_num_memory_errors_req *)lib_ctx->working_buffer;
+    request_len = sizeof(*req);
+
+    resp = (struct gfsp_get_num_memory_errors_res *)lib_ctx->working_buffer;
+    response_len = sizeof(*resp);
+    buf_len = lib_ctx->working_buffer_length;
+
+    gsc_debug("validating buffer\n");
+
+    status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Internal error - failed to validate buffer %d\n", status);
+        goto exit;
+    }
+
+    memset(req, 0, request_len);
+    req->header.group_id = MKHI_GROUP_ID_GFSP;
+    req->header.command = 0;
+    req->gfsp_heci_header = GFSP_MUN_MEM_ERR_CMD;
+
+    gsc_debug("sending command\n");
+
+    status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        goto exit;
+    }
+
+    if (received_len < sizeof(resp->header))
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    gsc_debug("result = %u\n", resp->header.result);
+
+    status = gfsp_heci_validate_response_header(lib_ctx, &resp->header,
+                                                resp->gfsp_heci_header,
+                                                req->gfsp_heci_header);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        goto exit;
+    }
+
+    if (resp->header.result != 0)
+    {
+       gsc_error("Get number of memory errors command failed with result 0x%x\n",
+                 resp->header.result);
+       status = IGSC_ERROR_PROTOCOL;
+       goto exit;
+    }
+
+    if (received_len < response_len)
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp->tiles_num > MAX_SUPPORTED_NUM_OF_TILES)
+    {
+        gsc_error("Received bad number of tiles %u, must not be bigger than %u\n",
+                  resp->tiles_num, MAX_SUPPORTED_NUM_OF_TILES);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (received_len < response_len +
+                  resp->tiles_num * sizeof(struct gfsp_num_memory_errors_per_tile))
+    {
+        gsc_error("Message size (%zu) cannot contain %u tiles\n", received_len, resp->tiles_num);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (tiles)
+    {
+        if (tiles->num_of_tiles < resp->tiles_num)
+        {
+           gsc_error("Buffer too small to copy %u tiles\n", resp->tiles_num);
+           status = IGSC_ERROR_BUFFER_TOO_SMALL;
+           tiles->num_of_tiles = resp->tiles_num;
+           goto exit;
+        }
+        gsc_memcpy_s(tiles->errors, tiles->num_of_tiles * sizeof(struct igsc_gfsp_tile_mem_err),
+                 resp->num_memory_errors,
+                 resp->tiles_num * sizeof(struct gfsp_num_memory_errors_per_tile));
+        tiles->num_of_tiles = resp->tiles_num;
+    }
+    *num_of_tiles = resp->tiles_num;
+
+    gsc_debug("get status success\n");
+
+exit:
+    gsc_driver_deinit(lib_ctx);
+
+    gsc_debug("ret = %d\n", status);
+
+    return status;
+}
+
+int igsc_gfsp_count_tiles(IN  struct  igsc_device_handle *handle,
+                          OUT uint32_t  *num_of_tiles)
+{
+    if (!handle || !handle->ctx || !num_of_tiles)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    return gsc_gfsp_memory_errors (handle, num_of_tiles, NULL);
+
+}
+
+int igsc_gfsp_memory_errors(IN struct igsc_device_handle *handle,
+                            OUT struct igsc_gfsp_mem_err *tiles)
+{
+    uint32_t num_of_tiles = 0;
+
+    if (!handle || !handle->ctx || !tiles || tiles->num_of_tiles == 0)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    return gsc_gfsp_memory_errors (handle, &num_of_tiles, tiles);
 }
