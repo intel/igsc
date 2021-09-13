@@ -45,6 +45,9 @@ enum mkhi_group_id
     MKHI_GROUP_ID_GFSP = 0x31,
 };
 
+#define GFX_SRV_MKHI_RUN_IFR_TEST_CMD   0x30
+#define GFX_SRV_MKHI_GET_IFR_STATUS_CMD 0x31
+
 struct mkhi_msg_hdr
 {
     uint8_t  group_id;      /**< the target client id registered to process the message */
