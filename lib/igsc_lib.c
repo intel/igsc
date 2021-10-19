@@ -28,7 +28,7 @@
 #include "utils.h"
 
 #define TEE_WRITE_TIMEOUT 60000 /* 60 sec */
-#define TEE_READ_TIMEOUT  60000 /* 60 sec */
+#define TEE_READ_TIMEOUT  480000 /* 480 sec */
 
 DEFINE_GUID(GUID_METEE_FWU, 0x87d90ca5, 0x3495, 0x4559,
             0x81, 0x05, 0x3f, 0xbf, 0xa3, 0x7b, 0x8b, 0x79);
@@ -1844,7 +1844,7 @@ exit:
 
 static int reconnect_loop(struct igsc_lib_ctx *lib_ctx)
 {
-    #define MAX_RECONNECT_RETRIES 20
+    #define MAX_RECONNECT_RETRIES 200
     unsigned int j;
     int ret;
 
