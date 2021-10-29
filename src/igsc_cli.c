@@ -2891,11 +2891,11 @@ static int do_ifr_run_test(int argc, char *argv[])
 
     if (device_path)
     {
-        ret = igsc_device_init_by_device(&handle, argv[1]);
+        ret = igsc_device_init_by_device(&handle, device_path);
         if (ret)
         {
            ret = EXIT_FAILURE;
-           fwupd_error("Cannot initialize device: %s\n", argv[1]);
+           fwupd_error("Cannot initialize device: %s\n", device_path);
            goto out;
         }
     }
