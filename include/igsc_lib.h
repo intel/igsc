@@ -41,6 +41,11 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+
+#ifndef BIT
+#define BIT(x) (1U << (x))
+#endif /* BIT */
+
 /**
  * A file descriptor
  * @typedef igsc_handle_t
@@ -1155,10 +1160,10 @@ enum igsc_ifr_pending_reset
  */
 enum igsc_ifr_array_scan_test_status_mask
 {
-    IGSC_ARRAY_SCAN_STATUS_TEST_EXECUTION_MASK = 0x1, /**< 0 - Test executed, 1 - Test not executed */
-    IGSC_ARRAY_SCAN_STATUS_TEST_RESULT_MASK = 0x2, /**< 0 - Test finished successfully, 1 - Error occurred during test execution */
-    IGSC_ARRAY_SCAN_STATUS_FOUND_HW_ERROR_MASK = 0x4, /**< 0 - HW error not found, 1 - HW error found*/
-    IGSC_ARRAY_SCAN_STATUS_HW_REPAIR_MASK = 0x8, /**< 0 - HW error will be fully repaired or no HW error found, 1 - HW error will not be fully repaired */
+    IGSC_ARRAY_SCAN_STATUS_TEST_EXECUTION_MASK = BIT(0), /**< 0 - Test executed, 1 - Test not executed */
+    IGSC_ARRAY_SCAN_STATUS_TEST_RESULT_MASK =    BIT(1), /**< 0 - Test finished successfully, 1 - Error occurred during test execution */
+    IGSC_ARRAY_SCAN_STATUS_FOUND_HW_ERROR_MASK = BIT(2), /**< 0 - HW error not found, 1 - HW error found*/
+    IGSC_ARRAY_SCAN_STATUS_HW_REPAIR_MASK =      BIT(3), /**< 0 - HW error will be fully repaired or no HW error found, 1 - HW error will not be fully repaired */
 };
 
 enum igsc_ifr_array_scan_extended_status
@@ -1167,13 +1172,15 @@ enum igsc_ifr_array_scan_extended_status
     IGSC_IFR_EXT_STS_SHALLOW_RST_PENDING = 1, /**< Shallow reset already pending from previous test, aborting test */
     IGSC_IFR_EXT_STS_DEEP_RST_PENDING = 2, /**< Deep reset already pending from previous test, aborting test */
     IGSC_IFR_EXT_STS_NO_REPAIR_NEEDED = 3, /**< Test passed, recoverable error found, no repair needed */
-    IGSC_IFR_EXT_STS_REPAIRED_ARRAY = 4, /**< est passed, recoverable error found and repaired using array repairs */
+    IGSC_IFR_EXT_STS_REPAIRED_ARRAY = 4, /**< Test passed, recoverable error found and repaired using array repairs */
     IGSC_IFR_EXT_STS_REPAIRED_SUBSLICE = 5, /**< Test passed, recoverable error found and repaired using Subslice swaps */
     IGSC_IFR_EXT_STS_REPAIRED_ARRAY_SUBSLICE = 6, /**< Test passed, recoverable error found and repaired using array repairs and Subslice swaps */
-    IGSC_IFR_EXT_STS_REPAIR_NOT_SUPPORTED = 7, /**< Test completed, unrecoverable error found, part doesn't support in field repair */
-    IGSC_IFR_EXT_STS_NO_RESORCES = 8, /**< Test completed, unrecoverable error found, not enough repair resources available */
-    IGSC_IFR_EXT_STS_NON_SUBSLICE = 9, /**< Test completed, unrecoverable error found, non-Subslice failure */
-    IGSC_IFR_EXT_STS_TEST_ERROR = 10, /**< Test error */
+    IGSC_IFR_EXT_STS_REPAIRED_ARRAY_FAULTY_SUBSLICE = 7, /**< Test passed, recoverable error found and repaired using array repairs and faulty spare Subslice */
+    IGSC_IFR_EXT_STS_REPAIR_NOT_SUPPORTED = 8, /**< Test completed, unrecoverable error found, part doesn't support in field repair */
+    IGSC_IFR_EXT_STS_NO_RESORCES = 9, /**< Test completed, unrecoverable error found, not enough repair resources available */
+    IGSC_IFR_EXT_STS_NON_SUBSLICE_IN_ARRAY = 10, /**< Test completed, unrecoverable error found, non-Subslice failure in Array test */
+    IGSC_IFR_EXT_STS_NON_SUBSLICE_IN_SCAN = 11, /**< Test completed, unrecoverable error found, non-Subslice failure in Scan test */
+    IGSC_IFR_EXT_STS_TEST_ERROR = 12, /**< Test error */
 };
 
 /**
@@ -1216,8 +1223,8 @@ int igsc_ifr_run_mem_ppr_test(IN struct igsc_device_handle *handle,
  */
 enum igsc_ifr_supported_tests_masks
 {
-   IGSC_IFR_SUPPORTED_TESTS_ARRAY_AND_SCAN = 0x1, /**< 1 - Array and Scan test */
-   IGSC_IFR_SUPPORTED_TESTS_MEMORY_PPR = 0x2, /**< 2 - Memory PPR */
+   IGSC_IFR_SUPPORTED_TESTS_ARRAY_AND_SCAN = BIT(0), /**< 1 - Array and Scan test */
+   IGSC_IFR_SUPPORTED_TESTS_MEMORY_PPR =     BIT(1), /**< 2 - Memory PPR */
 };
 
 /**
@@ -1225,9 +1232,9 @@ enum igsc_ifr_supported_tests_masks
  */
 enum igsc_ifr_hw_capabilities_masks
 {
-    IGSC_IRF_HW_CAPABILITY_IN_FIELD_REPAIR = 0x1, /**< 1: both in field tests and in field repairs are supported. */
-                                                  /**< 0: only in field tests are supported */
-    IGSC_IRF_HW_CAPABILITY_FULL_EU_MODE_SWITCH = 0x2, /**< 1: Full EU mode switch is supported */
+    IGSC_IRF_HW_CAPABILITY_IN_FIELD_REPAIR = BIT(0), /**< 1: both in field tests and in field repairs are supported. */
+                                                     /**< 0: only in field tests are supported */
+    IGSC_IRF_HW_CAPABILITY_FULL_EU_MODE_SWITCH = BIT(1), /**< 1: Full EU mode switch is supported */
 };
 
 /**
@@ -1235,15 +1242,22 @@ enum igsc_ifr_hw_capabilities_masks
  */
 enum igsc_ifr_previous_errors_masks
 {
-    IGSC_IFR_PREV_ERROR_DSS_ERR_ARR_STS_PKT = 0x1, /**< DSS Engine error in an array test status packet */
-    IGSC_IFR_PREV_ERROR_NON_DSS_ERR_ARR_STS_PKT = 0x2, /**< Non DSS Engine error in an array test status packet */
-    IGSC_IFR_PREV_ERROR_DSS_REPAIRABLE_PKT = 0x4, /**< DSS Repairable repair packet in an array test */
-    IGSC_IFR_PREV_ERROR_DSS_UNREPAIRABLE_PKT = 0x8, /**< DSS Unrepairable repair packet in an array test */
-    IGSC_IFR_PREV_ERROR_NON_DSS_REPAIRABLE_PKT = 0x10, /**< Non DSS Repairable repair packet in an array test */
-    IGSC_IFR_PREV_ERROR_NON_DSS_UNREPAIRABLE_PKT = 0x20, /**< Non DSS Unrepairable repair packet in an array test */
-    IGSC_IFR_PREV_ERROR_DSS_ERR_SCAN_STS_PKT = 0x40, /**< DSS failure in a scan test packet */
-    IGSC_IFR_PREV_ERROR_NON_DSS_ERR_SCAN_STS_PKT = 0x80, /**< Non DSS failure in a scan test packet */
-    IGSC_IFR_PREV_ERROR_UNEXPECTED = 0x8000, /**< Unexpected test failure */
+    IGSC_IFR_PREV_ERROR_DSS_ERR_ARR_STS_PKT =         BIT(0), /**< DSS Engine error in an array test status packet */
+    IGSC_IFR_PREV_ERROR_NON_DSS_ERR_ARR_STS_PKT =     BIT(1), /**< Non DSS Engine error in an array test status packet */
+    IGSC_IFR_PREV_ERROR_DSS_REPAIRABLE_PKT =          BIT(2), /**< DSS Repairable repair packet in an array test */
+    IGSC_IFR_PREV_ERROR_DSS_UNREPAIRABLE_PKT =        BIT(3), /**< DSS Unrepairable repair packet in an array test */
+    IGSC_IFR_PREV_ERROR_NON_DSS_REPAIRABLE_PKT =      BIT(4), /**< Non DSS Repairable repair packet in an array test */
+    IGSC_IFR_PREV_ERROR_NON_DSS_UNREPAIRABLE_PKT =    BIT(5), /**< Non DSS Unrepairable repair packet in an array test */
+    IGSC_IFR_PREV_ERROR_DSS_ERR_SCAN_STS_PKT =        BIT(6), /**< DSS failure in a scan test packet */
+    IGSC_IFR_PREV_ERROR_NON_DSS_ERR_SCAN_STS_PKT =    BIT(7), /**< Non DSS failure in a scan test packet */
+    IGSC_IFR_PREV_ERROR_NOT_ENOUGH_SPARE_DSS =        BIT(8), /**< Not enough spare DSS available */
+    IGSC_IFR_PREV_ERROR_MIS_DSS_STS_PKT_ON_ARR =      BIT(9), /**< Missing DSS status packet on array test */
+    IGSC_IFR_PREV_ERROR_MIS_NON_DSS_STS_PKT_ON_ARR =  BIT(10), /**< Missing non DSS status packet on array test */
+    IGSC_IFR_PREV_ERROR_MIS_DSS_STS_PKT_ON_SCAN =     BIT(11), /**< Missing DSS status packet on scan test */
+    IGSC_IFR_PREV_ERROR_MIS_NON_DSS_STS_PKT_ON_SCAN = BIT(12), /**< Missing non DSS status packet on scan test */
+    IGSC_IFR_PREV_ERROR_DSS_ENG_DONE_CLR_IN_ARR =     BIT(13), /**< DSS Engine Done clear bit in array test status packet */
+    IGSC_IFR_PREV_ERROR_NON_DSS_ENG_DONE_CLR_IN_ARR = BIT(14), /**< Non DSS Engine Done clear bit in array test status packet */
+    IGSC_IFR_PREV_ERROR_UNEXPECTED =                  BIT(31), /**< Unexpected test failure */
 };
 
 /**
@@ -1251,8 +1265,9 @@ enum igsc_ifr_previous_errors_masks
  */
 enum igsc_ifr_repairs_mask
 {
-    IGSC_IFR_REPAIRS_MASK_DSS_EN_REPAIR = 0x1, /**< DSS enable repair applied */
-    IGSC_IFR_REPAIRS_MASK_ARRAY_REPAIR = 0x2, /**< Array repair applied */
+    IGSC_IFR_REPAIRS_MASK_DSS_EN_REPAIR = BIT(0), /**< DSS enable repair applied */
+    IGSC_IFR_REPAIRS_MASK_ARRAY_REPAIR =  BIT(1), /**< Array repair applied */
+    IGSC_IFR_REPAIRS_MASK_FAILURE =       BIT(2), /**< Repair failure occurred */
 };
 
 /**
