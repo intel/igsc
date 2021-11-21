@@ -3056,12 +3056,6 @@ static int do_ifr_run_test(int argc, char *argv[])
         igsc_device_update_device_info(&handle, &dev_info);
     }
 
-    printf("requesting to run test %u (%s) for tiles: (%u,%u)\n",
-           test_type,
-           (test_type == 1) ? "array" : "scan",
-           !!(tiles_mask & IGSC_IFR_TILE_0),
-           !!(tiles_mask & IGSC_IFR_TILE_1));
-
     ret = run_ifr_test(&handle, test_type, tiles_mask);
 
 out:
