@@ -453,7 +453,7 @@ typedef int (*gsc_op)(int argc, char *argv[]);
 struct gsc_op {
     const char *name;
     gsc_op    op;
-    const char *usage[6]; /* up to 5 subcommands*/
+    const char *usage[8]; /* up to 7 subcommands*/
     const char  *help;  /* help */
 };
 
@@ -2628,6 +2628,26 @@ int mem_ppr_test(struct igsc_device_handle *handle)
     return ret;
 }
 
+mockable_static
+int ifr_count_tiles(struct igsc_device_handle *handle)
+{
+    int ret;
+    uint16_t supported_tiles;
+
+    /* call the igsc library routine to run ifr count tiles */
+    ret = igsc_ifr_count_tiles(handle, &supported_tiles);
+    if (ret)
+    {
+        fwupd_error("Failed to run ifr count tiles, library return code %d\n", ret);
+        return EXIT_FAILURE;
+    }
+
+    printf("Number of supported tiles: %u\n", supported_tiles);
+
+    return ret;
+}
+
+
 static int do_no_special_args_func(int argc, char *argv[], int (*func_ptr)(struct igsc_device_handle *))
 {
     struct igsc_device_handle handle;
@@ -2717,6 +2737,11 @@ static int do_ifr_run_mem_ppr_test(int argc, char *argv[])
     return do_no_special_args_func(argc, argv, mem_ppr_test);
 }
 
+static int do_ifr_count_tiles(int argc, char *argv[])
+{
+    return do_no_special_args_func(argc, argv, ifr_count_tiles);
+}
+
 static void print_run_test_status(uint8_t run_status)
 {
     switch (run_status)
@@ -2770,6 +2795,118 @@ int run_ifr_test(struct igsc_device_handle *handle, uint8_t test_type, uint8_t t
     print_run_test_status(run_status);
     printf("error_code is %u\n", error_code);
     return ret;
+}
+
+static int do_ifr_get_repair_info(int argc, char *argv[])
+{
+    struct igsc_device_handle handle;
+    const char *device_path = NULL;
+    struct igsc_device_info dev_info;
+    uint16_t tile_idx = 0;
+    uint16_t used_array_repair_entries; /**< Number of array repair entries used by FW */
+    uint16_t available_array_repair_entries; /**< Number of available array repair entries */
+    uint16_t failed_dss; /**< Number of failed DSS */
+    int ret;
+
+    if (argc <= 0)
+    {
+        fwupd_error("Missing arguments\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    memset(&handle, 0, sizeof(handle));
+
+    do
+    {
+        if (arg_is_device(argv[0]))
+        {
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No device was provided\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            device_path = argv[0];
+        }
+        else if (arg_is_tile(argv[0]))
+        {
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No tile provided\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            if (arg_is_token(argv[0], "0"))
+            {
+                tile_idx = 0;
+            }
+            else if (arg_is_token(argv[0], "1"))
+            {
+                tile_idx = 1;
+            }
+            else
+            {
+                fwupd_error("Bad tile number argument\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+        }
+        else
+        {
+            fwupd_error("Wrong argument %s\n", argv[0]);
+            return ERROR_BAD_ARGUMENT;
+        }
+    } while(arg_next(&argc, &argv));
+
+    if (device_path)
+    {
+        ret = igsc_device_init_by_device(&handle, device_path);
+        if (ret)
+        {
+           ret = EXIT_FAILURE;
+           fwupd_error("Cannot initialize device: %s\n", device_path);
+           goto out;
+        }
+    }
+    else
+    {
+        if (get_first_device_info(&dev_info))
+        {
+            ret = EXIT_FAILURE;
+            fwupd_error("No device to work with\n");
+            goto out;
+        }
+
+        ret = igsc_device_init_by_device_info(&handle, &dev_info);
+        if (ret)
+        {
+            ret = EXIT_FAILURE;
+            fwupd_error("Cannot initialize device: %s\n", dev_info.name);
+            goto out;
+        }
+
+        igsc_device_update_device_info(&handle, &dev_info);
+    }
+
+    printf("requesting ifr repair info for tile %u\n", tile_idx);
+
+    /* call the igsc library routine to run the ifr test */
+    ret = igsc_ifr_get_tile_repair_info(&handle, tile_idx,
+                                        &used_array_repair_entries,
+                                        &available_array_repair_entries,
+                                        &failed_dss);
+    if (ret)
+    {
+       fwupd_error("Failed to run test, library return code %d\n",
+                   ret);
+       return EXIT_FAILURE;
+    }
+
+    printf("Number of used array repair entries: %u\n", used_array_repair_entries);
+    printf("Number of available array repair entries: %u\n", available_array_repair_entries);
+    printf("Number of failed DSS: %u\n", failed_dss);
+
+out:
+    igsc_device_close(&handle);
+    return ret;
+
 }
 
 static int do_ifr_run_test(int argc, char *argv[])
@@ -2939,6 +3076,16 @@ static int do_ifr(int argc, char *argv[])
     if (arg_is_token(sub_command, "run-mem-ppr-test"))
     {
         return do_ifr_run_mem_ppr_test(argc, argv);
+    }
+
+    if (arg_is_token(sub_command, "get-repair-info"))
+    {
+        return do_ifr_get_repair_info(argc, argv);
+    }
+
+    if (arg_is_token(sub_command, "count-tiles"))
+    {
+        return do_ifr_count_tiles(argc, argv);
     }
 
     fwupd_error("Wrong argument %s\n", sub_command);
@@ -3182,6 +3329,8 @@ static const struct gsc_op g_ops[] = {
                   "run-array-scan-test [--device <dev>]",
                   "run-mem-ppr-test [--device <dev>]",
                   "get-status-ext [--device <dev>]",
+                  "count-tiles [--device <dev>]",
+                  "get-repair-info [--device <dev>] --tile <tile>",
                   NULL},
         .help  = "Get IFR status or run IFR test or read IFR file\n"
                  "\nOPTIONS:\n\n"
