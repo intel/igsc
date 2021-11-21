@@ -187,14 +187,45 @@ struct ifr_get_status_ext_req {
 /* New ifr get status response */
 struct ifr_get_status_ext_res {
     struct mkhi_msg_hdr header;
-    uint32_t supported_tests;
-    uint32_t hw_capabilities;
-    uint32_t ifr_applied;
-    uint8_t pending_reset; /**< enum ifr_pending_reset */
-    uint8_t reserved1[3];
-    uint32_t prev_errors;
-    uint32_t reserved2[2];
+    uint32_t            supported_tests;
+    uint32_t            hw_capabilities;
+    uint32_t            ifr_applied;
+    uint8_t             pending_reset; /**< enum ifr_pending_reset */
+    uint8_t             reserved1[3];
+    uint32_t            prev_errors;
+    uint32_t            reserved2[2];
 
+};
+
+/* Get ifr general info request */
+struct ifr_get_general_info_req {
+    struct mkhi_msg_hdr header;
+    uint8_t             reserved[8];
+};
+
+/* Get ifr general info response */
+struct ifr_get_general_info_res {
+    struct mkhi_msg_hdr header;
+    uint16_t            supported_tiles; /**< Number of supported tiles */
+    uint8_t             reserved[26];
+};
+
+/* Get ifr tile repair info request */
+struct ifr_get_tile_repair_info_req {
+    struct mkhi_msg_hdr header;
+    uint16_t            tile_idx; /**< The index of the tile the info is requested to */
+    uint8_t             reserved[6];
+};
+
+/* Get ifr tile repair info response */
+struct ifr_get_tile_repair_info_res {
+    struct mkhi_msg_hdr header;
+    uint16_t            requested_tile; /**< Index of the requested tile */
+    uint8_t             reserved1[2];
+    uint16_t            used_array_repair_entries; /**< Number of array repair entries used by FW */
+    uint16_t            available_array_repair_entries; /**< Number of available array repair entries */
+    uint16_t            failed_dss; /**< Number of failed DSS */
+    uint8_t             reserved2[18];
 };
 
 #pragma pack()
