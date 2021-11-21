@@ -43,6 +43,8 @@ enum mkhi_group_id {
 
 #define GFX_SRV_MKHI_RUN_IFR_TEST_CMD   0x30
 #define GFX_SRV_MKHI_GET_IFR_STATUS_CMD 0x31
+#define GFX_SRV_MKHI_GET_IFR_GENERAL_INFO_CMD 0x32
+#define GFX_SRV_MKHI_GET_IFR_TILE_REPAIR_INFO_CMD 0x36
 
 struct mkhi_msg_hdr {
     uint8_t  group_id;      /**< the target client id registered to process the message */
