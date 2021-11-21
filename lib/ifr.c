@@ -960,6 +960,257 @@ exit:
     return status;
 }
 
+int igsc_ifr_count_tiles(IN  struct igsc_device_handle *handle,
+                         OUT uint16_t *supported_tiles)
+{
+    int status;
+    unsigned int i;
+    size_t request_len;
+    size_t response_len;
+    size_t received_len;
+    size_t buf_len;
+    struct igsc_lib_ctx *lib_ctx;
+    struct ifr_get_general_info_req *req;
+    struct ifr_get_general_info_res *resp;
+
+    if (!handle || !handle->ctx || !supported_tiles)
+    {
+        gsc_error("Bad parameters\n");
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    lib_ctx = handle->ctx;
+
+    gsc_debug("in run ifr count tiles, initializing driver\n");
+
+    status = gsc_driver_init(lib_ctx, &GUID_METEE_MKHI);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("IFR is not supported on this device, status %d\n", status);
+        return status;
+    }
+
+    req = (struct ifr_get_general_info_req *)lib_ctx->working_buffer;
+    request_len = sizeof(*req);
+
+    resp = (struct ifr_get_general_info_res *)lib_ctx->working_buffer;
+    response_len = sizeof(*resp);
+    buf_len = lib_ctx->working_buffer_length;
+
+    gsc_debug("validating buffer\n");
+
+    status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Internal error - failed to validate buffer %d\n", status);
+        goto exit;
+    }
+
+    memset(req, 0, request_len);
+    req->header.group_id = MKHI_GROUP_ID_GFX_SRV;
+    req->header.command = GFX_SRV_MKHI_GET_IFR_GENERAL_INFO_CMD;
+
+    gsc_debug("sending command\n");
+
+    status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        goto exit;
+    }
+
+    if (received_len < sizeof(resp->header))
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    status = mkhi_heci_validate_response_header(lib_ctx, &resp->header,
+                                               req->header.command);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp->header.result != 0)
+    {
+       gsc_debug("IFR count tiles command failed with result 0x%x\n", resp->header.result);
+       status = IGSC_ERROR_PROTOCOL;
+       goto exit;
+    }
+
+    if (received_len < response_len)
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    for (i = 0; i < sizeof(resp->reserved); i ++)
+    {
+        if (resp->reserved[i])
+        {
+           gsc_error("IFR count tiles response is leaking data on reserved[%u] field: %u\n",
+                     i, resp->reserved[i]);
+           status = IGSC_ERROR_PROTOCOL;
+           goto exit;
+        }
+    }
+
+    *supported_tiles = resp->supported_tiles;
+
+    gsc_debug("IFR count tiles success\n");
+
+exit:
+    gsc_driver_deinit(lib_ctx);
+    return status;
+
+}
+
+int igsc_ifr_get_tile_repair_info(IN  struct igsc_device_handle *handle,
+                                  IN uint16_t tile_idx,
+                                  OUT uint16_t *used_array_repair_entries,
+                                  OUT uint16_t *available_array_repair_entries,
+                                  OUT uint16_t *failed_dss)
+{
+    int status;
+    unsigned int i;
+    size_t request_len;
+    size_t response_len;
+    size_t received_len;
+    size_t buf_len;
+    struct igsc_lib_ctx *lib_ctx;
+    struct ifr_get_tile_repair_info_req *req;
+    struct ifr_get_tile_repair_info_res *resp;
+
+    if (!handle || !handle->ctx ||
+        !used_array_repair_entries ||
+        !available_array_repair_entries || !failed_dss)
+    {
+        gsc_error("Bad parameters\n");
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    if (MAX_SUPPORTED_NUM_OF_TILES < tile_idx)
+    {
+        gsc_error("Bad tile number requested: %u\n", tile_idx);
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    lib_ctx = handle->ctx;
+
+    gsc_debug("in run ifr get tile repair info, initializing driver\n");
+
+    status = gsc_driver_init(lib_ctx, &GUID_METEE_MKHI);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("IFR is not supported on this device, status %d\n", status);
+        return status;
+    }
+
+    req = (struct ifr_get_tile_repair_info_req *)lib_ctx->working_buffer;
+    request_len = sizeof(*req);
+
+    resp = (struct ifr_get_tile_repair_info_res *)lib_ctx->working_buffer;
+    response_len = sizeof(*resp);
+    buf_len = lib_ctx->working_buffer_length;
+
+    gsc_debug("validating buffer\n");
+
+    status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Internal error - failed to validate buffer %d\n", status);
+        goto exit;
+    }
+
+    memset(req, 0, request_len);
+    req->header.group_id = MKHI_GROUP_ID_GFX_SRV;
+    req->header.command = GFX_SRV_MKHI_GET_IFR_TILE_REPAIR_INFO_CMD;
+    req->tile_idx = tile_idx;
+
+    gsc_debug("sending command\n");
+
+    status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        goto exit;
+    }
+
+    if (received_len < sizeof(resp->header))
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    status = mkhi_heci_validate_response_header(lib_ctx, &resp->header,
+                                               req->header.command);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp->header.result != 0)
+    {
+       gsc_debug("IFR get tile repair info command failed with result 0x%x\n", resp->header.result);
+       status = IGSC_ERROR_PROTOCOL;
+       goto exit;
+    }
+
+    if (received_len < response_len)
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (tile_idx != resp->requested_tile)
+    {
+        gsc_error("Returned tile index %u when %u was requested\n", resp->requested_tile, tile_idx);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    for (i = 0; i < sizeof(resp->reserved1); i ++)
+    {
+        if (resp->reserved1[i])
+        {
+           gsc_error("IFR get tile repair info response is leaking data on reserved1[%u] field: %u\n",
+                     i, resp->reserved1[i]);
+           status = IGSC_ERROR_PROTOCOL;
+           goto exit;
+        }
+    }
+
+    for (i = 0; i < sizeof(resp->reserved2); i ++)
+    {
+        if (resp->reserved2[i])
+        {
+           gsc_error("IFR get tile repair info response is leaking data on reserved2[%u] field: %u\n",
+                     i, resp->reserved2[i]);
+           status = IGSC_ERROR_PROTOCOL;
+           goto exit;
+        }
+    }
+
+    *used_array_repair_entries = resp->used_array_repair_entries;
+    *available_array_repair_entries = resp->available_array_repair_entries;
+    *failed_dss = resp->failed_dss;
+
+    gsc_debug("IFR get tile repair info success\n");
+
+exit:
+    gsc_driver_deinit(lib_ctx);
+    return status;
+}
+
 int igsc_ifr_get_status_ext(IN struct igsc_device_handle *handle,
                             OUT uint32_t *supported_tests,
                             OUT uint32_t *hw_capabilities,
@@ -1072,6 +1323,5 @@ int igsc_ifr_get_status_ext(IN struct igsc_device_handle *handle,
 exit:
     gsc_driver_deinit(lib_ctx);
     return status;
-
 }
 

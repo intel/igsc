@@ -1296,6 +1296,38 @@ int igsc_ifr_get_status_ext(IN  struct igsc_device_handle *handle,
                             OUT uint32_t *pending_reset);
 
 /**
+ *  @brief Counts the IFR supported tiles.
+ *
+ *  @param handle A handle to the device.
+ *  @param supported_tiles Number of supported tiles
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_ifr_count_tiles(IN  struct igsc_device_handle *handle,
+                         OUT uint16_t *supported_tiles);
+
+/**
+ *  @brief Retrieves the IFR repair info.
+ *
+ *  @param handle A handle to the device.
+ *  @param tile_idx The index of the tile the info is requested from
+ *  @param used_array_repair_entries Number of array repair entries used by FW
+ *  @param available_array_repair_entries Number of available array repair entries
+ *  @param failed_dss  Number of failed DSS
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_ifr_get_tile_repair_info(IN  struct igsc_device_handle *handle,
+                                  IN uint16_t tile_idx,
+                                  OUT uint16_t *used_array_repair_entries,
+                                  OUT uint16_t *available_array_repair_entries,
+                                  OUT uint16_t *failed_dss);
+
+
+
+/**
  * @}
  */
 #ifdef __cplusplus
