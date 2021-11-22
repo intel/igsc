@@ -621,6 +621,66 @@ static void test_ifr_get_status_ext_bad2(void **state)
     assert_true(ret != EXIT_SUCCESS);
 }
 
+/**
+ * test: igsc ifr get-repair-info --device
+ */
+static void test_ifr_get_repair_info_bad1(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("ifr");
+    argv[argc++] = test_strdup("get-repair-info");
+    argv[argc++] = test_strdup("--device");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc ifr get-repair-info --tile
+ */
+static void test_ifr_get_repair_info_bad2(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("ifr");
+    argv[argc++] = test_strdup("get-repair-info");
+    argv[argc++] = test_strdup("--tile");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc ifr count-tiles --device
+ */
+static void test_ifr_count_tiles_bad1(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("ifr");
+    argv[argc++] = test_strdup("count-tiles");
+    argv[argc++] = test_strdup("--device");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
 #undef main
 int main(void)
 {
@@ -650,6 +710,9 @@ int main(void)
         cmocka_unit_test(test_ifr_mem_ppr_bad2),
         cmocka_unit_test(test_ifr_get_status_ext_bad1),
         cmocka_unit_test(test_ifr_get_status_ext_bad2),
+        cmocka_unit_test(test_ifr_get_repair_info_bad1),
+        cmocka_unit_test(test_ifr_get_repair_info_bad2),
+        cmocka_unit_test(test_ifr_count_tiles_bad1),
     };
 
     status += cmocka_run_group_tests(ifr_tests, group_setup, group_teardown);
