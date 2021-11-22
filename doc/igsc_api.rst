@@ -909,6 +909,29 @@ which holds paring state of the OPROM image information.
                                  OUT uint32_t *prev_errors,
                                  OUT uint32_t *pending_reset);
 
+  f. Count tiles on the device
+
+   Retrieves the number of tiles on CSC IFR device.
+
+    .. code-block:: c
+
+      int igsc_ifr_count_tiles(IN  struct igsc_device_handle *handle,
+                               OUT uint16_t *supported_tiles); /* Number of supported tiles */
+
+  g. Get IFR tile repair info command
+
+   Retrieves the tile repair info of a specific tile of CSC IFR device.
+   The CSC firmware exposes the details about the repairs it performed so far.
+   The information is supplied per tile, so if the SW wants to get info about each of the 2 tiles
+   this API should be called twice with the relevant tile number.
+
+    .. code-block:: c
+
+      int igsc_ifr_get_repair_info(IN  struct igsc_device_handle *handle,
+                                   IN uint16_t tile_idx, /* Index of the tile the info is requested from */
+                                   OUT uint16_t *used_array_repair_entries, /* Number of array repair entries used by firmware */
+                                   OUT uint16_t *available_array_repair_entries, /* Number of available array repair entries */
+                                   OUT uint16_t *failed_dss); /* Number of failed DSS */
 
 
 2.7 Device Enumeration API
