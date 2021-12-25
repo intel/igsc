@@ -2240,8 +2240,6 @@ static int do_fwdata_update(int argc, char *argv[])
             fwupd_error("Cannot initialize device: %s\n", dev_info.name);
             goto out;
         }
-
-        igsc_device_update_device_info(&handle, &dev_info);
     }
     else
     {
@@ -2696,8 +2694,6 @@ static int do_no_special_args_func(int argc, char *argv[], int (*func_ptr)(struc
             fwupd_error("Cannot initialize device: %s\n", dev_info.name);
             goto out;
         }
-
-        igsc_device_update_device_info(&handle, &dev_info);
     }
 
     ret = (*func_ptr)(&handle);
@@ -2881,8 +2877,6 @@ static int do_ifr_get_repair_info(int argc, char *argv[])
             fwupd_error("Cannot initialize device: %s\n", dev_info.name);
             goto out;
         }
-
-        igsc_device_update_device_info(&handle, &dev_info);
     }
 
     printf("requesting ifr repair info for tile %u\n", tile_idx);
@@ -3022,8 +3016,6 @@ static int do_ifr_run_test(int argc, char *argv[])
             fwupd_error("Cannot initialize device: %s\n", dev_info.name);
             goto out;
         }
-
-        igsc_device_update_device_info(&handle, &dev_info);
     }
 
     ret = run_ifr_test(&handle, test_type, tiles_mask);
