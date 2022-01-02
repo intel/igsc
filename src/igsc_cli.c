@@ -2671,6 +2671,11 @@ static int do_no_special_args_func(int argc, char *argv[], int (*func_ptr)(struc
                return EXIT_FAILURE;
         }
     }
+    else if (argc != 0)
+    {
+        fwupd_error("Too many or wrong arguments\n");
+        return ERROR_BAD_ARGUMENT;
+    }
     else
     {
         /* Should be no more args */
