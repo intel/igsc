@@ -940,7 +940,7 @@ int igsc_device_iterator_next(struct igsc_device_iterator *iter,
  *
  *  @param iter pointer to iterator
  *
- *  @return IGSC_SUCCESS if successful, otherwise error code.
+ *  @return void
  */
 IGSC_EXPORT
 void igsc_device_iterator_destroy(struct igsc_device_iterator *iter);
