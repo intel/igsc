@@ -99,7 +99,7 @@ int igsc_ifr_get_status(IN  struct igsc_device_handle *handle,
     status = gsc_driver_init(lib_ctx, &GUID_METEE_IFR);
     if (status != IGSC_SUCCESS)
     {
-        gsc_error("IFR is not supported on this device, status %d\n", status);
+        gsc_error("Cannot initialize driver, status %d\n", status);
         return status;
     }
 
@@ -140,7 +140,6 @@ int igsc_ifr_get_status(IN  struct igsc_device_handle *handle,
     }
 
     *result = resp->header.result;
-    gsc_debug("result = %u\n", resp->header.result);
 
     status = ifr_heci_validate_response_header(lib_ctx, &resp->header,
                                                req->header.command);
@@ -180,8 +179,6 @@ int igsc_ifr_get_status(IN  struct igsc_device_handle *handle,
 exit:
     gsc_driver_deinit(lib_ctx);
 
-    gsc_debug("ret = %d\n", status);
-
     return status;
 }
 
@@ -214,7 +211,7 @@ int igsc_ifr_run_test(IN struct igsc_device_handle *handle,
     status = gsc_driver_init(lib_ctx, &GUID_METEE_IFR);
     if (status != IGSC_SUCCESS)
     {
-        gsc_error("IFR is not supported on this device, status %d\n", status);
+        gsc_error("Cannot initialize driver, status %d\n", status);
         return status;
     }
 
@@ -386,7 +383,7 @@ static int gsc_memory_ppr(struct igsc_device_handle *handle,
     status = gsc_driver_init(lib_ctx, &GUID_METEE_MKHI);
     if (status != IGSC_SUCCESS)
     {
-        gsc_error("IFR is not supported on this device, status %d\n", status);
+        gsc_error("Cannot initialize driver, status %d\n", status);
         return status;
     }
 
@@ -500,8 +497,6 @@ static int gsc_memory_ppr(struct igsc_device_handle *handle,
 exit:
     gsc_driver_deinit(lib_ctx);
 
-    gsc_debug("ret = %d\n", status);
-
     return status;
 }
 
@@ -545,7 +540,7 @@ static int gsc_gfsp_memory_errors(IN  struct  igsc_device_handle *handle,
     status = gsc_driver_init(lib_ctx, &GUID_METEE_MKHI);
     if (status != IGSC_SUCCESS)
     {
-        gsc_error("GFSP is not supported on this device, status %d\n", status);
+        gsc_error("Cannot initialize driver, status %d\n", status);
         return status;
     }
 
@@ -585,8 +580,6 @@ static int gsc_gfsp_memory_errors(IN  struct  igsc_device_handle *handle,
         status = IGSC_ERROR_PROTOCOL;
         goto exit;
     }
-
-    gsc_debug("result = %u\n", resp->header.result);
 
     status = gfsp_heci_validate_response_header(lib_ctx, &resp->header,
                                                 resp->gfsp_heci_header,
@@ -648,8 +641,6 @@ static int gsc_gfsp_memory_errors(IN  struct  igsc_device_handle *handle,
 
 exit:
     gsc_driver_deinit(lib_ctx);
-
-    gsc_debug("ret = %d\n", status);
 
     return status;
 }
@@ -748,7 +739,7 @@ int igsc_ifr_run_array_scan_test(IN struct igsc_device_handle *handle,
     status = gsc_driver_init(lib_ctx, &GUID_METEE_MKHI);
     if (status != IGSC_SUCCESS)
     {
-        gsc_error("IFR is not supported on this device, status %d\n", status);
+        gsc_error("Cannot initialize driver, status %d\n", status);
         return status;
     }
 
@@ -868,7 +859,7 @@ int igsc_ifr_run_mem_ppr_test(IN struct igsc_device_handle *handle,
     status = gsc_driver_init(lib_ctx, &GUID_METEE_MKHI);
     if (status != IGSC_SUCCESS)
     {
-        gsc_error("IFR is not supported on this device, status %d\n", status);
+        gsc_error("Cannot initialize driver, status %d\n", status);
         return status;
     }
 
@@ -986,7 +977,7 @@ int igsc_ifr_count_tiles(IN  struct igsc_device_handle *handle,
     status = gsc_driver_init(lib_ctx, &GUID_METEE_MKHI);
     if (status != IGSC_SUCCESS)
     {
-        gsc_error("IFR is not supported on this device, status %d\n", status);
+        gsc_error("Cannot initialize driver, status %d\n", status);
         return status;
     }
 
@@ -1107,7 +1098,7 @@ int igsc_ifr_get_tile_repair_info(IN  struct igsc_device_handle *handle,
     status = gsc_driver_init(lib_ctx, &GUID_METEE_MKHI);
     if (status != IGSC_SUCCESS)
     {
-        gsc_error("IFR is not supported on this device, status %d\n", status);
+        gsc_error("Cannot initialize driver, status %d\n", status);
         return status;
     }
 
@@ -1241,7 +1232,7 @@ int igsc_ifr_get_status_ext(IN struct igsc_device_handle *handle,
     status = gsc_driver_init(lib_ctx, &GUID_METEE_MKHI);
     if (status != IGSC_SUCCESS)
     {
-        gsc_error("IFR is not supported on this device, status %d\n", status);
+        gsc_error("Cannot initialize driver, status %d\n", status);
         return status;
     }
 
