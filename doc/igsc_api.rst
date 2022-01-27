@@ -190,8 +190,15 @@ image.
                                      OUT struct igsc_subsystem_ids *ssids);
 
 
+2.4 Thread safety
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-2.4 GSC Firmware Update
+The library supports multithreading but is not thread-safe.
+Every thread should either initialize and use its own igsc_device_handle
+or a locking mechanism should be implemented by the caller to ensure
+that only one thread uses the handle at any time.
+
+2.5 GSC Firmware Update
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Firmware Version
@@ -309,7 +316,7 @@ The structure represents the device firmware version.
                                    IN struct igsc_fw_version *device_ver);
 
 
-2.5 OPROM Update API:
+2.6 OPROM Update API:
 ~~~~~~~~~~~~~~~~~~~~~
 
 1. OPROM version is a string of 8 bytes.
@@ -542,7 +549,7 @@ which holds paring state of the OPROM image information.
    uint8_t igsc_oprom_version_compare(const struct igsc_oprom_version *image_ver,
                                       const struct igsc_oprom_version *device_ver);
 
-2.6 IFR (In-Field Repair) functions
+2.7 IFR (In-Field Repair) functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   In order to increase the lifetime of the discrete GFX die, there is some redundancy added to it.
@@ -934,7 +941,8 @@ which holds paring state of the OPROM image information.
                                    OUT uint16_t *failed_dss); /* Number of failed DSS */
 
 
-2.7 Device Enumeration API
+2.8 Device Enumeration API
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The device enumeration API provides access to GSC devices installed on the
 system, utilizing underlying system level enumeration API. It is less
@@ -975,7 +983,7 @@ done via SetupDi interface.
     int igsc_device_iterator_next(struct igsc_device_iterator *iter,
                                   struct igsc_device_info *info);
 
-2.8 Retrieving firmware status
+2.9 Retrieving firmware status
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Retrieve the firmware status code of the last operation.
@@ -992,7 +1000,7 @@ done via SetupDi interface.
 
    const char *igsc_translate_firmware_status(IN uint32_t firmware_status);
 
-2.9 Signed in-field firmware data update API
+2.10 Signed in-field firmware data update API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In discrete GFX projects, customers can configure many different configurations with FIT SW.
 There is a high probability that some customers will get some configurations wrong and will
@@ -1171,7 +1179,7 @@ The structure represents the device firmware data version.
                                    IN  igsc_progress_func_t progress_f,
                                    IN  void *ctx);
 
-2.10 IAF Update API
+2.11 IAF Update API
 ~~~~~~~~~~~~~~~~~~
 Intel Accelerator Fabric Platform Specific Configuration (PSC) update is
 done as a blob, without parsing the image and with zero metadata.
