@@ -156,6 +156,17 @@ struct igsc_oprom_device_info {
  * vendor and device id, subsystem vendor and device id support by
  * the GSC in-field data firmware update image as defined by PCI.
  */
+struct igsc_oprom_device_info_4ids {
+  uint16_t vendor_id;        /**< vendor id */
+  uint16_t device_id;        /**< device id */
+  uint16_t subsys_vendor_id; /**< subsystem vendor id */
+  uint16_t subsys_device_id; /**< subsystem device id */
+};
+
+/**
+ * vendor and device id, subsystem vendor and device id support by
+ * the GSC in-field data firmware update image as defined by PCI.
+ */
 struct igsc_fwdata_device_info {
   uint16_t vendor_id; /**< vendor id */
   uint16_t device_id; /**< device id */
