@@ -884,6 +884,68 @@ int igsc_image_oprom_iterator_next(IN struct igsc_oprom_image *img,
                                    OUT struct igsc_oprom_device_info *device);
 
 /**
+ *  @brief Retrieves a count of of different devices supported
+ *  by the OPROM update image associated with the handle,
+ *  based on image type.
+ *
+ *  @param img OPROM image handle
+ *  @param request_type type of oprom device, enum igsc_oprom_type
+ *  @param count the number of devices
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_image_oprom_count_devices_typed(IN struct igsc_oprom_image *img,
+                                         IN uint32_t request_type,
+                                         OUT uint32_t *count);
+
+/**
+ *  @brief Retrieves a list of supported devices based on image type
+ *  by the OPROM update image associated with the handle.
+ *  The caller supplies allocated buffer `devices` of
+ *  `count` size. The function returns `count` filled
+ *  with actually returned devices.
+ *
+ *  @param img OPROM image handle
+ *  @param request_type type of oprom device, enum igsc_oprom_type
+ *  @param devices list of devices supported by the OPROM image
+ *  @param count in the number of devices allocated
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_image_oprom_supported_devices_typed(IN struct igsc_oprom_image *img,
+                                             IN uint32_t request_type,
+                                             OUT struct igsc_oprom_device_info_4ids *devices,
+                                             IN OUT uint32_t *count);
+/**
+ *  @brief reset the iterator over supported devices based on image type
+ *
+ *  @param img OPROM image handle
+ *  @param request_type type of oprom device, enum igsc_oprom_type
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_image_oprom_iterator_reset_typed(IN struct igsc_oprom_image *img,
+                                          IN uint32_t request_type);
+
+/**
+ *  @brief progress the supported device iterator
+ *  and return the oprom device info, based on image type
+ *
+ *  @param img OPROM image handle
+ *  @param request_type type of oprom device, enum igsc_oprom_type
+ *  @param device OPROM device information.
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_image_oprom_iterator_next_typed(IN struct igsc_oprom_image *img,
+                                         IN uint32_t request_type,
+                                         OUT struct igsc_oprom_device_info_4ids *device);
+
+/**
  *  @brief release the OPROM image handle
  *
  *  @param img OPROM image handle
