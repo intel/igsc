@@ -366,6 +366,8 @@ struct gsc_fwu_heci_get_config_message_req {
  * @param format_version response format version
  * @param hw_step hw step of the device
  * @param hw_sku hw sku of the device
+ * @param oprom_code_devid_enforcement enforcement of the oprom code device ids flag
+ * @param flags reserved for future flags
  * @param reserved
  * @param debug_config differentiate between different binaries
  *        for debug or validation purposes
@@ -375,7 +377,9 @@ struct gsc_fwu_heci_get_config_message_resp {
     uint32_t                     format_version;
     uint32_t                     hw_step;
     uint32_t                     hw_sku;
-    uint32_t                     reserved[8];
+    uint32_t                     oprom_code_devid_enforcement : 1;
+    uint32_t                     flags                        : 31;
+    uint32_t                     reserved[7];
     uint32_t                     debug_config;
 };
 
