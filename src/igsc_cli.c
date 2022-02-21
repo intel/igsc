@@ -2361,6 +2361,12 @@ static int do_firmware_data(int argc, char *argv[])
     return ERROR_BAD_ARGUMENT;
 }
 
+const char * const gfsp_pending_reset_str[] = {
+    "No reset needed",
+    "Need to perform a shallow reset",
+    "Need to perform a deep reset",
+};
+
 #define MAX_TILES_NUM 4
 
 mockable_static
@@ -2571,6 +2577,22 @@ int get_status(struct igsc_device_handle *handle)
     return ret;
 }
 
+const char * const array_scan_test_extended_status_str[] = {
+    "Test passed successfully, no repairs needed",
+    "Shallow reset already pending from previous test, aborting test",
+    "Deep reset already pending from previous test, aborting test",
+    "Test passed, recoverable error found, no repair needed",
+    "Test passed, recoverable error found and repaired using array repairs",
+    "Test passed, recoverable error found and repaired using Subslice swaps",
+    "Test passed, recoverable error found and repaired using array repairs and Subslice swaps",
+    "Test passed, recoverable error found and repaired using array repairs and faulty spare Subslice",
+    "Test completed, unrecoverable error found, part doesn't support in field repair",
+    "Test completed, unrecoverable error found, part doesn't support in field repair",
+    "Test completed, unrecoverable error found, non-Subslice failure in Array test",
+    "Test completed, unrecoverable error found, non-Subslice failure in Scan test",
+    "Test error",
+};
+
 mockable_static
 int array_scan_test(struct igsc_device_handle *handle)
 {
@@ -2589,16 +2611,23 @@ int array_scan_test(struct igsc_device_handle *handle)
         return EXIT_FAILURE;
     }
 
-    printf("Test execution status: %u\n",
-           (status & IGSC_ARRAY_SCAN_STATUS_TEST_EXECUTION_MASK) ? 1 : 0);
-    printf("Test result: %u\n",
-           (status & IGSC_ARRAY_SCAN_STATUS_TEST_RESULT_MASK) ? 1 : 0);
-    printf("HW error found: %u\n",
-           (status & IGSC_ARRAY_SCAN_STATUS_FOUND_HW_ERROR_MASK) ? 1 : 0);
-    printf("HW repair status: %u\n",
-           (status & IGSC_ARRAY_SCAN_STATUS_HW_REPAIR_MASK) ? 1 : 0);
-    printf("Extended status: %u, Pending reset %u, Error code %u\n",
-           extended_status, pending_reset, error_code);
+    printf("Test execution status: %s\n",
+           (status & IGSC_ARRAY_SCAN_STATUS_TEST_EXECUTION_MASK) ? "Test not executed" : "Test executed");
+    printf("Test result: %s\n",
+           (status & IGSC_ARRAY_SCAN_STATUS_TEST_RESULT_MASK) ? "Error occurred during test execution": "Test finished successfully");
+    printf("HW error found: %s\n",
+           (status & IGSC_ARRAY_SCAN_STATUS_FOUND_HW_ERROR_MASK) ? "HW error found" : "HW error not found");
+    printf("HW repair status: %s\n",
+           (status & IGSC_ARRAY_SCAN_STATUS_HW_REPAIR_MASK) ? "HW error will not be fully repaired" : "HW error will be fully repaired or no HW error found");
+    if (sizeof(array_scan_test_extended_status_str)/sizeof(char*) <= extended_status)
+        printf("Extended status: %u\n", extended_status);
+    else
+        printf("Extended status: %s\n", array_scan_test_extended_status_str[extended_status]);
+    if (sizeof(gfsp_pending_reset_str)/sizeof(char*) <= pending_reset)
+        printf("Pending reset: %u\n", pending_reset);
+    else
+        printf("Pending reset: %s\n", gfsp_pending_reset_str[pending_reset]);
+    printf("Error code %u\n", error_code);
 
     return ret;
 }
