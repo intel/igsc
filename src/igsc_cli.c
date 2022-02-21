@@ -2573,7 +2573,10 @@ int get_status_ext(struct igsc_device_handle *handle)
     printf("Unexpected test failure: %u\n\n",
            (prev_errors & IGSC_IFR_PREV_ERROR_UNEXPECTED) ? 1 : 0 );
 
-    printf("Pending reset: %u\n", pending_reset);
+    if (sizeof(gfsp_pending_reset_str)/sizeof(char*) <= pending_reset)
+        printf("Pending reset: %u\n", pending_reset);
+    else
+        printf("Pending reset: %s\n", gfsp_pending_reset_str[pending_reset]);
 
     return ret;
 }
