@@ -2682,7 +2682,10 @@ int mem_ppr_test(struct igsc_device_handle *handle)
     }
 
     printf("Status: %u\n", status);
-    printf("Pending reset %u\n", pending_reset);
+    if (sizeof(gfsp_pending_reset_str)/sizeof(char*) <= pending_reset)
+        printf("Pending reset: %u\n", pending_reset);
+    else
+        printf("Pending reset: %s\n", gfsp_pending_reset_str[pending_reset]);
     printf("Error code %u\n", error_code);
 
     return ret;
