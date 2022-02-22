@@ -25,7 +25,7 @@ GSC FW updae    {0x87d90ca5, 0x3495, 0x4559, 0x81, 0x5, 0x3f, 0xbf, 0xa3, 0x7b, 
 .. doxygengroup:: gsc-fw-api-hdr
    :project: igsc
 
-2. Fimrware version
+2. Firmware version
 
 This message is used to retrieve the overall version of the “DGFW Version”,
 which is a version that reflects the overall combination of IPs

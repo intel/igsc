@@ -13,7 +13,7 @@ usage of the library.
 
    *Supported partitions:*
 
-       * *fwi* : GSC Firwmare
+       * *fwi* : GSC Firmware
        * *oprom-code* : code (GOP) OPROM partition
        * *oprom-data* : data (VBT) OPROM partition
 
