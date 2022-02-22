@@ -2475,7 +2475,7 @@ int get_mem_ppr_status(struct igsc_device_handle *handle)
         return EXIT_FAILURE;
     }
 
-    fwupd_msg("Retrieved memory ppr devices number: %u", device_num);
+    fwupd_msg("Retrieved memory ppr devices number: %u\n", device_num);
 
     /* allocate ppr_status structure according to the number of ppr devices */
     ppr_status = (struct igsc_ppr_status *) malloc(sizeof(struct igsc_ppr_status) +
