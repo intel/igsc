@@ -1,5 +1,41 @@
 # IGSC FUL
 
+## [v0.8.0] - 2022-07-10
+
+Note: non backward compatible change (num_of_tiles to max_num_of_tiles)
+
+### Changed
+
+1. cli: rename num_of_tiles to max_num_of_tiles
+2. lib: rename num_of_tiles to max_num_of_tiles
+3. cli: report error on extra argument
+4. lib: update ifr bitmaps definitions
+
+### Fixed
+
+1. cli: make print_mem_ppr_status output readable
+2. cli: make mem_ppr_test output readable
+3. cli: make get_status_ext output readable
+4. cli: ifr: make array_scan_test output readable
+5. lib: fix return value doc of the igsc_device_iterator_destroy
+6. lib: ifr: rewords error messages and drop redundant debug
+7. cli: remove redundant calls to get subsystem DID/VID
+8. cli: remove redundant print from run_ifr_test
+9. ut: initialize buffer in test function
+
+### Added
+
+1.  cli: add missing newline in get_mem_ppr_status
+2.  doc: add info about multithreading support
+3.  doc: add documentation of get ifr repair info and count tiles APIs
+4.  ut: add tests for ifr get repair info and count tiles commands
+5.  cli: add ifr get repair info and count tiles commands to cli
+6.  lib: add ifr get tile repair info and count tiles library APIs
+7.  lib: add heci definitions for get ifr info commands
+8.  lib: update ifr bitmaps definitions
+9.  .gitignore: add cpack intermediate files
+10. docs: .gitignore: add auto generated Doxygen
+
 ## [v0.7.0] - 2022-07-01
 
 ### Added
