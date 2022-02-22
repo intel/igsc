@@ -4,46 +4,45 @@
 
 ### Fixed
 
-cli: fix ifr run-test command with --device parameter
-
+1. cli: fix ifr run-test command with --device parameter
 
 ## [v0.7.0] - 2021-10-21
 
 ### Fixed
 
-lib: increase read timeout
-lib: ifr: remove redundant include from ifr.h
-lib: include msvc config.h in enum files
+1. lib: increase read timeout
+2. lib: ifr: remove redundant include from ifr.h
+3. lib: include msvc config.h in enum files
 
 ### Changed
 
-doc: add documentation for the new ifr api
-ut: ifr: add unit tests for the new ifr get status command
-ut: ifr: add unit tests for ifr memory ppr test command
-ut: ifr: add unit tests for ifr array&scan command
-cli: add new ifr get status command to cli
-cli: add ifr memory ppr command to cli
-cli: add ifr array&scan command to cli
-cli: extend struct gsc_op to include up to 5 subcommands
-lib: implement new ifr get status api
-lib: implement ifr memory ppr test command
-lib: implement new ifr array&scan test command api
-lib: ifr: define new ifr command ids
-lib: ifr: define api to new ifr get status command
-lib: ifr: define api to ifr array&scan and memory ppr tests
-lib: ifr: define new ifr heci commands
-ut: add unit tests for "get memory ppr status"
-ut: add unit tests for "get number of memory errors"
-doc: add documentation of "get number of memory errors" api
-doc: add documentation for "get memory ppr status" api
-ut: remove obsolete definition of read_ifr_file
-cli: gfsp: implement "get memory ppr status" cli command
-lib: gfsp: implement "get memory ppr status" api
-lib: gfsp: define "get memory PPR status" api
-lib: gfsp: add "get memory PPR status" heci message definitions
-cli: gfsp: implement "get number of memory errors" cli command
-lib: gfsp: implement "get number of memory errors" api
-lib: gfsp: define "get number of memory errors" api
+1. doc: add documentation for the new ifr api
+2. ut: ifr: add unit tests for the new ifr get status command
+3. ut: ifr: add unit tests for ifr memory ppr test command
+4. ut: ifr: add unit tests for ifr array&scan command
+5. cli: add new ifr get status command to cli
+6. cli: add ifr memory ppr command to cli
+7. cli: add ifr array&scan command to cli
+8. cli: extend struct gsc_op to include up to 5 subcommands
+9. lib: implement new ifr get status api
+10. lib: implement ifr memory ppr test command
+11. lib: implement new ifr array&scan test command api
+12. lib: ifr: define new ifr command ids
+13. lib: ifr: define api to new ifr get status command
+14. lib: ifr: define api to ifr array&scan and memory ppr tests
+15. lib: ifr: define new ifr heci commands
+16. ut: add unit tests for "get memory ppr status"
+17. ut: add unit tests for "get number of memory errors"
+18. doc: add documentation of "get number of memory errors" api
+19. doc: add documentation for "get memory ppr status" api
+20. ut: remove obsolete definition of read_ifr_file
+21. cli: gfsp: implement "get memory ppr status" cli command
+22. lib: gfsp: implement "get memory ppr status" api
+23. lib: gfsp: define "get memory PPR status" api
+24. lib: gfsp: add "get memory PPR status" heci message definitions
+25. cli: gfsp: implement "get number of memory errors" cli command
+26. lib: gfsp: implement "get number of memory errors" api
+27. lib: gfsp: define "get number of memory errors" api
 
 ## [v0.6.0] - 2021-09-02
 
