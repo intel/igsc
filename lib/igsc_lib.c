@@ -50,6 +50,9 @@ enum gsc_soc_step_id {
 struct gsc_hw_config_1 {
     uint32_t hw_sku;
     uint32_t hw_step;
+    uint32_t oprom_code_devid_enforcement : 1;
+    uint32_t flags                        : 31;
+    uint32_t debug_config;
 };
 
 #define to_hw_config_1(cfg) ((struct gsc_hw_config_1 *)(cfg)->blob)
@@ -1434,6 +1437,10 @@ static int gsc_device_hw_config(struct igsc_lib_ctx *lib_ctx,
         goto exit;
     }
 
+    hw_config_1->oprom_code_devid_enforcement = resp->oprom_code_devid_enforcement;
+    hw_config_1->flags = resp->flags;
+    hw_config_1->debug_config = resp->debug_config;
+
     status = IGSC_SUCCESS;
 
 exit:
@@ -1688,6 +1695,9 @@ static int gsc_image_hw_config(const struct gsc_fwu_img_layout *layout,
     hw_config_1 = (struct gsc_hw_config_1 *)hw_config->blob;
     hw_config_1->hw_sku = info->instance_id;
     hw_config_1->hw_step = 0;
+    hw_config_1->oprom_code_devid_enforcement = 0;
+    hw_config_1->flags = 0;
+    hw_config_1->debug_config = 0;
 
     return IGSC_SUCCESS;
 }
