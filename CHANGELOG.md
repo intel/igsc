@@ -1,5 +1,36 @@
 # IGSC FUL
 
+## [v0.8.0] - 2022-02-22
+
+Note: non backward compatible change (num_of_tiles to max_num_of_tiles)
+
+### Changed
+
+1. cli: rename num_of_tiles to max_num_of_tiles
+2. lib: rename num_of_tiles to max_num_of_tiles
+
+### Fixed
+
+1. cli: remove redundant print from run_ifr_test
+2. cli: remove redundant calls to get subsystem DID/VID
+3. lib: fix documentation of the igsc_device_iterator_destroy function
+4. lib: fix debug and error messages
+5. cli: fix the extra arguments issue
+6. doc: fix spelling
+7. cli: add missing newline in get_mem_ppr_status
+8. doc: fix spelling
+9. cli: make print_mem_ppr_status output readable
+10. cli: make mem_ppr_test output readable
+11. cli: make get_status_ext output readable
+12. cli: make array_scan_test output readable
+
+### Added
+
+1. cli: add ifr get repair info and count tiles commands to cli
+2. lib: add ifr get tile repair info and count tiles library apis
+3. doc: add documentation of get ifr repair info and count tiles apis
+4. doc: add info about multithreading support
+
 ## [v0.7.1] - 2021-11-02
 
 ### Fixed
