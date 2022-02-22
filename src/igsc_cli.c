@@ -2433,7 +2433,7 @@ int get_mem_err(struct igsc_device_handle *handle)
         fwupd_error("Failed to get memory errors number, returned %d\n", ret);
         return EXIT_FAILURE;
     }
-    printf("Number of tiles: %u\n", tiles->num_of_tiles);
+    printf("Maximum number of tiles: %u\n", tiles->num_of_tiles);
     for (i = 0; i < tiles->num_of_tiles; i++)
         printf("tile %u: correctable memory errors: %u, uncorrectable memory errors: %u\n",
                i, tiles->errors[i].corr_err, tiles->errors[i].uncorr_err);
