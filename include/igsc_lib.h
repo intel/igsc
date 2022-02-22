@@ -1058,13 +1058,13 @@ struct igsc_gfsp_mem_err
  *  @brief Gets number of tiles
  *
  *  @param handle A handle to the device.
- *  @param num_of_tiles number of tiles
+ *  @param max_num_of_tiles maximum number of tiles
  *
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
 int igsc_gfsp_count_tiles(IN  struct igsc_device_handle *handle,
-                          OUT uint32_t *num_of_tiles);
+                          OUT uint32_t *max_num_of_tiles);
 
 /**
  *  @brief Gets GFSP number of memory errors

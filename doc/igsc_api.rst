@@ -793,11 +793,11 @@ which holds paring state of the OPROM image information.
           struct igsc_gfsp_tile_mem_err errors[]; /**< array of memory errors structs for each tile */
       };
 
-      int igsc_gfsp_count_tiles(IN  struct  igsc_device_handle *handle,
-                                OUT uint32_t  *num_of_tiles);
+      int igsc_gfsp_count_tiles(IN  struct igsc_device_handle *handle,
+                                OUT uint32_t *max_num_of_tiles);
 
 
-      int igsc_gfsp_memory_errors_num(IN  struct  igsc_device_handle *handle,
+      int igsc_gfsp_memory_errors_num(IN  struct igsc_device_handle *handle,
                                       OUT struct igsc_gfsp_mem_err *tiles);
 
   e. IFR run Array & Scan tests

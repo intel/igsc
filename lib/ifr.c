@@ -645,15 +645,15 @@ exit:
     return status;
 }
 
-int igsc_gfsp_count_tiles(IN  struct  igsc_device_handle *handle,
-                          OUT uint32_t  *num_of_tiles)
+int igsc_gfsp_count_tiles(IN  struct igsc_device_handle *handle,
+                          OUT uint32_t *max_num_of_tiles)
 {
-    if (!handle || !handle->ctx || !num_of_tiles)
+    if (!handle || !handle->ctx || !max_num_of_tiles)
     {
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
-    return gsc_gfsp_memory_errors (handle, num_of_tiles, NULL);
+    return gsc_gfsp_memory_errors (handle, max_num_of_tiles, NULL);
 
 }
 
