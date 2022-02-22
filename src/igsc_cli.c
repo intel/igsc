@@ -2441,21 +2441,40 @@ int get_mem_err(struct igsc_device_handle *handle)
     return ret;
 }
 
+const char * const gfsp_ppr_mode_str[] = {
+    "enabled",
+    "disabled",
+    "test mode",
+    "auto run on next boot",
+};
+
+const char * const gfsp_ppr_applied_str[] = {
+    "ppr not applied",
+    "ppr applied",
+    "ppr exhausted",
+};
+
 void print_mem_ppr_status(struct igsc_ppr_status *sts)
 {
     printf("PPR status:\n");
     printf("Boot time memory correction pending: %u\n",
            sts->boot_time_memory_correction_pending);
-    printf("PPR mode: %u\n", sts->ppr_mode);
-    printf("Test run status: executed: %u\n",
-           (sts->test_run_status & IGSC_PPR_STATUS_TEST_EXECUTED_MASK) ? 1 : 0);
-    printf("Test run status: finished successfully: %u\n",
-           (sts->test_run_status & IGSC_PPR_STATUS_TEST_SUCCESS_MASK) ? 1 : 0);
-    printf("Test run status: found hw error: %u\n",
-           (sts->test_run_status & IGSC_PPR_STATUS_FOUND_HW_ERROR_MASK) ? 1 : 0);
-    printf("Test run status: hw error repaired: %u\n",
-           (sts->test_run_status & IGSC_PPR_STATUS_HW_ERROR_REPAIRED_MASK) ? 1 : 0);
-    printf("RAS PPR test applied: %u\n", sts->ras_ppr_applied);
+    if (sizeof(gfsp_ppr_mode_str)/sizeof(char*) <= sts->ppr_mode)
+        printf("PPR mode: %u\n", sts->ppr_mode);
+    else
+        printf("PPR mode: %s\n", gfsp_ppr_mode_str[sts->ppr_mode]);
+    printf("Test run status: executed: %s\n",
+           (sts->test_run_status & IGSC_PPR_STATUS_TEST_EXECUTED_MASK) ? "Test not executed" : "Test executed");
+    printf("Test run status: finished successfully: %s\n",
+           (sts->test_run_status & IGSC_PPR_STATUS_TEST_SUCCESS_MASK) ? "Error occurred during test execution" : "Test finished successfully");
+    printf("Test run status: found hw error: %s\n",
+           (sts->test_run_status & IGSC_PPR_STATUS_FOUND_HW_ERROR_MASK) ? "HW error found" : "HW error not found");
+    printf("Test run status: hw error repaired: %s\n",
+           (sts->test_run_status & IGSC_PPR_STATUS_HW_ERROR_REPAIRED_MASK) ? "HW error is unrepairable" : "HW error repaired or no HW error found");
+    if (sizeof(gfsp_ppr_applied_str)/sizeof(char*) <= sts->ras_ppr_applied)
+        printf("RAS PPR test applied: %u\n", sts->ras_ppr_applied);
+    else
+        printf("RAS PPR test applied: %s\n", gfsp_ppr_applied_str[sts->ras_ppr_applied]);
     printf("mbist completed: %u\n", sts->mbist_completed);
     printf("Number of PPR devices: %u\n", sts->num_devices);
 
