@@ -181,7 +181,7 @@ static void debug_print_pci_data(const struct oprom_pci_data *p)
 }
 
 static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
-                                        size_t ext_start, size_t ext_end)
+                                        size_t ext_start, size_t ext_end, uint8_t type)
 {
     size_t cur_offset = ext_start;
     struct mft_ext_header_with_data *header;
@@ -202,13 +202,26 @@ static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
         {
             if (header->extension_length < sizeof(*header) + sizeof(struct oprom_subsystem_device_id))
             {
-                gsc_error("Illegal oprom cpd image (device extension %u)\n",
+                gsc_error("Illegal oprom cpd image (device extension length %u)\n",
                            header->extension_length);
                 return IGSC_ERROR_BAD_IMAGE;
             }
-
-            img->cpd_img.dev_ext = (struct mft_oprom_device_type_ext *)header;
-            debug_print_device_type_ext(img->cpd_img.dev_ext);
+            if (CUR_PART_DATA == type)
+            {
+                /* If the extension was already found in this image - it's illegal */
+                if (img->cpd_img.dev_ext)
+                {
+                    gsc_error("Illegal oprom data image (device extension appears twice)\n");
+                    return IGSC_ERROR_BAD_IMAGE;
+                }
+                img->cpd_img.dev_ext = (struct mft_oprom_device_type_ext *)header;
+                debug_print_device_type_ext(img->cpd_img.dev_ext);
+            }
+            else
+            {
+                gsc_error("Illegal oprom device extension in the oprom code section\n");
+                return IGSC_ERROR_BAD_IMAGE;
+            }
         }
 
         if (header->extension_type == MFT_EXT_TYPE_SIGNED_PACKAGE_INFO)
@@ -392,14 +405,15 @@ static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len, u
     cpd_img->metadata_start = header->entries[METADATA_INDEX].offset;
     cpd_img->metadata_end = cpd_img->metadata_start + header->entries[METADATA_INDEX].length;
 
-    if (image_oprom_parse_extensions(img, cpd_img->metadata_start, cpd_img->metadata_end))
+    if (image_oprom_parse_extensions(img, cpd_img->metadata_start, cpd_img->metadata_end, type))
     {
         return IGSC_ERROR_BAD_IMAGE;
     }
 
     return image_oprom_parse_extensions(img,
                                         cpd_img->manifest_ext_start,
-                                        cpd_img->manifest_ext_end);
+                                        cpd_img->manifest_ext_end,
+                                        type);
 }
 
 static bool verify_pci_data(struct oprom_pci_data *p_d)
