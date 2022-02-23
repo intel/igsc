@@ -207,6 +207,19 @@ struct mft_oprom_device_type_ext {
     struct oprom_subsystem_device_id device_ids[];
 };
 
+struct oprom_subsystem_device_4ids {
+    uint16_t vendor_id;
+    uint16_t device_id;
+    uint16_t subsys_vendor_id;
+    uint16_t subsys_device_id;
+};
+
+struct mft_oprom_device_4ids_array_ext {
+    uint32_t extension_type;
+    uint32_t extension_length;
+    struct oprom_subsystem_device_4ids device_ids[];
+};
+
 #pragma pack()
 
 int image_oprom_get_buffer(IN struct igsc_oprom_image *img,
