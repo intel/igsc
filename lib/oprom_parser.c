@@ -26,9 +26,10 @@
 
 /* extension types */
 #define MFT_EXT_TYPE_DEVICE_TYPE          7
+#define MDF_EXT_TYPE_MODULE_ATTR          10
 #define MFT_EXT_TYPE_SIGNED_PACKAGE_INFO  15
 #define MFT_EXT_TYPE_IFWI_PART_MAN        22
-#define MDF_EXT_TYPE_MODULE_ATTR          10
+#define MFT_EXT_TYPE_DEVICE_ID_ARRAY      37
 
 #define PCI_DATA_SIGNATURE       0x52494350 /* "PCIR" */
 #define PCI_VENDOR_ID            0x8086

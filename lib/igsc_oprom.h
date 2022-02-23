@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  */
 #ifndef __IGSC_OPROM_H__
 #define __IGSC_OPROM_H__
@@ -205,6 +205,19 @@ struct mft_oprom_device_type_ext {
     uint32_t extension_type;
     uint32_t extension_length;
     struct oprom_subsystem_device_id device_ids[];
+};
+
+struct oprom_subsystem_device_4ids {
+    uint16_t vendor_id;
+    uint16_t device_id;
+    uint16_t subsys_vendor_id;
+    uint16_t subsys_device_id;
+};
+
+struct mft_oprom_device_4ids_array_ext {
+    uint32_t extension_type;
+    uint32_t extension_length;
+    struct oprom_subsystem_device_4ids device_ids[];
 };
 
 #pragma pack()
