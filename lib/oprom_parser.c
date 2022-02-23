@@ -68,7 +68,9 @@ struct cpd_image {
     size_t manifest_ext_end;                             /**< end offset of the manifest extensions */
     size_t metadata_start;                               /**< start offset of the metadata extensions */
     size_t metadata_end;                                 /**< end offset of the metadata extensions */
-    struct mft_oprom_device_type_ext *dev_ext;           /**< oprom devices extension */
+    struct mft_oprom_device_type_ext *dev_ext;           /**< legacy oprom data devices extension */
+    struct mft_oprom_device_4ids_array_ext *dev_4ids_data; /**< oprom data devices 4ids extension */
+    struct mft_oprom_device_4ids_array_ext *dev_4ids_code; /**< oprom code devices 4ids extension */
 };
 
 struct igsc_oprom_image {
@@ -103,6 +105,20 @@ static void debug_print_device_type_ext(struct mft_oprom_device_type_ext *ext)
     }
 }
 
+static void debug_print_device_4ids_ext(struct mft_oprom_device_4ids_array_ext *ext)
+{
+    struct oprom_subsystem_device_4ids *dev = &ext->device_ids[0];
+    size_t len = sizeof(struct mft_ext_header_with_data);
+
+    gsc_debug("type %u len %u\n", ext->extension_type, ext->extension_length);
+    for (; len < ext->extension_length; len += sizeof(*dev), dev++)
+    {
+        gsc_debug("vid 0x%x did 0x%x ssvid 0x%x ssdid 0x%x\n",
+                  dev->vendor_id, dev->device_id,
+                  dev->subsys_vendor_id, dev->subsys_device_id);
+    }
+}
+
 static void debug_print_oprom_version(enum igsc_oprom_type type,
                                       const struct igsc_oprom_version *oprom_version)
 {
@@ -130,6 +146,11 @@ static void debug_print_oprom_version(enum igsc_oprom_type type,
 {
     (void)type;
     (void)oprom_version;
+}
+
+static void debug_print_device_4ids_ext(struct mft_oprom_device_4ids_array_ext *ext)
+{
+    (void)ext;
 }
 #endif
 
@@ -221,6 +242,42 @@ static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
             {
                 gsc_error("Illegal oprom device extension in the oprom code section\n");
                 return IGSC_ERROR_BAD_IMAGE;
+            }
+        }
+
+        if (header->extension_type == MFT_EXT_TYPE_DEVICE_ID_ARRAY)
+        {
+            if (header->extension_length < sizeof(*header) + sizeof(struct oprom_subsystem_device_4ids))
+            {
+                gsc_error("Illegal oprom cpd image (device extension length %u)\n",
+                           header->extension_length);
+                return IGSC_ERROR_BAD_IMAGE;
+            }
+
+            switch(type) {
+            case CUR_PART_DATA:
+                /* If the extension was already found in this image - it's illegal */
+                if (img->cpd_img.dev_4ids_data)
+                {
+                    gsc_error("Illegal oprom data image (device extension appears twice)\n");
+                    return IGSC_ERROR_BAD_IMAGE;
+                }
+                img->cpd_img.dev_4ids_data = (struct mft_oprom_device_4ids_array_ext *)header;
+                debug_print_device_4ids_ext(img->cpd_img.dev_4ids_data);
+                break;
+            case CUR_PART_CODE:
+                /* If the extension was already found in this image - it's illegal */
+                if (img->cpd_img.dev_4ids_code)
+                {
+                    gsc_error("Illegal oprom code image (device extension appears twice)\n");
+                    return IGSC_ERROR_BAD_IMAGE;
+                }
+                img->cpd_img.dev_4ids_code = (struct mft_oprom_device_4ids_array_ext *)header;
+                debug_print_device_4ids_ext(img->cpd_img.dev_4ids_code);
+                break;
+            default:
+                gsc_error("Internal error. Wrong image type %u\n", type);
+                return IGSC_ERROR_INTERNAL;
             }
         }
 
