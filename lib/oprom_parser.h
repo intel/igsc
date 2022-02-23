@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  */
 
 #ifndef __IGSC_OPROM_PARSER_H__
@@ -30,4 +30,16 @@ int image_oprom_get_buffer(struct igsc_oprom_image *img,
                            enum igsc_oprom_type type,
                            const uint8_t **buffer,
                            size_t *buffer_len);
+
+uint32_t image_oprom_count_devices_4ids(struct igsc_oprom_image *img,
+                                        enum igsc_oprom_type type);
+void image_oprom_iterator_reset_4ids(struct igsc_oprom_image *img,
+                                     enum igsc_oprom_type type);
+int image_oprom_get_device_4ids(struct igsc_oprom_image *img, uint32_t pos,
+                                enum igsc_oprom_type type,
+                                struct oprom_subsystem_device_4ids *device);
+int image_oprom_get_next_4ids(struct igsc_oprom_image *img,
+                              enum igsc_oprom_type type,
+                              struct igsc_oprom_device_info_4ids *device);
+
 #endif /* !__IGSC_OPROM_PARSER_H__ */

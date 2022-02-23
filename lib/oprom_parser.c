@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  */
 
 #include <stdint.h>
@@ -87,7 +87,9 @@ struct igsc_oprom_image {
     struct cpd_image cpd_img;               /**< cpd image structure */
     struct oprom_header_ext_v2 *v2_header;  /**< expansion header version 2 */
 
-    uint32_t cur_device_pos;                /**< iterator's current device position */
+    uint32_t cur_device_pos;                /**< iterator's current legacy 2ids device position */
+    uint32_t cur_device_4ids_code_pos;      /**< iterator's current 4ids code device position */
+    uint32_t cur_device_4ids_data_pos;      /**< iterator's current 4ids data device position */
 };
 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -728,6 +730,40 @@ uint32_t image_oprom_count_devices(struct igsc_oprom_image *img)
     return count;
 }
 
+uint32_t image_oprom_count_devices_4ids(struct igsc_oprom_image *img,
+                                        enum igsc_oprom_type type)
+{
+    uint32_t count = 0;
+    struct mft_oprom_device_4ids_array_ext *dev_4ids;
+
+    if (type == IGSC_OPROM_DATA)
+    {
+        dev_4ids = img->cpd_img.dev_4ids_data;
+    }
+    else if (type == IGSC_OPROM_CODE)
+    {
+        dev_4ids = img->cpd_img.dev_4ids_code;
+    }
+    else
+    {
+        dev_4ids = NULL;
+        gsc_error("Internal error - wrong requested request image type %u", type);
+    }
+
+    if (dev_4ids)
+    {
+        gsc_debug("extension_length %u\n", dev_4ids->extension_length);
+        /* Note that here the extension_length is big enough because it was
+         * checked earlier when parsing the extension
+         */
+        count = (uint32_t)(dev_4ids->extension_length -
+                           sizeof(struct mft_oprom_device_4ids_array_ext)) /
+                           sizeof(struct oprom_subsystem_device_4ids);
+    }
+
+    return count;
+}
+
 int image_oprom_get_device(struct igsc_oprom_image *img, uint32_t num,
                            struct oprom_subsystem_device_id *device)
 {
@@ -738,6 +774,44 @@ int image_oprom_get_device(struct igsc_oprom_image *img, uint32_t num,
     {
         gsc_memcpy_s(device, sizeof(*device),
                      &img->cpd_img.dev_ext->device_ids[num],
+                     sizeof(*device));
+        return IGSC_SUCCESS;
+    }
+
+    return IGSC_ERROR_DEVICE_NOT_FOUND;
+}
+
+int image_oprom_get_device_4ids(struct igsc_oprom_image *img, uint32_t pos,
+                                enum igsc_oprom_type type,
+                                struct oprom_subsystem_device_4ids *device)
+{
+    struct mft_oprom_device_4ids_array_ext *dev_4ids;
+    uint32_t max_num = image_oprom_count_devices_4ids(img, type);
+
+    if (type == IGSC_OPROM_DATA)
+    {
+        dev_4ids = img->cpd_img.dev_4ids_data;
+    }
+    else if (type == IGSC_OPROM_CODE)
+    {
+        dev_4ids = img->cpd_img.dev_4ids_code;
+    }
+    else
+    {
+        gsc_error("Internal error - wrong requested request image type %u", type);
+        return IGSC_ERROR_INTERNAL;
+    }
+
+    if (!dev_4ids)
+    {
+        return IGSC_ERROR_DEVICE_NOT_FOUND;
+    }
+
+    gsc_debug("max_num %u pos %u\n", max_num, pos);
+    if (pos < max_num)
+    {
+        gsc_memcpy_s(device, sizeof(*device),
+                     &dev_4ids->device_ids[pos],
                      sizeof(*device));
         return IGSC_SUCCESS;
     }
@@ -768,9 +842,68 @@ int image_oprom_get_next(struct igsc_oprom_image *img,
     return IGSC_SUCCESS;
 }
 
+int image_oprom_get_next_4ids(struct igsc_oprom_image *img,
+                              enum igsc_oprom_type type,
+                              struct igsc_oprom_device_info_4ids *device)
+{
+    struct oprom_subsystem_device_4ids _device;
+    uint32_t cur_pos;
+
+    if (type == IGSC_OPROM_DATA)
+    {
+        cur_pos = img->cur_device_4ids_data_pos;
+        img->cur_device_4ids_data_pos++;
+    }
+    else if (type == IGSC_OPROM_CODE)
+    {
+        cur_pos = img->cur_device_4ids_code_pos;
+        img->cur_device_4ids_code_pos++;
+    }
+    else
+    {
+        gsc_error("Internal error - wrong requested request image type %u", type);
+        return IGSC_ERROR_INTERNAL;
+    }
+
+    memset(&_device, 0, sizeof(_device));
+
+    if (image_oprom_get_device_4ids(img, cur_pos, type, &_device) != IGSC_SUCCESS)
+    {
+        gsc_debug("no more devices\n");
+        return IGSC_ERROR_DEVICE_NOT_FOUND;
+    }
+
+    gsc_debug("vid 0x%x did 0x%x ssvid 0x%x ssdid 0x%x \n",
+              _device.vendor_id, _device.device_id,
+              _device.subsys_vendor_id, _device.subsys_device_id);
+
+    device->subsys_vendor_id = _device.subsys_vendor_id;
+    device->subsys_device_id = _device.subsys_device_id;
+    device->vendor_id = _device.vendor_id;
+    device->device_id = _device.device_id;
+
+    return IGSC_SUCCESS;
+}
+
 void image_oprom_iterator_reset(IN struct igsc_oprom_image *img)
 {
     img->cur_device_pos = 0;
+}
+
+void image_oprom_iterator_reset_4ids(IN struct igsc_oprom_image *img, enum igsc_oprom_type type)
+{
+    if (type == IGSC_OPROM_DATA)
+    {
+        img->cur_device_4ids_data_pos = 0;
+    }
+    else if (type == IGSC_OPROM_CODE)
+    {
+        img->cur_device_4ids_code_pos = 0;
+    }
+    else
+    {
+        gsc_error("Internal error - wrong requested request image type %u", type);
+    }
 }
 
 int image_oprom_get_buffer(struct igsc_oprom_image *img,
