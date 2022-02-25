@@ -946,6 +946,32 @@ int igsc_image_oprom_iterator_next_typed(IN struct igsc_oprom_image *img,
                                          OUT struct igsc_oprom_device_info_4ids *device);
 
 /**
+ *  @brief returns whether the oprom image has 4ids device extension
+ *
+ *  @param img OPROM image handle
+ *  @param request_type type of oprom device
+ *  @param has_4ids_extension whether the oprom image has 4ids device extension
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_image_oprom_has_4ids_extension(IN struct igsc_oprom_image *img,
+                                        IN uint32_t request_type,
+                                        OUT bool *has_4ids_extension);
+
+/**
+ *  @brief returns whether the oprom image has 2ids device extension
+ *
+ *  @param img OPROM image handle
+ *  @param has_2ids_extension whether the oprom image has 2ids device extension
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_image_oprom_has_2ids_extension(IN struct igsc_oprom_image *img,
+                                        OUT bool *has_2ids_extension);
+
+/**
  *  @brief release the OPROM image handle
  *
  *  @param img OPROM image handle
