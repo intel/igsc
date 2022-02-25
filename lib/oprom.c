@@ -313,7 +313,6 @@ static bool oprom_match_device_4ids(struct igsc_device_info *device,
            (device->device_id == oprom_device->device_id);
 }
 
-
 int igsc_image_oprom_match_device(IN struct igsc_oprom_image *img,
                                   IN enum igsc_oprom_type request_type,
                                   IN struct igsc_device_info *device)
@@ -324,7 +323,7 @@ int igsc_image_oprom_match_device(IN struct igsc_oprom_image *img,
     struct igsc_oprom_device_info_4ids oprom_device_4ids;
     int ret;
     uint32_t count = 0;
-    bool image_4ids = true;
+    bool image_4ids;
 
     if (img == NULL || device == NULL)
     {
@@ -345,6 +344,8 @@ int igsc_image_oprom_match_device(IN struct igsc_oprom_image *img,
         ret = IGSC_ERROR_INVALID_PARAMETER;
         goto exit;
     }
+
+    image_4ids = image_oprom_has_4ids_extension(img, request_type);
 
     if (image_4ids)
     {

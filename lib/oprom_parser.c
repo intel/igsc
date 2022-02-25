@@ -203,6 +203,23 @@ static void debug_print_pci_data(const struct oprom_pci_data *p)
               p->DMTF_CLP_entry_point_pointer);
 }
 
+bool image_oprom_has_4ids_extension(struct igsc_oprom_image *img, enum igsc_oprom_type type)
+{
+    if (type == IGSC_OPROM_DATA)
+    {
+       return (img->cpd_img.dev_4ids_data != NULL);
+    }
+    else
+    {
+       return (img->cpd_img.dev_4ids_code != NULL);
+    }
+}
+
+bool image_oprom_has_2ids_extension(struct igsc_oprom_image *img)
+{
+    return (img->cpd_img.dev_ext != NULL);
+}
+
 static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
                                         size_t ext_start, size_t ext_end, uint8_t type)
 {
