@@ -41,5 +41,8 @@ int image_oprom_get_device_4ids(struct igsc_oprom_image *img, uint32_t pos,
 int image_oprom_get_next_4ids(struct igsc_oprom_image *img,
                               enum igsc_oprom_type type,
                               struct igsc_oprom_device_info_4ids *device);
+bool image_oprom_has_4ids_extension(struct igsc_oprom_image *img,
+                                    enum igsc_oprom_type type);
+bool image_oprom_has_2ids_extension(struct igsc_oprom_image *img);
 
 #endif /* !__IGSC_OPROM_PARSER_H__ */
