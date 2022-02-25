@@ -313,6 +313,36 @@ static bool oprom_match_device_4ids(struct igsc_device_info *device,
            (device->device_id == oprom_device->device_id);
 }
 
+int igsc_image_oprom_has_4ids_extension(IN struct igsc_oprom_image *img,
+                                        IN uint32_t request_type,
+                                        OUT bool *has_4ids_extension)
+{
+    if (img == NULL || has_4ids_extension == NULL)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    if (request_type != IGSC_OPROM_CODE && request_type != IGSC_OPROM_DATA)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    *has_4ids_extension = image_oprom_has_4ids_extension(img, request_type);
+    return IGSC_SUCCESS;
+}
+
+int igsc_image_oprom_has_2ids_extension(IN struct igsc_oprom_image *img,
+                                        OUT bool *has_2ids_extension)
+{
+    if (img == NULL || has_2ids_extension == NULL)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    *has_2ids_extension = image_oprom_has_2ids_extension(img);
+    return IGSC_SUCCESS;
+}
+
 int igsc_image_oprom_match_device(IN struct igsc_oprom_image *img,
                                   IN enum igsc_oprom_type request_type,
                                   IN struct igsc_device_info *device)
