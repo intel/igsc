@@ -170,6 +170,12 @@ static void print_oprom_device_info(struct igsc_oprom_device_info *info)
            info->subsys_vendor_id, info->subsys_device_id);
 }
 
+static void print_oprom_device_info_4ids(struct igsc_oprom_device_info_4ids *info)
+{
+    printf("Vendor Id: %04X Device Id: %04X SubSystem Vendor Id: %04X SubSystem Device Id: %04X\n",
+           info->vendor_id, info->device_id, info->subsys_vendor_id, info->subsys_device_id);
+}
+
 static inline void print_oprom_code_version(const struct igsc_oprom_version *oprom_version)
 {
     print_oprom_version(IGSC_OPROM_CODE, oprom_version);
@@ -1311,6 +1317,142 @@ out:
     return ret;
 }
 
+mockable_static
+int oprom_code_image_supported_devices(const char *image_path)
+{
+    struct img *img = NULL;
+    struct igsc_oprom_image *oimg = NULL;
+    uint32_t img_type;
+    int ret;
+    unsigned int i;
+    uint32_t count;
+    struct igsc_oprom_device_info_4ids *devices_4ids = NULL;
+    bool has_4ids_extension;
+    bool has_2ids_extension;
+
+    img = image_read_from_file(image_path);
+    if (img == NULL)
+    {
+        fwupd_error("Failed to read :%s\n", image_path);
+        return EXIT_FAILURE;
+    }
+
+    ret = igsc_image_oprom_init(&oimg, img->blob, img->size);
+    if (ret == IGSC_ERROR_BAD_IMAGE)
+    {
+        fwupd_error("Invalid image format: %s\n", image_path);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Failed to parse image: %s\n", image_path);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    ret = igsc_image_oprom_type(oimg, &img_type);
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Failed to get oprom type from image: %s\n", image_path);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    if ((IGSC_OPROM_CODE & img_type) == 0)
+    {
+        fwupd_error("Image type is %s expecting %s\n",
+                    oprom_type_to_str(img_type),
+                    oprom_type_to_str(IGSC_OPROM_DATA));
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    ret = igsc_image_oprom_has_4ids_extension(oimg,
+                                              IGSC_OPROM_CODE,
+                                              &has_4ids_extension);
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Failed to retrieve the 4ids status of the image: %d\n", ret);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    ret = igsc_image_oprom_has_2ids_extension(oimg, &has_2ids_extension);
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Failed to retrieve the 2ids status of the image: %d\n", ret);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    if (has_4ids_extension && has_2ids_extension)
+    {
+        fwupd_error("Illegal image %s, includes both 2ids and 4ids oprom extensions\n",
+                    image_path);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    if (has_4ids_extension)
+    {
+        ret = igsc_image_oprom_count_devices_typed(oimg, IGSC_OPROM_CODE, &count);
+        if (ret != IGSC_SUCCESS)
+        {
+            fwupd_error("Failed to count supported devices on image: %s, returned %d\n",
+                        image_path, ret);
+            ret = EXIT_FAILURE;
+            goto out;
+        }
+    }
+    else
+    {
+        fwupd_msg("OPROM Code image does not have the supported devices extension\n");
+        ret = EXIT_SUCCESS;
+        goto out;
+    }
+
+    fwupd_verbose("Found %d supported devices in image %s\n", count, image_path);
+
+    if (count == 0)
+    {
+       fwupd_msg("Image %s has empty supported devices list\n", image_path);
+       ret = EXIT_SUCCESS;
+       goto out;
+    }
+
+    devices_4ids = calloc(count, sizeof(struct igsc_oprom_device_info_4ids));
+    if (devices_4ids == NULL) {
+        fwupd_error("Out of memory\n");
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    ret = igsc_image_oprom_supported_devices_typed(oimg, IGSC_OPROM_CODE, devices_4ids, &count);
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Failed to get %d supported devices from image: %s, ret %d\n",
+                    count, image_path, ret);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+    fwupd_verbose("Retrieved %d supported devices in image %s\n", count, image_path);
+
+    fwupd_msg("OPROM Code supported devices:\n");
+    for (i = 0; i < count; i++)
+    {
+        print_oprom_device_info_4ids(&devices_4ids[i]);
+    }
+
+out:
+    igsc_image_oprom_release(oimg);
+    free(img);
+    free(devices_4ids);
+
+    return ret;
+
+}
 
 mockable_static
 int oprom_data_image_supported_devices(const char *image_path)
@@ -1322,6 +1464,9 @@ int oprom_data_image_supported_devices(const char *image_path)
     unsigned int i;
     uint32_t count;
     struct igsc_oprom_device_info *devices = NULL;
+    struct igsc_oprom_device_info_4ids *devices_4ids = NULL;
+    bool has_4ids_extension;
+    bool has_2ids_extension;
 
     img = image_read_from_file(image_path);
     if (img == NULL)
@@ -1362,7 +1507,47 @@ int oprom_data_image_supported_devices(const char *image_path)
         goto out;
     }
 
-    ret = igsc_image_oprom_count_devices(oimg, &count);
+    ret = igsc_image_oprom_has_4ids_extension(oimg,
+                                              IGSC_OPROM_DATA,
+                                              &has_4ids_extension);
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Failed to retrieve the 4ids status of the image: %d\n", ret);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    ret = igsc_image_oprom_has_2ids_extension(oimg, &has_2ids_extension);
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Failed to retrieve the 2ids status of the image: %d\n", ret);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    if (has_4ids_extension && has_2ids_extension)
+    {
+        fwupd_error("Illegal image %s, includes both 2ids and 4ids oprom extensions\n",
+                    image_path);
+        ret = EXIT_FAILURE;
+        goto out;
+    }
+
+    if (has_4ids_extension)
+    {
+        ret = igsc_image_oprom_count_devices_typed(oimg, IGSC_OPROM_DATA, &count);
+    }
+    else if (has_2ids_extension)
+    {
+        ret = igsc_image_oprom_count_devices(oimg, &count);
+    }
+    else
+    {
+        fwupd_msg("OPROM Data image does not have the supported devices extension\n");
+        ret = EXIT_SUCCESS;
+        goto out;
+    }
+
     if (ret != IGSC_SUCCESS)
     {
         fwupd_error("Failed to count supported devices on image: %s\n",
@@ -1370,27 +1555,43 @@ int oprom_data_image_supported_devices(const char *image_path)
         ret = EXIT_FAILURE;
         goto out;
     }
+
     fwupd_verbose("Found %d supported devices in image %s\n", count, image_path);
 
     if (count == 0)
     {
-       fwupd_msg("Image %s does not include supported devices data\n", image_path);
+       fwupd_msg("Image %s has empty supported devices list\n", image_path);
        ret = EXIT_SUCCESS;
        goto out;
     }
 
-    devices = calloc(count, sizeof(struct igsc_oprom_device_info));
-    if (devices == NULL) {
-        fwupd_error("Out of memory\n");
-        ret = EXIT_FAILURE;
-        goto out;
-    }
+    if (has_4ids_extension)
+    {
+        devices_4ids = calloc(count, sizeof(struct igsc_oprom_device_info_4ids));
+        if (devices_4ids == NULL) {
+            fwupd_error("Out of memory\n");
+            ret = EXIT_FAILURE;
+            goto out;
+        }
 
-    ret = igsc_image_oprom_supported_devices(oimg, devices, &count);
+        ret = igsc_image_oprom_supported_devices_typed(oimg, IGSC_OPROM_DATA,
+                                                       devices_4ids, &count);
+    }
+    else
+    {
+        devices = calloc(count, sizeof(struct igsc_oprom_device_info));
+        if (devices == NULL) {
+            fwupd_error("Out of memory\n");
+            ret = EXIT_FAILURE;
+            goto out;
+        }
+
+        ret = igsc_image_oprom_supported_devices(oimg, devices, &count);
+    }
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to get %d supported devices from image: %s\n",
-                    count, image_path);
+        fwupd_error("Failed to get %d supported devices from image: %s, ret %d, has_4ids_extension %u\n",
+                    count, image_path, ret, has_4ids_extension);
         ret = EXIT_FAILURE;
         goto out;
     }
@@ -1399,13 +1600,21 @@ int oprom_data_image_supported_devices(const char *image_path)
     fwupd_msg("OPROM Data supported devices:\n");
     for (i = 0; i < count; i++)
     {
-         print_oprom_device_info(&devices[i]);
+         if (has_4ids_extension)
+         {
+             print_oprom_device_info_4ids(&devices_4ids[i]);
+         }
+         else
+         {
+             print_oprom_device_info(&devices[i]);
+         }
     }
 
 out:
     igsc_image_oprom_release(oimg);
     free(img);
     free(devices);
+    free(devices_4ids);
 
     return ret;
 }
@@ -1417,6 +1626,22 @@ static int do_oprom_data_supported_devices(int argc, char *argv[])
         if (arg_is_image(argv[0]))
         {
             return oprom_data_image_supported_devices(argv[1]);
+        }
+        fwupd_error("Wrong argument %s\n", argv[0]);
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    fwupd_error("Wrong number of arguments\n");
+    return ERROR_BAD_ARGUMENT;
+}
+
+static int do_oprom_code_supported_devices(int argc, char *argv[])
+{
+    if (argc == 2)
+    {
+        if (arg_is_image(argv[0]))
+        {
+            return oprom_code_image_supported_devices(argv[1]);
         }
         fwupd_error("Wrong argument %s\n", argv[0]);
         return ERROR_BAD_ARGUMENT;
@@ -1863,6 +2088,11 @@ static int do_oprom_code(int argc, char *argv[])
     if (arg_is_token(sub_command, "update"))
     {
         return do_oprom_update(argc, argv, IGSC_OPROM_CODE);
+    }
+
+    if (arg_is_token(sub_command, "supported-devices"))
+    {
+        return do_oprom_code_supported_devices(argc, argv);
     }
 
     fwupd_error("Wrong argument %s\n", sub_command);
@@ -3477,8 +3707,11 @@ static const struct gsc_op g_ops[] = {
         .op    = do_oprom_code,
         .usage = {"update [options] [--device <dev>] --image <image>",
                   "version [--device <dev>] | --image <file>",
+                  "supported-devices --image <file>",
                   NULL},
-        .help  = "Update oprom code partition or retrieve version from the devices or the supplied image\n"
+        .help  = "Update oprom code partition\n"
+                 "or retrieve version from the devices or the supplied image\n"
+                 "or retrieve list of supported devices from the supplied image\n"
                  "\nOPTIONS:\n\n"
                  "    -a | --allow-downgrade\n"
                  "            allow downgrade or override the same version\n"
