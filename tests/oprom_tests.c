@@ -76,15 +76,21 @@ static void test_params_image_oprom_type(void **state)
 static void test_params_image_oprom_count_devices(void **state)
 {
     struct igsc_oprom_image *img = *state;
+    uint32_t count;
 
     assert_int_equal(igsc_image_oprom_count_devices(NULL, NULL), IGSC_ERROR_INVALID_PARAMETER);
     assert_int_equal(igsc_image_oprom_count_devices(img, NULL), IGSC_ERROR_INVALID_PARAMETER);
+
+    assert_int_equal(igsc_image_oprom_count_devices_typed(NULL, IGSC_OPROM_DATA, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_image_oprom_count_devices_typed(img, IGSC_OPROM_CODE, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_image_oprom_count_devices_typed(img, 8, &count), IGSC_ERROR_INVALID_PARAMETER);
 }
 
 static void test_params_image_oprom_supported_devices(void **state)
 {
     struct igsc_oprom_image *img = *state;
     struct igsc_oprom_device_info devices[1];
+    struct igsc_oprom_device_info_4ids devices_4ids[1];
     uint32_t count = 1;
 
     assert_int_equal(igsc_image_oprom_supported_devices(NULL, NULL, NULL), IGSC_ERROR_INVALID_PARAMETER);
@@ -92,8 +98,15 @@ static void test_params_image_oprom_supported_devices(void **state)
     assert_int_equal(igsc_image_oprom_supported_devices(img, devices, NULL), IGSC_ERROR_INVALID_PARAMETER);
     assert_int_equal(igsc_image_oprom_supported_devices(img, NULL, &count), IGSC_ERROR_INVALID_PARAMETER);
 
+    assert_int_equal(igsc_image_oprom_supported_devices_typed(NULL, IGSC_OPROM_DATA, NULL, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_image_oprom_supported_devices_typed(img, IGSC_OPROM_DATA, NULL, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_image_oprom_supported_devices_typed(img, IGSC_OPROM_CODE, devices_4ids, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_image_oprom_supported_devices_typed(img, IGSC_OPROM_CODE, NULL, &count), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_image_oprom_supported_devices_typed(img, 7, devices_4ids, &count), IGSC_ERROR_INVALID_PARAMETER);
+
     count=0;
     assert_int_equal(igsc_image_oprom_supported_devices(img, devices, &count), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_image_oprom_supported_devices_typed(img, IGSC_OPROM_CODE, devices_4ids, &count), IGSC_ERROR_INVALID_PARAMETER);
 }
 
 static void test_params_image_oprom_match_device(void **state)
@@ -121,14 +134,35 @@ static void test_params_image_oprom_iterator_reset(void **state)
     will_return(__wrap_image_oprom_get_type, IGSC_OPROM_DATA);
     assert_int_equal(igsc_image_oprom_iterator_reset(img), IGSC_SUCCESS);
 
+    assert_int_equal(igsc_image_oprom_iterator_reset_typed(NULL, IGSC_OPROM_CODE), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_image_oprom_iterator_reset_typed(NULL, IGSC_OPROM_DATA), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_image_oprom_iterator_reset_typed(img, IGSC_OPROM_NONE), IGSC_ERROR_INVALID_PARAMETER);
+
+    will_return(__wrap_image_oprom_get_type, IGSC_OPROM_NONE);
+    assert_int_equal(igsc_image_oprom_iterator_reset_typed(img, IGSC_OPROM_CODE), IGSC_ERROR_NOT_SUPPORTED);
+
+    will_return(__wrap_image_oprom_get_type, IGSC_OPROM_CODE);
+    assert_int_equal(igsc_image_oprom_iterator_reset_typed(img, IGSC_OPROM_CODE), IGSC_SUCCESS);
+    assert_int_equal(igsc_image_oprom_iterator_reset_typed(img, IGSC_OPROM_NONE), IGSC_ERROR_INVALID_PARAMETER);
+
+    will_return(__wrap_image_oprom_get_type, IGSC_OPROM_DATA);
+    assert_int_equal(igsc_image_oprom_iterator_reset_typed(img, IGSC_OPROM_DATA), IGSC_SUCCESS);
+    assert_int_equal(igsc_image_oprom_iterator_reset_typed(img, IGSC_OPROM_NONE), IGSC_ERROR_INVALID_PARAMETER);
 }
 
 static void test_params_image_oprom_iterator_next(void **state)
 {
     struct igsc_oprom_image *img = *state;
+    struct igsc_oprom_device_info *device;
+    struct igsc_oprom_device_info_4ids *device_4ids;
 
     assert_int_equal(igsc_image_oprom_iterator_next(NULL, NULL), IGSC_ERROR_INVALID_PARAMETER);
     assert_int_equal(igsc_image_oprom_iterator_next(img, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_image_oprom_iterator_next(NULL, device), IGSC_ERROR_INVALID_PARAMETER);
+
+    assert_int_equal(igsc_image_oprom_iterator_next_typed(NULL, IGSC_OPROM_DATA, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_image_oprom_iterator_next_typed(img, IGSC_OPROM_CODE, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_image_oprom_iterator_next_typed(img, IGSC_OPROM_NONE, device_4ids), IGSC_ERROR_INVALID_PARAMETER);
 }
 
 static void test_params_image_oprom_release(void **state)
