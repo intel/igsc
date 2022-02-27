@@ -950,6 +950,49 @@ static void test_oprom_data_supported_devices_good2(void **state)
 }
 
 /**
+ * test: igsc oprom-code supported-devices --image img
+ */
+static void test_oprom_code_supported_devices_good1(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("oprom-code");
+    argv[argc++] = test_strdup("supported-devices");
+    argv[argc++] = test_strdup("--image");
+    argv[argc++] = test_strdup("oprom.img");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret == EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc oprom-code supported-devices -i img
+ */
+static void test_oprom_code_supported_devices_good2(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("oprom-code");
+    argv[argc++] = test_strdup("supported-devices");
+    argv[argc++] = test_strdup("-i");
+    argv[argc++] = test_strdup("oprom.img");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret == EXIT_SUCCESS);
+}
+
+
+/**
  * test: igsc oprom-data supported-devices
  */
 static void test_oprom_data_supported_devices_bad1(void **state)
@@ -968,6 +1011,24 @@ static void test_oprom_data_supported_devices_bad1(void **state)
     assert_true(ret != EXIT_SUCCESS);
 }
 
+/**
+ * test: igsc oprom-code supported-devices
+ */
+static void test_oprom_code_supported_devices_bad1(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("oprom-code");
+    argv[argc++] = test_strdup("supported-devices");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
 
 
 /**
@@ -1334,6 +1395,9 @@ int main(void)
         cmocka_unit_test(test_oprom_data_supported_devices_good1),
         cmocka_unit_test(test_oprom_data_supported_devices_good2),
         cmocka_unit_test(test_oprom_data_supported_devices_bad1),
+        cmocka_unit_test(test_oprom_code_supported_devices_good1),
+        cmocka_unit_test(test_oprom_code_supported_devices_good2),
+        cmocka_unit_test(test_oprom_code_supported_devices_bad1),
         cmocka_unit_test(test_oprom_code_update_1),
         cmocka_unit_test(test_oprom_code_update_2),
         cmocka_unit_test(test_oprom_code_update_3),

@@ -110,6 +110,12 @@ int oprom_data_image_supported_devices(const char *image_path)
     return EXIT_SUCCESS;
 }
 
+int oprom_code_image_supported_devices(const char *image_path)
+{
+    fprintf(stderr, "mock %s\n", __func__);
+    return EXIT_SUCCESS;
+}
+
 int image_type(const char *image_path)
 {
     fprintf(stderr, "mock %s\n", __func__);
