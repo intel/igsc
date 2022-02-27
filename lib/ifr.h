@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  */
 
 #ifndef __IGSC_IFR_HECI_H__
@@ -20,12 +20,13 @@ enum ifr_cmd {
 };
 
 enum gfsp_cmd {
-    GFSP_CORR_MEM_STAT_CMD      = 1, /**< Get memory correction status */
-    GFSP_MEM_ERR_MITIG_STAT_CMD = 2, /**<  Get memory error mitigation status */
-    GFSP_MUN_MEM_ERR_CMD        = 3, /**< Get number of memory errors */
-    GFSP_MEM_PRP_STAT_CMD       = 4, /**< Get memory PPR status */
-    GFSP_MEM_ID_CMD             = 5, /**< Get memory ID */
-    GFSP_MEM_NUM
+    GFSP_CORR_MEM_STAT_CMD = 1,      /**< Get memory correction status */
+    GFSP_MEM_ERR_MITIG_STAT_CMD = 2, /**< Get memory error mitigation status */
+    GFSP_MUN_MEM_ERR_CMD = 3,        /**< Get number of memory errors */
+    GFSP_MEM_PRP_STAT_CMD = 4,       /**< Get memory PPR status */
+    GFSP_MEM_ID_CMD = 5,             /**< Get memory ID */
+    GFSP_SET_ECC_CFG_CMD = 8,        /**< Set ECC Configuration */
+    GFSP_GET_ECC_CFG_CMD = 9,        /**< Get ECC Configuration */
 };
 
 struct ifr_msg_hdr {
@@ -228,6 +229,36 @@ struct ifr_get_tile_repair_info_res {
     uint16_t            available_array_repair_entries; /**< Number of available array repair entries */
     uint16_t            failed_dss; /**< Number of failed DSS */
     uint8_t             reserved2[18];
+};
+
+/* Set ECC Configuration Request */
+struct gfsp_set_ecc_config_req {
+    struct mkhi_msg_hdr header;
+    uint32_t gfsp_heci_header; /* contains enum gfsp_cmd */
+    uint8_t ecc_state;         /**< ECC State: 0 - Disable 1 - Enable */
+    uint8_t reserved[3];
+};
+
+struct gfsp_set_ecc_config_res {
+    struct mkhi_msg_hdr header;
+    uint32_t gfsp_heci_header; /* contains enum gfsp_cmd */
+    uint8_t cur_ecc_state;     /**< Current ECC State: 0 - Disable 1 - Enable */
+    uint8_t pen_ecc_state;     /**< Pending ECC State: 0 - Disable 1 - Enable */
+    uint8_t reserved[2];
+};
+
+/* Get ECC Configuration Request */
+struct gfsp_get_ecc_config_req {
+    struct mkhi_msg_hdr header;
+    uint32_t gfsp_heci_header; /* contains enum gfsp_cmd */
+};
+
+struct gfsp_get_ecc_config_res {
+    struct mkhi_msg_hdr header;
+    uint32_t gfsp_heci_header; /* contains enum gfsp_cmd */
+    uint8_t cur_ecc_state;     /**< Current ECC State: 0 - Disable 1 - Enable */
+    uint8_t pen_ecc_state;     /**< Pending ECC State: 0 - Disable 1 - Enable */
+    uint8_t reserved[2];
 };
 
 #pragma pack()
