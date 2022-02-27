@@ -948,6 +948,18 @@ int igsc_image_oprom_has_2ids_extension(IN struct igsc_oprom_image *img,
                                         OUT bool *has_2ids_extension);
 
 /**
+ *  @brief returns whether the oprom code config has devId enforcement bit set 
+ *
+ *  @param igsc_hw_config device hardware configuration.
+ *  @param devid_enforced true when devId is enforced, false otherwise
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_image_oprom_code_devid_enforced(IN struct igsc_hw_config *hw_config,
+                                         OUT bool *devid_enforced);
+
+/**
  *  @brief release the OPROM image handle
  *
  *  @param img OPROM image handle
