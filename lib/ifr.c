@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  */
 
 #include <stdint.h>
@@ -1316,3 +1316,211 @@ exit:
     return status;
 }
 
+int igsc_ecc_config_set(IN  struct igsc_device_handle *handle,
+                        IN  uint8_t req_ecc_state,
+                        OUT uint8_t *cur_ecc_state,
+                        OUT uint8_t *pen_ecc_state)
+{
+    int status;
+    size_t request_len;
+    size_t response_len;
+    size_t received_len;
+    size_t buf_len;
+    struct igsc_lib_ctx *lib_ctx;
+    struct gfsp_set_ecc_config_req *req;
+    struct gfsp_set_ecc_config_res *resp;
+
+    if (!handle || !handle->ctx || !cur_ecc_state || !pen_ecc_state)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    if (!(req_ecc_state == 0 || req_ecc_state == 1))
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    lib_ctx = handle->ctx;
+
+    gsc_debug("in set ecc config, initializing driver\n");
+
+    status = gsc_driver_init(lib_ctx, &GUID_METEE_MKHI);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Cannot initialize driver, status %d\n", status);
+        return status;
+    }
+
+    req = (struct gfsp_set_ecc_config_req *)lib_ctx->working_buffer;
+    request_len = sizeof(*req);
+
+    resp = (struct gfsp_set_ecc_config_res *)lib_ctx->working_buffer;
+    response_len = sizeof(*resp);
+    buf_len = lib_ctx->working_buffer_length;
+
+    gsc_debug("validating buffer\n");
+
+    status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Internal error - failed to validate buffer %d\n", status);
+        goto exit;
+    }
+
+    memset(req, 0, request_len);
+    req->header.group_id = MKHI_GROUP_ID_GFSP;
+    req->header.command = 0;
+    req->gfsp_heci_header = GFSP_SET_ECC_CFG_CMD;
+    req->ecc_state = req_ecc_state;
+
+    gsc_debug("sending command\n");
+
+    status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        goto exit;
+    }
+
+    if (received_len < sizeof(resp->header))
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    status = gfsp_heci_validate_response_header(lib_ctx, &resp->header,
+                                                resp->gfsp_heci_header,
+                                                GFSP_SET_ECC_CFG_CMD);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        goto exit;
+    }
+
+    if (resp->header.result != 0)
+    {
+       gsc_error("Set ECC config command failed with result 0x%x\n",
+                 resp->header.result);
+       status = IGSC_ERROR_PROTOCOL;
+       goto exit;
+    }
+
+    if (received_len < response_len)
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    *cur_ecc_state = resp->cur_ecc_state;
+    *pen_ecc_state = resp->pen_ecc_state;
+
+    gsc_debug("Set ECC config success\n");
+
+exit:
+    gsc_driver_deinit(lib_ctx);
+
+    return status;
+}
+
+int igsc_ecc_config_get(IN  struct igsc_device_handle *handle,
+                        OUT uint8_t *cur_ecc_state,
+                        OUT uint8_t *pen_ecc_state)
+{
+    int status;
+    size_t request_len;
+    size_t response_len;
+    size_t received_len;
+    size_t buf_len;
+    struct igsc_lib_ctx *lib_ctx;
+    struct gfsp_get_ecc_config_req *req;
+    struct gfsp_get_ecc_config_res *resp;
+
+    if (!handle || !handle->ctx || !cur_ecc_state || !pen_ecc_state)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    lib_ctx = handle->ctx;
+
+    gsc_debug("in get ecc config, initializing driver\n");
+
+    status = gsc_driver_init(lib_ctx, &GUID_METEE_MKHI);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Cannot initialize driver, status %d\n", status);
+        return status;
+    }
+
+    req = (struct gfsp_get_ecc_config_req *)lib_ctx->working_buffer;
+    request_len = sizeof(*req);
+
+    resp = (struct gfsp_get_ecc_config_res *)lib_ctx->working_buffer;
+    response_len = sizeof(*resp);
+    buf_len = lib_ctx->working_buffer_length;
+
+    gsc_debug("validating buffer\n");
+
+    status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Internal error - failed to validate buffer %d\n", status);
+        goto exit;
+    }
+
+    memset(req, 0, request_len);
+    req->header.group_id = MKHI_GROUP_ID_GFSP;
+    req->header.command = 0;
+    req->gfsp_heci_header = GFSP_GET_ECC_CFG_CMD;
+
+    gsc_debug("sending command\n");
+
+    status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        goto exit;
+    }
+
+    if (received_len < sizeof(resp->header))
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    status = gfsp_heci_validate_response_header(lib_ctx, &resp->header,
+                                                resp->gfsp_heci_header,
+                                                GFSP_GET_ECC_CFG_CMD);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        goto exit;
+    }
+
+    if (resp->header.result != 0)
+    {
+       gsc_error("Get ECC config command failed with result 0x%x\n",
+                 resp->header.result);
+       status = IGSC_ERROR_PROTOCOL;
+       goto exit;
+    }
+
+    if (received_len < response_len)
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    *cur_ecc_state = resp->cur_ecc_state;
+    *pen_ecc_state = resp->pen_ecc_state;
+
+    gsc_debug("Get ECC config success\n");
+
+exit:
+    gsc_driver_deinit(lib_ctx);
+
+    return status;
+}
