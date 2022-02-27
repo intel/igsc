@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  */
 
 /**
@@ -1258,8 +1258,35 @@ int igsc_ifr_get_tile_repair_info(IN  struct igsc_device_handle *handle,
                                   OUT uint16_t *used_array_repair_entries,
                                   OUT uint16_t *available_array_repair_entries,
                                   OUT uint16_t *failed_dss);
+/**
+ *  @brief Set ECC Configuration
+ *
+ *  @param handle A handle to the device.
+ *  @param req_ecc_state Requested ECC State
+ *  @param cur_ecc_state Current ECC State after command execution
+ *  @param pen_ecc_state Pending ECC State after command execution
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_ecc_config_set(IN  struct igsc_device_handle *handle,
+                        IN  uint8_t req_ecc_state,
+                        OUT uint8_t *cur_ecc_state,
+                        OUT uint8_t *pen_ecc_state);
 
-
+/**
+ *  @brief Get ECC Configuration
+ *
+ *  @param handle A handle to the device.
+ *  @param cur_ecc_state Current ECC State
+ *  @param pen_ecc_state Pending ECC State
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_ecc_config_get(IN  struct igsc_device_handle *handle,
+                        OUT uint8_t *cur_ecc_state,
+                        OUT uint8_t *pen_ecc_state);
 
 /**
  * @}
