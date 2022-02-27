@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (C) 2019-2022 Intel Corporation
+ */
 #include <stdarg.h>
 #include <stddef.h>
 #include <setjmp.h>
@@ -681,6 +685,107 @@ static void test_ifr_count_tiles_bad1(void **state)
     assert_true(ret != EXIT_SUCCESS);
 }
 
+/**
+ * test: igsc gfsp set-ecc-config no param
+ */
+static void test_gfsp_ecc_config_set_no_param(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("gfsp");
+    argv[argc++] = test_strdup("set-ecc-config");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc gfsp set-ecc-config bad param
+ */
+static void test_gfsp_ecc_config_set_bad_param(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("gfsp");
+    argv[argc++] = test_strdup("set-ecc-config");
+    argv[argc++] = test_strdup("-e");
+    argv[argc++] = test_strdup("11");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc gfsp set-ecc-config bad param 2
+ */
+static void test_gfsp_ecc_config_set_bad_param2(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("gfsp");
+    argv[argc++] = test_strdup("set-ecc-config");
+    argv[argc++] = test_strdup("-e");
+    argv[argc++] = test_strdup("blah");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc gfsp set-ecc-config good param
+ */
+static void test_gfsp_ecc_config_set_good_param(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("gfsp");
+    argv[argc++] = test_strdup("set-ecc-config");
+    argv[argc++] = test_strdup("-e");
+    argv[argc++] = test_strdup("1");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc gfsp get-ecc-config
+ */
+static void test_gfsp_ecc_config_get_bad1(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("gfsp");
+    argv[argc++] = test_strdup("get-ecc-config");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
 #undef main
 int main(void)
 {
@@ -713,6 +818,11 @@ int main(void)
         cmocka_unit_test(test_ifr_get_repair_info_bad1),
         cmocka_unit_test(test_ifr_get_repair_info_bad2),
         cmocka_unit_test(test_ifr_count_tiles_bad1),
+        cmocka_unit_test(test_gfsp_ecc_config_set_no_param),
+        cmocka_unit_test(test_gfsp_ecc_config_set_bad_param),
+        cmocka_unit_test(test_gfsp_ecc_config_set_bad_param2),
+        cmocka_unit_test(test_gfsp_ecc_config_set_good_param),
+        cmocka_unit_test(test_gfsp_ecc_config_get_bad1),
     };
 
     status += cmocka_run_group_tests(ifr_tests, group_setup, group_teardown);
