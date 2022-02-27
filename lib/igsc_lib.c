@@ -1702,6 +1702,22 @@ static int gsc_image_hw_config(const struct gsc_fwu_img_layout *layout,
     return IGSC_SUCCESS;
 }
 
+int igsc_image_oprom_code_devid_enforced(IN struct igsc_hw_config *hw_config, OUT bool *devid_enforced)
+{
+    struct gsc_hw_config_1 *hw_config_1;
+
+    if (!hw_config || !devid_enforced)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    hw_config_1 = (struct gsc_hw_config_1 *)hw_config->blob;
+
+    *devid_enforced = (hw_config_1->oprom_code_devid_enforcement == 1);
+
+    return IGSC_SUCCESS;
+}
+
 int igsc_image_hw_config(IN  const uint8_t *buffer,
                          IN  uint32_t buffer_len,
                          OUT struct igsc_hw_config *hw_config)
