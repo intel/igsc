@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  */
 #include <stdint.h>
 #include <stdbool.h>
@@ -422,6 +422,12 @@ static bool arg_is_check(const char *arg)
 {
     return arg_is_token(arg, "-c") ||
            arg_is_token(arg, "--check");
+}
+
+static bool arg_is_ecc_config(const char *arg)
+{
+    return arg_is_token(arg, "-e") ||
+           arg_is_token(arg, "--ecc-config");
 }
 
 /* prevent optimization
@@ -2699,6 +2705,25 @@ int ifr_count_tiles(struct igsc_device_handle *handle)
     return ret;
 }
 
+mockable_static
+int ecc_config_get(struct igsc_device_handle *handle)
+{
+    int     ret;
+    uint8_t cur_ecc_state = 0xFF;
+    uint8_t pen_ecc_state = 0xFF;
+
+    ret = igsc_ecc_config_get(handle, &cur_ecc_state, &pen_ecc_state);
+    if (ret)
+    {
+        fwupd_error("Failed to get ECC config, return code %d\n", ret);
+    }
+    else
+    {
+	    fwupd_msg("Current ECC State: %u\n", cur_ecc_state);
+	    fwupd_msg("Pending ECC State: %u\n", pen_ecc_state);
+    }
+    return ret;
+}
 
 static int do_no_special_args_func(int argc, char *argv[], int (*func_ptr)(struct igsc_device_handle *))
 {
@@ -3137,6 +3162,114 @@ static int do_ifr(int argc, char *argv[])
     return ERROR_BAD_ARGUMENT;
 }
 
+mockable_static
+int do_gfsp_ecc_config_set(int argc, char *argv[])
+{
+    struct igsc_device_handle handle;
+    const char *device_path = NULL;
+    struct igsc_device_info dev_info;
+    unsigned long req_ecc_state = 0xFF;
+    uint8_t cur_ecc_state = 0xFF;
+    uint8_t pen_ecc_state = 0xFF;
+    int ret;
+
+    if (argc <= 0)
+    {
+        fwupd_error("Missing arguments\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    memset(&handle, 0, sizeof(handle));
+
+    do
+    {
+        if (arg_is_device(argv[0]))
+        {
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No device was provided\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            device_path = argv[0];
+        }
+        else if (arg_is_ecc_config(argv[0]))
+        {
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No ecc config value provided\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            if (arg_is_token(argv[0], "0"))
+            {
+                req_ecc_state = 0;
+            }
+            else if (arg_is_token(argv[0], "1"))
+            {
+                req_ecc_state = 1;
+            }
+            else
+            {
+                fwupd_error("Bad ecc config value argument '%s'\n", argv[0]);
+                return ERROR_BAD_ARGUMENT;
+            }
+        }
+        else
+        {
+            fwupd_error("Wrong argument %s\n", argv[0]);
+            return ERROR_BAD_ARGUMENT;
+        }
+    } while(arg_next(&argc, &argv));
+
+    if (!(req_ecc_state == 0 || req_ecc_state == 1))
+    {
+        fwupd_error("No ecc config value\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    if (device_path)
+    {
+        ret = igsc_device_init_by_device(&handle, device_path);
+        if (ret)
+        {
+           ret = EXIT_FAILURE;
+           fwupd_error("Cannot initialize device: %s\n", device_path);
+           goto out;
+        }
+    }
+    else
+    {
+        if (get_first_device_info(&dev_info))
+        {
+            ret = EXIT_FAILURE;
+            fwupd_error("No device to work with\n");
+            goto out;
+        }
+
+        ret = igsc_device_init_by_device_info(&handle, &dev_info);
+        if (ret)
+        {
+            ret = EXIT_FAILURE;
+            fwupd_error("Cannot initialize device: %s\n", dev_info.name);
+            goto out;
+        }
+    }
+
+    ret = igsc_ecc_config_set(&handle, (uint8_t)req_ecc_state, &cur_ecc_state, &pen_ecc_state);
+    if (ret)
+    {
+        fwupd_error("Failed to set ECC config, return code %d\n", ret);
+    }
+    else
+    {
+	    fwupd_msg("Current ECC State: %u\n", cur_ecc_state);
+	    fwupd_msg("Pending ECC State: %u\n", pen_ecc_state);
+    }
+
+out:
+    igsc_device_close(&handle);
+    return ret;
+}
+
 static int do_gfsp(int argc, char *argv[])
 {
     const char *sub_command = NULL;
@@ -3158,6 +3291,14 @@ static int do_gfsp(int argc, char *argv[])
     if (arg_is_token(sub_command, "get-mem-ppr-status"))
     {
         return do_gfsp_get_mem_ppr_status(argc, argv);
+    }
+    if (arg_is_token(sub_command, "set-ecc-config"))
+    {
+        return do_gfsp_ecc_config_set(argc, argv);
+    }
+    if (arg_is_token(sub_command, "get-ecc-config"))
+    {
+        return do_no_special_args_func(argc, argv, ecc_config_get);
     }
 
     fwupd_error("Wrong argument %s\n", sub_command);
@@ -3391,11 +3532,15 @@ static const struct gsc_op g_ops[] = {
         .op    = do_gfsp,
         .usage = {"get-mem-err [--device <dev>]",
                   "get-mem-ppr-status [--device <dev>]",
+                  "set-ecc-config [--device <dev>] --ecc-config <config>",
+                  "get-ecc-config [--device <dev>]",
                   NULL},
         .help  = "Get number of memory errors for each tile\n"
                  "\nOPTIONS:\n\n"
                  "    -d | --device <device>\n"
                  "            device to communicate with\n"
+                 "    -e | --ecc-config <[0|1]>\n"
+                 "           0 - Disable 1 - Enable \n"
     },
 
     {
