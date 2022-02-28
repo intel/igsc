@@ -24,17 +24,25 @@ extern "C" {
 #endif /* OUT */
 
 #if defined (_WIN32) || defined (_WIN64)
-  #ifdef IGSC_DLL_EXPORTS
-    #define IGSC_EXPORT __declspec(dllexport)
-  #else
-    #define IGSC_EXPORT __declspec(dllimport)
-  #endif
-#else
-  #ifdef IGSC_DLL_EXPORTS
-    #define IGSC_EXPORT __attribute__((__visibility__("default")))
-  #else
+  #ifndef IGSC_DLL
     #define IGSC_EXPORT
-  #endif
+  #else /* IGSC_DLL */
+    #ifdef IGSC_DLL_EXPORTS
+      #define IGSC_EXPORT __declspec(dllexport)
+    #else
+      #define IGSC_EXPORT __declspec(dllimport)
+    #endif
+  #endif /* IGSC_DLL */
+#else
+  #ifndef IGSC_DLL
+    #define IGSC_EXPORT
+  #else /* IGSC_DLL */
+    #ifdef IGSC_DLL_EXPORTS
+      #define IGSC_EXPORT __attribute__((__visibility__("default")))
+    #else
+      #define IGSC_EXPORT
+    #endif
+  #endif /* IGSC_DLL */
 #endif
 /** @endcond */
 

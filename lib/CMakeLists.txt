@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright (C) 2019-2021 Intel Corporation
+# Copyright (C) 2019-2022 Intel Corporation
 cmake_minimum_required(VERSION 3.10)
 project(igsc C)
 set(LICENSE Apache)
@@ -31,7 +31,7 @@ set(LIBSOURCES
     $<$<BOOL:${WIN32}>:${PROJECT_BINARY_DIR}/igsc_lib.rc>
 )
 
-add_library(${PROJECT_NAME} SHARED ${LIBSOURCES})
+add_library(${PROJECT_NAME} ${LIBSOURCES})
 set_target_properties(${PROJECT_NAME}
                       PROPERTIES PUBLIC_HEADER ${CMAKE_SOURCE_DIR}/include/igsc_lib.h)
 
@@ -42,7 +42,8 @@ target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
 
 target_compile_definitions(
   ${PROJECT_NAME}
-  PRIVATE IGSC_DLL_EXPORTS
+  PRIVATE $<$<BOOL:${BUILD_SHARED_LIBS}>:IGSC_DLL_EXPORTS>
+  PRIVATE $<$<BOOL:${BUILD_SHARED_LIBS}>:IGSC_DLL>
   PRIVATE $<$<BOOL:${ENABLE_ENUM}>:IGSC_ENUM>
   PRIVATE $<$<BOOL:${SYSLOG}>:SYSLOG>
   PRIVATE $<$<BOOL:${ENABLE_PERF}>:IGSC_PERF>
