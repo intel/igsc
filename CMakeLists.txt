@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright (C) 2019-2020 Intel Corporation
+# Copyright (C) 2019-2022 Intel Corporation
 cmake_minimum_required(VERSION 3.10)
 project(igsc C)
 set(LICENSE Apache)
@@ -20,6 +20,7 @@ option(ENABLE_DOCS "Enable docs build" OFF)
 option(ENABLE_TESTS "Perform unit tests after build" OFF)
 option(ENABLE_WERROR "Enable treat warnings as error" ON)
 option(ENABLE_CLI "Enable command line tool build" ON)
+option(ENABLE_CLI_FORCE "Enable command line tool build also if enumeration is not supported" OFF)
 option(ENABLE_ENUM "Enable enumeration build" ON)
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 option (BUILD_USE_CONAN "Use Conan for dependencies download" NO)
@@ -97,7 +98,7 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINK_OPTIONS}")
 
 add_subdirectory("lib")
 
-if(CLI_ENABLED)
+if(CLI_ENABLED OR ENABLE_CLI_FORCE)
   add_subdirectory("src")
 endif()
 

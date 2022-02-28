@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright (C) 2019-2020 Intel Corporation
+# Copyright (C) 2019-2022 Intel Corporation
 cmake_minimum_required(VERSION 3.10)
 project(igsc-cli C)
 set(LICENSE Apache)
@@ -24,6 +24,14 @@ target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
 
 target_link_libraries(${PROJECT_NAME} igsc)
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME igsc)
+
+if(NOT BUILD_SHARED_LIBS)
+  if(CMAKE_C_COMPILER_ID MATCHES Clang OR
+     CMAKE_C_COMPILER_ID MATCHES AppleClang OR
+     CMAKE_C_COMPILER_ID MATCHES GNU)
+    target_link_options(${PROJECT_NAME} PRIVATE -static-libgcc -static)
+  endif()
+endif()
 
 install(
   TARGETS ${PROJECT_NAME}
