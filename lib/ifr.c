@@ -426,7 +426,7 @@ static int gsc_memory_ppr(struct igsc_device_handle *handle,
 
     status = gfsp_heci_validate_response_header(lib_ctx, &resp->header,
                                                 resp->gfsp_heci_header,
-                                                req->gfsp_heci_header);
+                                                GFSP_MEM_PRP_STAT_CMD);
     if (status != IGSC_SUCCESS)
     {
         gsc_error("Invalid HECI message response %d\n", status);
@@ -583,7 +583,7 @@ static int gsc_gfsp_memory_errors(IN  struct  igsc_device_handle *handle,
 
     status = gfsp_heci_validate_response_header(lib_ctx, &resp->header,
                                                 resp->gfsp_heci_header,
-                                                req->gfsp_heci_header);
+                                                GFSP_MUN_MEM_ERR_CMD);
     if (status != IGSC_SUCCESS)
     {
         gsc_error("Invalid HECI message response %d\n", status);
