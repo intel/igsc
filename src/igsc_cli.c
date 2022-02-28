@@ -1687,6 +1687,73 @@ static int do_oprom_version(int argc, char *argv[], enum igsc_oprom_type type)
     return ERROR_BAD_ARGUMENT;
 }
 
+/* The logic for the OPROM CODE Update goes like this:
+ *
+ * On DG1 there is no matching of VID/DID at all between the oprom image and the device,
+ * all oprom CODE images are fit for all devices.
+ * Starting from DG2 there are 2 types of device firmware - the old type (like in DG1) and the new one,
+ * that does the the matching between the oprom image supported 4-IDs list and the 4-IDs of the card.
+ * The matching is done like this:
+ *
+ * If oprom_code_devid_enforcement flag exists in the firmware image on the device (set by FIT tool)
+ * and it is set to True:
+ * The update is accepted only if the update file contains a Device IDs whitelist (0x37)
+ * and the card's {VID, DID, SSVID, SSDID} is in the update file's Device IDs whitelist.
+ * In this case the dev ids list will be checked by the match function elsewhere in the flow.
+ *
+ * If oprom_code_devid_enforcement flag doesn't exist in the FW image on the device or it is False:
+ * The update is accepted only if the update file does not contain a Device ID whitelist (0x37).
+ * This case is checked here in this function.
+ */
+int oprom_check_devid_enforcement(struct igsc_device_handle *handle,
+                                  struct igsc_oprom_image *img)
+{
+    struct igsc_hw_config device_hw_config;
+    int ret;
+    uint32_t count;
+    bool devid_enforced;
+
+    memset(&device_hw_config, 0, sizeof(device_hw_config));
+
+    ret = igsc_device_hw_config(handle, &device_hw_config);
+    if (ret != IGSC_SUCCESS)
+    {
+        return ret;
+    }
+
+    ret = igsc_image_oprom_code_devid_enforced(&device_hw_config, &devid_enforced);
+    if (ret != IGSC_SUCCESS)
+    {
+       fwupd_error("Internal error: failed to check devId enforcement: %d\n", ret);
+       return ret;
+    }
+
+    if (devid_enforced)
+    {
+        /* If devId enforcement is set - the dev ids list will be checked
+         * by the match function later
+         */
+        return IGSC_SUCCESS;
+    }
+
+    ret = igsc_image_oprom_count_devices_typed(img, IGSC_OPROM_CODE, &count);
+    if (ret != IGSC_SUCCESS)
+    {
+       fwupd_error("Internal error: failed to count oprom devices in the image\n");
+       return ret;
+    }
+
+    if (count != 0)
+    {
+       fwupd_error("Oprom code devId enforcement bit is not set but the supported device list is not empty\n");
+       return IGSC_ERROR_NOT_SUPPORTED;
+    }
+    else
+    {
+        return IGSC_SUCCESS;
+    }
+}
+
 mockable_static
 int oprom_update(const char *image_path,
                  struct igsc_device_handle *handle, struct igsc_device_info *dev_info,
@@ -1765,6 +1832,20 @@ int oprom_update(const char *image_path,
         goto exit;
     }
     print_oprom_version(type, &dev_version);
+
+    if (type == IGSC_OPROM_CODE)
+    {
+        /* Check devId enforcement for the case when 4ids extension exists and
+         * for the case when the extension does not exist.
+         * Note that in case of 2ids image and FW it will still work because the
+         * 2ids FW will return that devId enforcement is disabled. */
+        ret = oprom_check_devid_enforcement(handle, oimg);
+        if (ret != IGSC_SUCCESS)
+        {
+            fwupd_error("Oprom code device enforcement failed: %d\n", ret);
+            goto exit;
+        }
+    }
 
     ret = igsc_image_oprom_match_device(oimg, type, dev_info);
     if (ret == IGSC_ERROR_DEVICE_NOT_FOUND)
