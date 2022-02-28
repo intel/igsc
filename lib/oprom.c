@@ -354,6 +354,7 @@ int igsc_image_oprom_match_device(IN struct igsc_oprom_image *img,
     int ret;
     uint32_t count = 0;
     bool image_4ids;
+    bool image_2ids;
 
     if (img == NULL || device == NULL)
     {
@@ -376,6 +377,13 @@ int igsc_image_oprom_match_device(IN struct igsc_oprom_image *img,
     }
 
     image_4ids = image_oprom_has_4ids_extension(img, request_type);
+    image_2ids = image_oprom_has_2ids_extension(img);
+
+    if (image_4ids && image_2ids)
+    {
+        ret = IGSC_ERROR_BAD_IMAGE;
+        goto exit;
+    }
 
     if (image_4ids)
     {
@@ -390,7 +398,7 @@ int igsc_image_oprom_match_device(IN struct igsc_oprom_image *img,
         }
         ret = IGSC_ERROR_NOT_SUPPORTED;
     }
-    else
+    else if (image_2ids)
     {
         /*
          * The Code partition of OPROM is always supposed to match
@@ -421,6 +429,22 @@ int igsc_image_oprom_match_device(IN struct igsc_oprom_image *img,
                 ret = IGSC_SUCCESS;
                 goto exit;
             }
+        }
+        ret = IGSC_ERROR_NOT_SUPPORTED;
+    }
+    else /* Neither 4ids extension nor 2ids one are present */
+    {
+        /* IGSC_OPROM_CODE case is checked by the 4ids enforcement function */
+        if (request_type == IGSC_OPROM_CODE)
+        {
+            ret = IGSC_SUCCESS;
+            goto exit;
+        }
+        /* For IGSC_OPROM_DATA - check the device ids */
+        if (device->subsys_device_id == 0 && device->subsys_vendor_id == 0)
+        {
+            ret = IGSC_SUCCESS;
+            goto exit;
         }
         ret = IGSC_ERROR_NOT_SUPPORTED;
     }
