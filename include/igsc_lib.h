@@ -61,7 +61,7 @@ typedef void *igsc_handle_t;
  */
 enum igsc_image_type {
     IGSC_IMAGE_TYPE_UNKNOWN = 0, /**< Unknown image type */
-    IGSC_IMAGE_TYPE_GFX_FW,      /**< GSC Frimware image */
+    IGSC_IMAGE_TYPE_GFX_FW,      /**< GSC Firmware image */
     IGSC_IMAGE_TYPE_OPROM,       /**< OPROM CODA an DATA combined image */
     IGSC_IMAGE_TYPE_OPROM_CODE,  /**< OPROM code image */
     IGSC_IMAGE_TYPE_OPROM_DATA,  /**< OPROM data image */
