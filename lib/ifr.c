@@ -328,7 +328,7 @@ static int gfsp_heci_validate_response_header(struct igsc_lib_ctx *lib_ctx,
 
     if (gfsp_heci_header != command)
     {
-        gsc_error("Invalid command %d\n", resp_header->command);
+        gsc_error("Invalid command %u ~= %u\n", gfsp_heci_header, command);
         status = IGSC_ERROR_PROTOCOL;
         goto exit;
     }
