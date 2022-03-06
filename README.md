@@ -35,17 +35,17 @@ Both cmake and meson build framework are supported.
 ```
 
 
-*Windows:*
+*Windows: (Visual Studio 2019)*
 
 ```sh
-    cmake -G "Visual Studio 15 2017" -S . -B builddir
+    cmake -G "Visual Studio 16 2019" -S . -B builddir
     cmake --build builddir --config Release
 ```
 
-*Windows Debug version:*
+*Windows Debug version: (Visual Studio 2019)*
 
 ```sh
-    cmake -G "Visual Studio 15 2017" -S . -B builddir
+    cmake -G "Visual Studio 16 2019" -S . -B builddir
     cmake --build builddir --config Debug
 ```
 
@@ -62,7 +62,7 @@ Both cmake and meson build framework are supported.
 ## Command Line Tool Usage Example:
 --------------------------
 
-`# igsc <partitin> update|version  [--image <fw image file>]  [ --device <device>]`
+`# igsc <partition> update|version  [--image <fw image file>]  [ --device <device>]`
 
 **Example:**
 
