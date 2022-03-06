@@ -269,18 +269,23 @@ int igsc_image_oprom_supported_devices_typed(IN struct igsc_oprom_image *img,
 
     if (img == NULL || device == NULL || count == NULL || *count == 0)
     {
+        gsc_error("bad parameters\n");
         return IGSC_ERROR_INVALID_PARAMETER;
     }
     if (request_type != IGSC_OPROM_DATA && request_type != IGSC_OPROM_CODE)
     {
+        gsc_error("request_type %u is not supported\n", request_type);
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
     img_type = image_oprom_get_type(img);
     if ((img_type & request_type) == 0)
     {
+        gsc_error("request type %u does not match image type %u \n", request_type, img_type);
         return IGSC_ERROR_NOT_SUPPORTED;
     }
+
+    gsc_debug("img_type %u, request_type = %u\n", img_type, request_type);
 
     do
     {
@@ -379,6 +384,9 @@ int igsc_image_oprom_match_device(IN struct igsc_oprom_image *img,
     image_4ids = image_oprom_has_4ids_extension(img, request_type);
     image_2ids = image_oprom_has_2ids_extension(img);
 
+    gsc_debug("Image type %u has 4Ids extension: %s, has 2Ids extension: %s\n",
+              img_type, image_4ids ? "true" : "false", image_2ids ? "true" : "false");
+
     if (image_4ids && image_2ids)
     {
         ret = IGSC_ERROR_BAD_IMAGE;
@@ -387,11 +395,20 @@ int igsc_image_oprom_match_device(IN struct igsc_oprom_image *img,
 
     if (image_4ids)
     {
+        gsc_debug("Device: vid 0x%x did 0x%x ssvid 0x%x ssdid 0x%x\n",
+                  device->vendor_id, device->device_id,
+                  device->subsys_vendor_id, device->subsys_device_id);
+
         /* search the device list for a match */
         while ((ret = image_oprom_get_next_4ids(img, request_type, &oprom_device_4ids)) == IGSC_SUCCESS)
         {
+            gsc_debug("List: vid 0x%x did 0x%x ssvid 0x%x ssdid 0x%x\n",
+                  oprom_device_4ids.vendor_id, oprom_device_4ids.device_id,
+                  oprom_device_4ids.subsys_vendor_id, oprom_device_4ids.subsys_device_id);
+
             if (oprom_match_device_4ids(device, &oprom_device_4ids))
             {
+                gsc_debug("Match !\n");
                 ret = IGSC_SUCCESS;
                 goto exit;
             }
