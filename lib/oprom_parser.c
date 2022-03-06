@@ -98,6 +98,12 @@ static void debug_print_device_type_ext(struct mft_oprom_device_type_ext *ext)
     struct oprom_subsystem_device_id *dev = &ext->device_ids[0];
     size_t len = sizeof(struct mft_ext_header_with_data);
 
+    if (!ext)
+    {
+        gsc_debug("2ids extension is NULL\n");
+        return;
+    }
+
     gsc_debug("type %u len %u\n", ext->extension_type, ext->extension_length);
     for (; len < ext->extension_length; len += sizeof(*dev))
     {
@@ -111,6 +117,12 @@ static void debug_print_device_4ids_ext(struct mft_oprom_device_4ids_array_ext *
 {
     struct oprom_subsystem_device_4ids *dev = &ext->device_ids[0];
     size_t len = sizeof(struct mft_ext_header_with_data);
+
+    if (!ext)
+    {
+        gsc_debug("4ids extension is NULL\n");
+        return;
+    }
 
     gsc_debug("type %u len %u\n", ext->extension_type, ext->extension_length);
     for (; len < ext->extension_length; len += sizeof(*dev), dev++)
@@ -205,6 +217,11 @@ static void debug_print_pci_data(const struct oprom_pci_data *p)
 
 bool image_oprom_has_4ids_extension(struct igsc_oprom_image *img, enum igsc_oprom_type type)
 {
+    gsc_debug("oprom data extensions:\n");
+    debug_print_device_4ids_ext(img->cpd_img.dev_4ids_data);
+    gsc_debug("oprom code extensions:\n");
+    debug_print_device_4ids_ext(img->cpd_img.dev_4ids_code);
+
     if (type == IGSC_OPROM_DATA)
     {
        return (img->cpd_img.dev_4ids_data != NULL);
@@ -237,6 +254,8 @@ static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
                       header->extension_length);
             return IGSC_ERROR_BAD_IMAGE;
         }
+
+        gsc_debug("EXTENSION TYPE %u\n", header->extension_type);
 
         if (header->extension_type == MFT_EXT_TYPE_DEVICE_TYPE)
         {
@@ -272,6 +291,8 @@ static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
                            header->extension_length);
                 return IGSC_ERROR_BAD_IMAGE;
             }
+
+            gsc_debug("Inside MFT_EXT_TYPE_DEVICE_ID_ARRAY, oprom type %u\n", type);
 
             switch(type) {
             case CUR_PART_DATA:
