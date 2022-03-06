@@ -1848,7 +1848,7 @@ int oprom_update(const char *image_path,
     }
 
     ret = igsc_image_oprom_match_device(oimg, type, dev_info);
-    if (ret == IGSC_ERROR_DEVICE_NOT_FOUND)
+    if (ret == IGSC_ERROR_NOT_SUPPORTED)
     {
         fwupd_error("The image is not compatible with the device, check vid/did\n");
         goto exit;
