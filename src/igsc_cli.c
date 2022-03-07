@@ -463,6 +463,14 @@ struct gsc_op {
     const char  *help;  /* help */
 };
 
+
+static inline void print_device_fw_status(struct igsc_device_handle *handle)
+{
+    fwupd_msg("Firmware status: %s (%d)\n",
+              igsc_translate_firmware_status(igsc_get_last_firmware_status(handle)),
+              igsc_get_last_firmware_status(handle));
+}
+
 mockable_static
 int iaf_psc_update(const char *device_path, const char *image_path)
 {
@@ -523,6 +531,7 @@ int iaf_psc_update(const char *device_path, const char *image_path)
     if (ret)
     {
         fwupd_error("Update process failed\n");
+        print_device_fw_status(&handle);
     }
 
 exit:
@@ -553,6 +562,7 @@ int firmware_check_hw_config(struct igsc_device_handle *handle, const struct img
     ret = igsc_image_hw_config(img->blob, img->size, &image_hw_config);
     if (ret != IGSC_SUCCESS && ret != IGSC_ERROR_NOT_SUPPORTED)
     {
+        print_device_fw_status(handle);
         return ret;
     }
 
@@ -625,6 +635,7 @@ int firmware_update(const char *device_path,
         else
         {
             fwupd_error("Cannot retrieve firmware version from device: %s\n", device_path);
+            print_device_fw_status(&handle);
         }
         goto exit;
     }
@@ -696,23 +707,19 @@ int firmware_update(const char *device_path,
     if (ret)
     {
         fwupd_error("Update process failed\n");
+        print_device_fw_status(&handle);
     }
 
     ret = igsc_device_fw_version(&handle, &device_fw_version);
     if (ret != IGSC_SUCCESS)
     {
         fwupd_error("Cannot retrieve firmware version from device: %s\n", device_path);
+        print_device_fw_status(&handle);
         goto exit;
     }
     print_dev_fw_version(&device_fw_version);
 
 exit:
-    if (ret != IGSC_SUCCESS)
-    {
-        fwupd_verbose("firmware status: %s(%d)\n",
-                      igsc_translate_firmware_status(igsc_get_last_firmware_status(&handle)),
-                      igsc_get_last_firmware_status(&handle));
-    }
     (void)igsc_device_close(&handle);
 
     free(img);
@@ -745,6 +752,7 @@ int firmware_version(const char *device_path)
         }
         else {
             fwupd_error("Cannot retrieve firmware version from device: %s\n", device_path);
+            print_device_fw_status(&handle);
         }
         goto exit;
     }
@@ -752,13 +760,6 @@ int firmware_version(const char *device_path)
     print_dev_fw_version(&fw_version);
 
 exit:
-    if (ret != IGSC_SUCCESS)
-    {
-        fwupd_verbose("firmware status: %s(%d)\n",
-                      igsc_translate_firmware_status(igsc_get_last_firmware_status(&handle)),
-                      igsc_get_last_firmware_status(&handle));
-    }
-
     (void)igsc_device_close(&handle);
     return ret;
 }
@@ -869,14 +870,11 @@ static int firmware_hw_config(const char *device_path, struct igsc_hw_config *hw
     {
         fwupd_error("config option is not available\n");
     }
-
-exit:
-    if (ret != IGSC_SUCCESS && ret != IGSC_ERROR_NOT_SUPPORTED)
+    if (ret)
     {
-        fwupd_verbose("firmware status: %s(%d)\n",
-                      igsc_translate_firmware_status(igsc_get_last_firmware_status(&handle)),
-                      igsc_get_last_firmware_status(&handle));
+        print_device_fw_status(&handle);
     }
+exit:
     (void)igsc_device_close(&handle);
     return ret;
 }
@@ -1235,6 +1233,7 @@ int oprom_device_version(const char *device_path,
         else
         {
             fwupd_error("Failed to get oprom version from device: %s\n", device_path);
+            print_device_fw_status(&handle);
         }
         goto exit;
     }
@@ -1536,6 +1535,7 @@ int oprom_update(const char *image_path,
         else
         {
             fwupd_error("Cannot initialize device: %s\n", dev_info->name);
+            print_device_fw_status(handle);
         }
         goto exit;
     }
@@ -1602,13 +1602,15 @@ int oprom_update(const char *image_path,
     }
     if (ret)
     {
-        fwupd_error("OPROM update failed\n");
+        fwupd_error("OPROM update failed ret = %d\n", ret);
+        print_device_fw_status(handle);
     }
 
     ret = igsc_device_oprom_version(handle, type, &dev_version);
     if (ret != IGSC_SUCCESS)
     {
         fwupd_error("Failed to get oprom version after update\n");
+        print_device_fw_status(handle);
         goto exit;
     }
     print_oprom_version(type, &dev_version);
@@ -2020,6 +2022,7 @@ int fwdata_device_version(const char *device_path)
         else
         {
             fwupd_error("Failed to get fwdata version from device: %s\n", device_path);
+            print_device_fw_status(&handle);
         }
         goto exit;
     }
@@ -2085,6 +2088,7 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
         else
         {
             fwupd_error("Cannot initialize device: %s\n", dev_info->name);
+            print_device_fw_status(handle);
         }
         goto exit;
     }
@@ -2157,13 +2161,15 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
     }
     if (ret)
     {
-        fwupd_error("fwdata update failed\n");
+        fwupd_error("fwdata update failed ret = %d\n", ret);
+        print_device_fw_status(handle);
     }
 
     ret = igsc_device_fwdata_version(handle, &dev_version);
     if (ret != IGSC_SUCCESS)
     {
         fwupd_error("Failed to get firmware version after update\n");
+        print_device_fw_status(handle);
         goto exit;
     }
     print_dev_fwdata_version(&dev_version);
@@ -2405,6 +2411,7 @@ int get_mem_err(struct igsc_device_handle *handle)
     if (ret)
     {
         fwupd_error("Failed to get memory errors number, returned %d\n", ret);
+        print_device_fw_status(handle);
         return EXIT_FAILURE;
     }
     printf("Maximum number of tiles: %u\n", tiles->num_of_tiles);
@@ -2478,6 +2485,7 @@ int get_mem_ppr_status(struct igsc_device_handle *handle)
     if (ret)
     {
         fwupd_error("Failed to retrieve memory ppr devices number, return code %d\n", ret);
+        print_device_fw_status(handle);
         return EXIT_FAILURE;
     }
 
@@ -2499,6 +2507,7 @@ int get_mem_ppr_status(struct igsc_device_handle *handle)
     if (ret)
     {
         fwupd_error("Failed to retrieve ppr status, return code %d\n", ret);
+        print_device_fw_status(handle);
     }
     else
     {
@@ -2525,6 +2534,7 @@ int get_status_ext(struct igsc_device_handle *handle)
     if (ret)
     {
         fwupd_error("Failed to get ifr status, library return code %d\n", ret);
+        print_device_fw_status(handle);
         return EXIT_FAILURE;
     }
 
@@ -2591,6 +2601,7 @@ int get_status(struct igsc_device_handle *handle)
     {
         fwupd_error("Failed to get ifr status, library return code %d, command result %u\n",
                     ret, result);
+        print_device_fw_status(handle);
         return EXIT_FAILURE;
     }
 
@@ -2636,6 +2647,7 @@ int array_scan_test(struct igsc_device_handle *handle)
     {
         fwupd_error("Failed to run array and scan ifr test, library return code %d\n",
                     ret);
+        print_device_fw_status(handle);
         return EXIT_FAILURE;
     }
 
@@ -2673,6 +2685,7 @@ int mem_ppr_test(struct igsc_device_handle *handle)
     if (ret)
     {
         fwupd_error("Failed to run ppr test, library return code %d\n", ret);
+        print_device_fw_status(handle);
         return EXIT_FAILURE;
     }
 
@@ -2697,6 +2710,7 @@ int ifr_count_tiles(struct igsc_device_handle *handle)
     if (ret)
     {
         fwupd_error("Failed to run ifr count tiles, library return code %d\n", ret);
+        print_device_fw_status(handle);
         return EXIT_FAILURE;
     }
 
@@ -2716,6 +2730,7 @@ int ecc_config_get(struct igsc_device_handle *handle)
     if (ret)
     {
         fwupd_error("Failed to get ECC config, return code %d\n", ret);
+        print_device_fw_status(handle);
     }
     else
     {
@@ -2867,9 +2882,10 @@ int run_ifr_test(struct igsc_device_handle *handle, uint8_t test_type, uint8_t t
     ret = igsc_ifr_run_test(handle, test_type, tiles_mask, &result, &run_status, &error_code);
     if (ret || result)
     {
-       fwupd_error("Failed to run test, library return code %d Heci result %u\n",
-                   ret, result);
-       return EXIT_FAILURE;
+        fwupd_error("Failed to run test, library return code %d Heci result %u\n",
+                    ret, result);
+        print_device_fw_status(handle);
+        return EXIT_FAILURE;
     }
 
     print_run_test_status(run_status);
