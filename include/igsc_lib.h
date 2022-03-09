@@ -196,19 +196,20 @@ struct igsc_device_info {
  * @addtogroup IGSC_ERRORS
  * @{
  */
-#define IGSC_ERROR_BASE              0x0000U               /**< Error Base */
-#define IGSC_SUCCESS                 (IGSC_ERROR_BASE + 0) /**< Success */
-#define IGSC_ERROR_INTERNAL          (IGSC_ERROR_BASE + 1) /**< Internal Error */
-#define IGSC_ERROR_NOMEM             (IGSC_ERROR_BASE + 2) /**< Memory Allocation Failed */
-#define IGSC_ERROR_INVALID_PARAMETER (IGSC_ERROR_BASE + 3) /**< Invalid parameter was provided */
-#define IGSC_ERROR_DEVICE_NOT_FOUND  (IGSC_ERROR_BASE + 4) /**< Requested device was not found */
-#define IGSC_ERROR_BAD_IMAGE         (IGSC_ERROR_BASE + 5) /**< Provided image has wrong format */
-#define IGSC_ERROR_PROTOCOL          (IGSC_ERROR_BASE + 6) /**< Error in the update protocol */
-#define IGSC_ERROR_BUFFER_TOO_SMALL  (IGSC_ERROR_BASE + 7) /**< Provided buffer is too small */
-#define IGSC_ERROR_INVALID_STATE     (IGSC_ERROR_BASE + 8) /**< Invalid library internal state */
-#define IGSC_ERROR_NOT_SUPPORTED     (IGSC_ERROR_BASE + 9) /**< Unsupported request */
-#define IGSC_ERROR_TIMEOUT           (IGSC_ERROR_BASE + 11)/**< The operation has timed out */
-#define IGSC_ERROR_PERMISSION_DENIED (IGSC_ERROR_BASE + 12)/**< The process doesn't have access rights */
+#define IGSC_ERROR_BASE              0x0000U                /**< Error Base */
+#define IGSC_SUCCESS                 (IGSC_ERROR_BASE + 0)  /**< Success */
+#define IGSC_ERROR_INTERNAL          (IGSC_ERROR_BASE + 1)  /**< Internal Error */
+#define IGSC_ERROR_NOMEM             (IGSC_ERROR_BASE + 2)  /**< Memory Allocation Failed */
+#define IGSC_ERROR_INVALID_PARAMETER (IGSC_ERROR_BASE + 3)  /**< Invalid parameter was provided */
+#define IGSC_ERROR_DEVICE_NOT_FOUND  (IGSC_ERROR_BASE + 4)  /**< Requested device was not found */
+#define IGSC_ERROR_BAD_IMAGE         (IGSC_ERROR_BASE + 5)  /**< Provided image has wrong format */
+#define IGSC_ERROR_PROTOCOL          (IGSC_ERROR_BASE + 6)  /**< Error in the update protocol */
+#define IGSC_ERROR_BUFFER_TOO_SMALL  (IGSC_ERROR_BASE + 7)  /**< Provided buffer is too small */
+#define IGSC_ERROR_INVALID_STATE     (IGSC_ERROR_BASE + 8)  /**< Invalid library internal state */
+#define IGSC_ERROR_NOT_SUPPORTED     (IGSC_ERROR_BASE + 9)  /**< Unsupported request */
+#define IGSC_ERROR_INCOMPATIBLE      (IGSC_ERROR_BASE + 10) /**< Incompatible request */
+#define IGSC_ERROR_TIMEOUT           (IGSC_ERROR_BASE + 11) /**< The operation has timed out */
+#define IGSC_ERROR_PERMISSION_DENIED (IGSC_ERROR_BASE + 12) /**< The process doesn't have access rights */
 /**
  * @}
  */
@@ -948,28 +949,6 @@ void igsc_device_iterator_destroy(struct igsc_device_iterator *iter);
  */
 
 /**
- * @name IGSC_ERRORS
- *     The Library return codes
- * @addtogroup IGSC_ERRORS
- * @{
- */
-#define IGSC_ERROR_BASE              0x0000U               /**< Error Base */
-#define IGSC_SUCCESS                 (IGSC_ERROR_BASE +  0) /**< Success */
-#define IGSC_ERROR_INTERNAL          (IGSC_ERROR_BASE +  1) /**< Internal Error */
-#define IGSC_ERROR_NOMEM             (IGSC_ERROR_BASE +  2) /**< Memory Allocation Failed */
-#define IGSC_ERROR_INVALID_PARAMETER (IGSC_ERROR_BASE +  3) /**< Invalid parameter was provided */
-#define IGSC_ERROR_DEVICE_NOT_FOUND  (IGSC_ERROR_BASE +  4) /**< Requested device was not found */
-#define IGSC_ERROR_BAD_IMAGE         (IGSC_ERROR_BASE +  5) /**< Provided image has wrong format */
-#define IGSC_ERROR_PROTOCOL          (IGSC_ERROR_BASE +  6) /**< Error in the update protocol */
-#define IGSC_ERROR_BUFFER_TOO_SMALL  (IGSC_ERROR_BASE +  7) /**< Provided buffer is too small */
-#define IGSC_ERROR_INVALID_STATE     (IGSC_ERROR_BASE +  8) /**< Invalid library internal state */
-#define IGSC_ERROR_NOT_SUPPORTED     (IGSC_ERROR_BASE +  9) /**< Unsupported request */
-#define IGSC_ERROR_INCOMPATIBLE      (IGSC_ERROR_BASE + 10) /**< Incompatible request */
-/**
- * @}
- */
-
-/**
  * ifr tiles masks
  */
 enum igsc_ifr_tiles {
@@ -1008,10 +987,6 @@ enum ifr_test_run_status
     IFR_TEST_STATUS_NON_SUBSLICE_FAILURE,  /**< Test completed, unrecoverable error found (non-Subslice failure). */
     IFR_TEST_STATUS_ERROR,                 /**< Test error */
 };
-/**
- * @}
- */
-
 
 /**
  *  @brief Retrieves the status of GSC IFR device.
@@ -1050,6 +1025,9 @@ int igsc_ifr_run_test(IN struct igsc_device_handle *handle,
                       OUT uint8_t  *result,
                       OUT uint8_t  *run_status,
                       OUT uint32_t *error_code);
+/**
+ * @}
+ */
 
 /**
  * @}
