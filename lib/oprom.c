@@ -348,6 +348,24 @@ int igsc_image_oprom_has_2ids_extension(IN struct igsc_oprom_image *img,
     return IGSC_SUCCESS;
 }
 
+/* The oprom update logic for the 4-IDs allowlist.
+ * For the Data portion:
+ * If the Device IDs allowlist (0x37) exists in the update image:
+ *    The update is accepted only if the card's {VID, DID, SSVID, SSDID}
+ *    is in the update image's Device IDs allowlist.
+ * If the Device IDs allowlist (0x37) doesn't exist in the update image:
+ *    The update is accepted only if the card's SSVID and SSDID are zero.
+ *
+ * For the Code portion:
+ * If oprom_code_devid_enforcement flag exists in the SPI Image and is set to True:
+ *    The update is accepted only if the update file contains a Device IDs allowlist (0x37)
+ *    and the card's {VID, DID, SSVID, SSDID} is in the update file's Device IDs allowlist.
+ * If the flag doesn't exist or is False:
+ *    The update is accepted only if the update file does not contain a Device ID allowlist (0x37)
+ *
+ * Part of this logic is implemented in this function and part elsewhere
+ * when we are dealing with the enforcement.
+ */
 int igsc_image_oprom_match_device(IN struct igsc_oprom_image *img,
                                   IN enum igsc_oprom_type request_type,
                                   IN struct igsc_device_info *device)
