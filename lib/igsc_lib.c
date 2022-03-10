@@ -1534,6 +1534,7 @@ int igsc_hw_config_to_string(IN const struct igsc_hw_config *hw_config,
                              IN char *buf, IN size_t length)
 {
     int ret;
+    int acc;
 
     if (hw_config == NULL  || buf == NULL || length == 0)
     {
@@ -1563,18 +1564,14 @@ int igsc_hw_config_to_string(IN const struct igsc_hw_config *hw_config,
     {
         return ret;
     }
-    if ((size_t)ret == length)
+    if ((size_t)ret >= length)
     {
         return ret;
     }
 
     buf += ret;
     length -= (size_t)ret;
-
-    if (to_hw_config_1(hw_config)->hw_step == 0)
-    {
-        ret += snprintf(buf + ret, length, " hw step: [ n/a ]");
-    }
+    acc = ret;
 
     switch(to_hw_config_1(hw_config)->hw_step)
     {
@@ -1592,7 +1589,70 @@ int igsc_hw_config_to_string(IN const struct igsc_hw_config *hw_config,
         ret = snprintf(buf, length, " hw step: [ n/a ]");
     }
 
-    return ret;
+    if (ret < 0)
+    {
+        return ret;
+    }
+    if ((size_t)ret >= length)
+    {
+        return acc + (int)length;
+    }
+
+    buf += ret;
+    length -= (size_t)ret;
+    acc += ret;
+
+    if (to_hw_config_1(hw_config)->oprom_code_devid_enforcement == 0)
+    {
+        ret = snprintf(buf, length, " oprom code device IDs check is not enforced");
+    }
+    else
+    {
+        ret = snprintf(buf, length, " oprom code device IDs check is enforced");
+    }
+
+    if (ret < 0)
+    {
+        return ret;
+    }
+    if ((size_t)ret >= length)
+    {
+        return acc + (int)length;
+    }
+
+    buf += ret;
+    length -= (size_t)ret;
+    acc += ret;
+
+    ret = snprintf(buf, length, ", flags: 0x%04x", to_hw_config_1(hw_config)->flags);
+
+    if (ret < 0)
+    {
+        return ret;
+    }
+    if ((size_t)ret >= length)
+    {
+        return acc + (int)length;
+    }
+
+    buf += ret;
+    length -= (size_t)ret;
+    acc += ret;
+
+    ret = snprintf(buf, length, ", debug_config: 0x%04x", to_hw_config_1(hw_config)->debug_config);
+
+    if (ret < 0)
+    {
+        return ret;
+    }
+    if ((size_t)ret >= length)
+    {
+        return acc + (int)length;
+    }
+
+    acc += ret;
+
+    return acc;
 }
 
 
