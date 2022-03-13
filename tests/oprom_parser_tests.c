@@ -28,7 +28,7 @@ static int group_setup(void **state)
 
 static void setup_pci_data(struct oprom_pci_data *p_d)
 {
-    p_d->code_type = OPROM_CODE_TYPE_CODE;
+    p_d->code_type = OPROM_CODE_TYPE_DATA;
     p_d->signature = PCI_DATA_SIGNATURE;
     p_d->vendor_id = PCI_VENDOR_ID;
     p_d->device_id = PCI_DEVICE_ID;
@@ -58,6 +58,7 @@ static int test_setup(void **state)
 
     memset((void *)img->buffer, 0, IMAGE_SIZE);
     img->buffer_len = IMAGE_SIZE;
+    img->cpd_img.dev_ext = NULL;
 
     pci_header = (struct oprom_header_ext_v2 *)img->buffer;
     setup_pci_header(pci_header);
