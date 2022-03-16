@@ -1,22 +1,31 @@
 name: gitlint
-on: [pull_request]
+on: [workflow_call]
 
 jobs:
   gitlint:
-    runs-on: self-hosted
-    name: Lint commits, branches, and pull requests
+    runs-on: [self-hosted, Linux]
+    name: Lint commit messages
     container:
-      image: ger-registry.caas.intel.com/sfip-sw/meswci-python
+      image: ger-registry.caas.intel.com/sfip-sw/efw-build:20.04
       options: --user 1001
+    env:
+      DEPTH: 50
     steps:
       - name: Checkout the the PR branch
         uses: actions/checkout@v2
         with:
-          fetch-depth: 0
+          fetch-depth: ${DEPTH}
+      - run: git -c protocol.version=2 fetch --no-tags --prune --progress --depth=${DEPTH} origin ${GITHUB_BASE_REF}
       - name: Run gitlint
         run: |
           base=origin/${GITHUB_BASE_REF}
+          head=HEAD
           merge_base=$(git merge-base --fork-point ${base} HEAD)
           git log --oneline ${merge_base}..${head}
           gitlint --commits ${merge_base}..${head}
-
+      - name: Check for duplicates
+        run: |
+          base=origin/${GITHUB_BASE_REF}
+          merge_base=$(git merge-base --fork-point ${base} HEAD)
+          duplicates=$(git log --format="%s"  ${merge_base}..HEAD | uniq -d)
+          if  [ -n "$duplicates" ] ; then  echo "Error: duplicates $duplicates"; exit 1; fi

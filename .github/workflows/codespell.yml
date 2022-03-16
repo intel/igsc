@@ -1,0 +1,20 @@
+name: codespell
+on:
+  workflow_call:
+
+jobs:
+  codespell:
+    runs-on: [self-hosted,Linux]
+    name: Check code spelling
+    container:
+      image: ger-registry.caas.intel.com/sfip-sw/meswci-python
+      options: --user 1001
+    steps:
+      - name: Checkout the the PR branch
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - name: Run codespell
+        run: |
+          codespell | tee ./codespell.log
+          if  [ -s codespell.log ]; then exit 1; fi

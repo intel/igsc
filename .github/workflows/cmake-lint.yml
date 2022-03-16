@@ -1,0 +1,25 @@
+name: cmake-lint
+on: [workflow_call]
+
+jobs:
+  gitlint:
+    runs-on: [self-hosted, Linux]
+    name: CMake Lint
+    container:
+      image: ger-registry.caas.intel.com/sfip-sw/efw-build:20.04
+      options: --user 1001
+    steps:
+      - name: Checkout the the PR branch
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - name: Run
+        run: |
+          .gitlab-ci/check-cmake.sh | tee cmakelint.log
+      - name: Save the results
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: cmakelint
+          path: cmakelint.log
+          retention-days: 3
