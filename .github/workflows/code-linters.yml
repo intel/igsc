@@ -9,12 +9,15 @@ jobs:
     uses: ./.github/workflows/codespell.yml
   check-cmake-lint:
     uses: ./.github/workflows/cmake-lint.yml
+  check-clang-scan:
+    uses: ./.github/workflows/clang-scan.yml
   fastci:
     runs-on: [self-hosted, Linux]
     needs:
     - check-gitlint
     - check-codespell
     - check-cmake-lint
+    - check-clang-scan
     steps:
     - name: fastci
       run: |

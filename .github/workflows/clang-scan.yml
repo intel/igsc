@@ -1,0 +1,59 @@
+name: clang-scan
+on: [workflow_call]
+
+jobs:
+  clang-format:
+    runs-on: [self-hosted, Linux]
+    env:
+      BUILDDIR: /tmp/build
+    name: Check clang checks
+    container:
+      image: ger-registry.caas.intel.com/sfip-sw/lms-ubuntu:18.04
+      options: --user 1001
+    steps:
+      - name: Checkout the PR branch
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - name: Run clang scan-build
+        run: |
+          mkdir -p ${BUILDDIR}
+          cd ${BUILDDIR}
+          cmake -DCMAKE_C_COMPILER=clang $GITHUB_WORKSPACE
+          scan-build -o ./scan-build make -j$(nproc)
+      - name: 'Upload Clang Scan Results'
+        uses: actions/upload-artifact@v3
+        if : failure()
+        with:
+          name: clang-scan-build-results
+          path: ${BUILDDIR}/scan-build/
+          retention-days: 3
+  clang-tidy:
+    runs-on: [self-hosted, Linux]
+    env:
+      BUILDDIR: /tmp/build
+    name: Check clang-tidy
+    container:
+      image: ger-registry.caas.intel.com/sfip-sw/lms-ubuntu:19.10
+      options: --user 1001
+    steps:
+      - name: Checkout the PR branch
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - name: Clang Tidy
+        run: |
+          rm -rf ${BUILDDIR}
+          mkdir -p ${BUILDDIR}
+          cd ${BUILDDIR}
+          cmake "-DCMAKE_C_CLANG_TIDY=clang-tidy" $GITHUB_WORKSPACE
+          make -j$(nproc) > tidy.out
+          cat tidy.out | clang-tidy-to-junit.py $GITHUB_WORKSPACE > junit.xml
+      - name: 'Upload Tidy Scan Results'
+        uses: actions/upload-artifact@v3
+        if : failure()
+        with:
+          name: clang-tidy-junit.xml
+          path: ${BUILDDIR}/junit.xml
+          retention-days: 3
+
