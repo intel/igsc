@@ -1,5 +1,50 @@
 # IGSC FUL
 
+## [v0.8.1] - 2022-03-22
+
+### Changed
+
+1. lib: extend igsc_hw_config_to_string
+2. lib: add comment describing oprom update logic
+3. lib: use legacy device extension for oprom data only
+4. lib: define 4-ids extension structures
+5. lib: update the oprom code devId enforcement flag
+6. cli: print status from fw in non-verbose mode
+7. README: recommend visual studio 2019
+8. cmake: add option to static build
+
+### Fixed
+
+1. cli: fix handling of match function return value
+2. ut: fix image type in the test setup
+3. lib: fix struct definition coding style
+4. lib: fix gfsp_heci_validate_response_header usage
+5. lib: fix error message in gfsp response validation
+
+### Added
+1. lib: add debug prints for 4ids extension processing
+2. lib: implement special case of no device extensions
+3. cli: add oprom code update devId enforcement check
+4. lib: add igsc_image_oprom_code_devid_enforced() api
+5. ut: add cli unit-tests for 4ids functionality
+6. ut: add tests for the 4ids library functions
+7. cli: implement cli changes for handling 4ids images
+8. lib: add oprom image has 4ids or 2ids extension api
+9. lib: add oprom image 4ids and 2ids extension functions
+10. lib: implement oprom 4ids library api
+11. lib: implement oprom 4ids parsing helper functions
+12. lib: parse 4ids supported device list extension
+13. lib: define 4-ids extension structures
+14. lib: define 4-ids extension structures
+15. lib: add oprom code device ids flag to heci reply
+16. lib: add definitions of the new apis for 4-IDs oprom
+17. lib: define the oprom device info structure with 4 IDs
+18. doc: add ecc config commands
+19. test: add tests for ecc config
+20. cli: add ecc config commands
+21. lib: implement ecc config commands
+22. lib: add heci definitions for ecc config commands
+
 ## [v0.8.0] - 2022-02-22
 
 Note: non backward compatible change (num_of_tiles to max_num_of_tiles)
