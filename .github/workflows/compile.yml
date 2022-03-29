@@ -34,7 +34,7 @@ jobs:
       - name: Create build dir
         run: mkdir ${BUILDDIR}/
 
-      - name: Run CMake compilation with ${{ inputs.compiler }}
+      - name: Run on ${{ matrix.container }} cmake compilation with ${{ inputs.compiler }}
         shell: bash
         run: |
           CMAKE_BUILD_DIR=${BUILDDIR}/cmake
