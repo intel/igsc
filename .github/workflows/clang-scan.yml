@@ -2,7 +2,7 @@ name: clang-scan
 on: [workflow_call]
 
 jobs:
-  clang-format:
+  clang-scan-build:
     runs-on: [self-hosted, Linux]
     env:
       BUILDDIR: /tmp/build

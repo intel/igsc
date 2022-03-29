@@ -1,0 +1,61 @@
+name: ubuntu-compile
+on:
+   workflow_call:
+     inputs:
+       compiler:
+         description: 'Compiler'
+         default: 'gcc'
+         required: false
+         type: string
+
+jobs:
+  clang-compile:
+    runs-on: [self-hosted, Linux]
+    env:
+      BUILDDIR: /tmp/build
+    name: Compile with ${{ inputs.compiler }}
+    strategy:
+      matrix:
+        container:
+        - "lms-ubuntu:18.04"
+        - "lms-ubuntu:20.04"
+        device-enumeration: ['on', 'off']
+
+    container:
+      image: ger-registry.caas.intel.com/sfip-sw/${{ matrix.container }}
+      # git checkout is run with docker privileges so it will create
+      # files with root permissions we cannot clean those later.
+      options: --user 1001
+    steps:
+      - name: Checkout the PR branch
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Create build dir
+        run: mkdir ${BUILDDIR}/
+
+      - name: Run CMake compilation with ${{ inputs.compiler }}
+        shell: bash
+        run: |
+          CMAKE_BUILD_DIR=${BUILDDIR}/cmake
+          CMAKE_ARGS="-DCMAKE_C_COMPILER=${{ inputs.compiler }}"
+          if [[ "${{ matrix.device-enumeration }}" = "on" ]]; then
+            CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_ENUM:BOOL=ON"
+          else
+            CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_ENUM:BOOL=OFF"
+          fi
+          cmake --version
+          mkdir -p ${CMAKE_BUILD_DIR}
+          pushd ${CMAKE_BUILD_DIR}
+          cmake ${GITHUB_WORKSPACE} ${CMAKE_ARGS}
+          popd
+          make -C ${CMAKE_BUILD_DIR} -j$(nproc) package
+
+      - name: Run on ${{ matrix.container }} meson compilation with ${{ inputs.compiler }}
+        run: |
+          CC=${{ inputs.compiler }} meson setup $BUILDDIR/meson/
+          meson configure -Dbuildtype=debug $BUILDDIR/meson
+          ninja -v -C $BUILDDIR/meson
+          meson configure -Dbuildtype=release ${BUILDDIR}/meson
+          ninja -v -C ${BUILDDIR}/meson
