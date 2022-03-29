@@ -35,7 +35,7 @@ jobs:
     name: Check clang-tidy
     container:
       image: ger-registry.caas.intel.com/sfip-sw/lms-ubuntu:19.10
-      options: --user 1001
+      options: --user 18411
     steps:
       - name: Checkout the PR branch
         uses: actions/checkout@v2
