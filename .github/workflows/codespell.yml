@@ -4,12 +4,14 @@ on:
 
 jobs:
   codespell:
-    runs-on: [self-hosted,Linux]
+    runs-on: [UbuntuJer]
     name: Check code spelling
     container:
       image: ger-registry.caas.intel.com/sfip-sw/meswci-python
-      options: --user 1001
+      options: --user 18411
     steps:
+      - name: Cleaning up the $GITHUB_WORKSPACE as root from a Docker image
+        run: find /__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}/. -name . -o -prune -exec rm -rf -- {} + || true
       - name: Checkout the the PR branch
         uses: actions/checkout@v2
         with:

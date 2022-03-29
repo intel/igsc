@@ -10,7 +10,7 @@ on:
 
 jobs:
   clang-compile:
-    runs-on: [self-hosted, Linux]
+    runs-on: [UbuntuJer]
     env:
       BUILDDIR: /tmp/build
     name: Compile with ${{ inputs.compiler }}
@@ -22,12 +22,10 @@ jobs:
 
     container:
       image: ger-registry.caas.intel.com/sfip-sw/${{ matrix.container }}
-      # git checkout is run with docker privileges so it will create
-      # files with root permissions we cannot clean those later.
-      options: --user 1001
+      options: --user 18411
     steps:
       - name: Checkout the PR branch
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 1
 

@@ -3,16 +3,16 @@ on: [workflow_call]
 
 jobs:
   clang-scan-build:
-    runs-on: [self-hosted, Linux]
+    runs-on: [UbuntuJer]
     env:
       BUILDDIR: /tmp/build
     name: Check clang checks
     container:
       image: ger-registry.caas.intel.com/sfip-sw/lms-ubuntu:18.04
-      options: --user 1001
+      options: --user 18411
     steps:
       - name: Checkout the PR branch
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 1
       - name: Run clang scan-build
@@ -56,4 +56,3 @@ jobs:
           name: clang-tidy-junit.xml
           path: ${BUILDDIR}/junit.xml
           retention-days: 3
-

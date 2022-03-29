@@ -3,16 +3,16 @@ on: [workflow_call]
 
 jobs:
   gitlint:
-    runs-on: [self-hosted, Linux]
+    runs-on: [UbuntuJer]
     name: Lint commit messages
     container:
       image: ger-registry.caas.intel.com/sfip-sw/efw-build:20.04
-      options: --user 1001
+      options: --user 18411
     env:
       DEPTH: 50
     steps:
       - name: Checkout the the PR branch
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: ${DEPTH}
       - run: git -c protocol.version=2 fetch --no-tags --prune --progress --depth=${DEPTH} origin ${GITHUB_BASE_REF}
