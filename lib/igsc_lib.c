@@ -656,7 +656,7 @@ static int gsc_fwu_get_version(struct igsc_lib_ctx *lib_ctx,
     int status;
     size_t request_len;
     size_t response_len;
-    size_t received_len;
+    size_t received_len = 0;
     size_t buf_len;
 
     struct gsc_fwu_heci_version_resp *resp;
