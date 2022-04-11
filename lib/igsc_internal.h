@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  */
 #ifndef __IGSC_INTERNAL_H__
 #define __IGSC_INTERNAL_H__
@@ -16,6 +16,7 @@ struct igsc_lib_ctx {
     bool driver_init_called;          /**< Driver was initialized */
     struct gsc_fwu_img_layout layout; /**< Context for the image layout */
     uint32_t last_firmware_status;    /**< last status code returned from the firmware */
+    bool restore_power_control;       /**< need to restore power control for the device */
 };
 
 int gsc_fwu_buffer_validate(struct igsc_lib_ctx *lib_ctx,
