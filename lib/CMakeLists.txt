@@ -20,6 +20,11 @@ else()
     set(ENUM_SOURCES enum/igsc_enum_stubs.c)
 endif()
 
+set(POWER_SOURCES
+    $<$<BOOL:${UNIX}>:power/igsc_power_udev.c>
+    $<$<BOOL:${WIN32}>:power/igsc_power_windows.c>
+)
+
 set(LIBSOURCES
     igsc_lib.c
     ifr.c
@@ -27,6 +32,7 @@ set(LIBSOURCES
     oprom_parser.c
     fw_data_parser.c
     ${ENUM_SOURCES}
+    ${POWER_SOURCES}
     $<$<BOOL:${ENABLE_PERF}>:igsc_perf.c>
     $<$<BOOL:${WIN32}>:${PROJECT_BINARY_DIR}/igsc_lib.rc>
 )

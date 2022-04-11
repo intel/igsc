@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  */
 
 #include <stdint.h>
@@ -152,6 +152,15 @@ void gsc_driver_deinit(struct igsc_lib_ctx *lib_ctx)
         return;
     }
 
+    if (lib_ctx->restore_power_control)
+    {
+        if (gsc_set_device_power_control(lib_ctx->device_path, GSC_POWER_CONTROL_AUTO) == IGSC_SUCCESS)
+        {
+             gsc_debug("restored power control to 'auto' for %s\n", lib_ctx->device_path);
+             lib_ctx->restore_power_control = false;
+        }
+    }
+
     driver_working_buffer_free(lib_ctx);
 
     TeeDisconnect(&lib_ctx->driver_handle);
@@ -164,6 +173,7 @@ int gsc_driver_init(struct igsc_lib_ctx *lib_ctx, IN const GUID *guid)
 {
     TEESTATUS tee_status;
     int status;
+    uint8_t power_control;
 
     if (lib_ctx->dev_handle == IGSC_INVALID_DEVICE_HANDLE)
     {
@@ -194,6 +204,16 @@ int gsc_driver_init(struct igsc_lib_ctx *lib_ctx, IN const GUID *guid)
     {
         TeeDisconnect(&lib_ctx->driver_handle);
         goto exit;
+    }
+
+    if (gsc_get_device_power_control(lib_ctx->device_path, &power_control) == IGSC_SUCCESS &&
+        power_control != GSC_POWER_CONTROL_ON)
+    {
+        if (gsc_set_device_power_control(lib_ctx->device_path, GSC_POWER_CONTROL_ON) == IGSC_SUCCESS)
+        {
+            gsc_debug("set power control to 'on' for %s\n", lib_ctx->device_path);
+            lib_ctx->restore_power_control = true;
+        }
     }
 
     lib_ctx->driver_init_called = true;

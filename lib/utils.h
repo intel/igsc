@@ -1,10 +1,11 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  */
 #ifndef __IGSC_UTIL_H__
 #define __IGSC_UTIL_H__
 
+#include <stdint.h>
 #ifdef __linux__
 #include <unistd.h>
 #endif /* __linux__ */
@@ -51,6 +52,8 @@ static inline void gsc_msleep(uint32_t msecs)
 #define igsc_strdup strdup
 #endif
 #elif WIN32
+#include <string.h>
+#include <windows.h>
 static inline int gsc_memcpy_s(void *dest, size_t dest_size,
                                const void *src, size_t count)
 {
@@ -67,6 +70,11 @@ static inline void gsc_msleep(uint32_t msecs)
 #endif
 
 int get_device_info_by_devpath(const char *devpath,  struct igsc_device_info *info);
+
+#define GSC_POWER_CONTROL_ON 1
+#define GSC_POWER_CONTROL_AUTO 2
+int gsc_get_device_power_control(const char *devpath, uint8_t *power_control);
+int gsc_set_device_power_control(const char *devpath, uint8_t power_control);
 
 #ifndef BIT
 #define BIT(x) (1U << (x))

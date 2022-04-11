@@ -22,6 +22,8 @@ else
   srcs += ['enum/igsc_enum_stubs.c']
 endif
 
+srcs += ['power/igsc_power_udev.c']
+
 if get_option('enable_perf')
   add_project_arguments('-DIGSC_PERF', language : 'c')
   srcs += ['igsc_perf.c']
