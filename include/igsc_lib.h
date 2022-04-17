@@ -231,8 +231,7 @@ struct igsc_lib_ctx;
 /**
  * Structure to store GSC FU device data
  */
-struct igsc_device_handle
-{
+struct igsc_device_handle {
     struct igsc_lib_ctx *ctx; /**< Internal library context */
 };
 
@@ -1038,8 +1037,7 @@ int igsc_ifr_run_test(IN struct igsc_device_handle *handle,
 /**
  * gfsp number of memory errors per tile
  */
-struct igsc_gfsp_tile_mem_err
-{
+struct igsc_gfsp_tile_mem_err {
     uint32_t corr_err;   /**<  Correctable memory errors on this boot and tile */
     uint32_t uncorr_err; /**<  Uncorrectable memory errors on this boot and tile */
 };
@@ -1047,8 +1045,7 @@ struct igsc_gfsp_tile_mem_err
 /**
  * gfsp number of memory errors on the card
  */
-struct igsc_gfsp_mem_err
-{
+struct igsc_gfsp_mem_err {
     uint32_t num_of_tiles; /**< Number of entries in errors array(number of available entries */
                            /**< when passed to function and number of filled entries when returned) */
     struct igsc_gfsp_tile_mem_err errors[]; /**< array of memory errors structs for each tile */
@@ -1096,28 +1093,25 @@ enum igsc_ppr_test_status_mask
 /**
  * Device PPR status structure
  */
-struct igsc_device_mbist_ppr_status
-{
-    uint32_t mbist_test_status; /**< 0 – Pass, Any set bit represents that MBIST on the matching channel has failed */
+struct igsc_device_mbist_ppr_status {
+    uint32_t mbist_test_status;           /**< 0 – Pass, Any set bit represents that MBIST on the matching channel has failed */
     uint32_t num_of_ppr_fuses_used_by_fw; /**< Number of PPR fuses used by the firmware */
-    uint32_t num_of_remaining_ppr_fuses; /**< Number of remaining PPR fuses */
+    uint32_t num_of_remaining_ppr_fuses;  /**< Number of remaining PPR fuses */
 };
 
 /**
  * PPR status structure
  */
-struct igsc_ppr_status
-{
+struct igsc_ppr_status {
     uint8_t  boot_time_memory_correction_pending; /**< 0 - No pending boot time memory correction, */
                                                   /**< 1 - Pending boot time memory correction     */
-    uint8_t  ppr_mode; /**< 0 – PPR enabled, 1 – PPR disabled, 2 – PPR test mode, */
-                       /**< 3 – PPR auto run on next boot */
-    uint8_t  test_run_status; /**< test status @see enum igsc_ppr_test_status_mask */
+    uint8_t  ppr_mode;                            /**< 0 – PPR enabled, 1 – PPR disabled, 2 – PPR test mode, 3 – PPR auto run on next boot */
+    uint8_t  test_run_status;                     /**< test status @see enum igsc_ppr_test_status_mask */
     uint8_t  reserved;
-    uint32_t ras_ppr_applied; /**< 0 - ppr not applied, 1 - ppr applied, 2 - ppr exhausted */
-    uint32_t mbist_completed; /**< 0 - Not Applied, Any set bit represents mbist completed */
-    uint32_t num_devices; /**< real number of devices in the array (on ATS, PVC <= 8) */
-    struct   igsc_device_mbist_ppr_status device_mbist_ppr_status[]; /* Array of PPR statuses per device */
+    uint32_t ras_ppr_applied;                     /**< 0 - ppr not applied, 1 - ppr applied, 2 - ppr exhausted */
+    uint32_t mbist_completed;                     /**< 0 - Not Applied, Any set bit represents mbist completed */
+    uint32_t num_devices;                         /**< real number of devices in the array (on ATS, PVC <= 8) */
+    struct   igsc_device_mbist_ppr_status device_mbist_ppr_status[]; /**< Array of PPR statuses per device */
 };
 
 /**
@@ -1148,39 +1142,36 @@ int igsc_memory_ppr_status(IN struct  igsc_device_handle *handle,
 /**
  * IFR pending reset values definition
  */
-enum igsc_ifr_pending_reset
-{
-    IGSC_IFR_PENDING_RESET_NONE = 0, /**< 0 - No reset needed */
+enum igsc_ifr_pending_reset {
+    IGSC_IFR_PENDING_RESET_NONE = 0,    /**< 0 - No reset needed */
     IGSC_IFR_PENDING_RESET_SHALLOW = 1, /**< 1 - Need to perform a shallow reset */
-    IGSC_IFR_PENDING_RESET_DEEP = 2, /**< 2 - Need to perform a deep reset */
+    IGSC_IFR_PENDING_RESET_DEEP = 2,    /**< 2 - Need to perform a deep reset */
 };
 
 /**
  * IFR array and scan test status bit masks
  */
-enum igsc_ifr_array_scan_test_status_mask
-{
+enum igsc_ifr_array_scan_test_status_mask {
     IGSC_ARRAY_SCAN_STATUS_TEST_EXECUTION_MASK = BIT(0), /**< 0 - Test executed, 1 - Test not executed */
     IGSC_ARRAY_SCAN_STATUS_TEST_RESULT_MASK =    BIT(1), /**< 0 - Test finished successfully, 1 - Error occurred during test execution */
     IGSC_ARRAY_SCAN_STATUS_FOUND_HW_ERROR_MASK = BIT(2), /**< 0 - HW error not found, 1 - HW error found*/
     IGSC_ARRAY_SCAN_STATUS_HW_REPAIR_MASK =      BIT(3), /**< 0 - HW error will be fully repaired or no HW error found, 1 - HW error will not be fully repaired */
 };
 
-enum igsc_ifr_array_scan_extended_status
-{
-    IGSC_IFR_EXT_STS_PASSED = 0, /**< Test passed successfully, no repairs needed */
-    IGSC_IFR_EXT_STS_SHALLOW_RST_PENDING = 1, /**< Shallow reset already pending from previous test, aborting test */
-    IGSC_IFR_EXT_STS_DEEP_RST_PENDING = 2, /**< Deep reset already pending from previous test, aborting test */
-    IGSC_IFR_EXT_STS_NO_REPAIR_NEEDED = 3, /**< Test passed, recoverable error found, no repair needed */
-    IGSC_IFR_EXT_STS_REPAIRED_ARRAY = 4, /**< Test passed, recoverable error found and repaired using array repairs */
-    IGSC_IFR_EXT_STS_REPAIRED_SUBSLICE = 5, /**< Test passed, recoverable error found and repaired using Subslice swaps */
-    IGSC_IFR_EXT_STS_REPAIRED_ARRAY_SUBSLICE = 6, /**< Test passed, recoverable error found and repaired using array repairs and Subslice swaps */
+enum igsc_ifr_array_scan_extended_status {
+    IGSC_IFR_EXT_STS_PASSED = 0,                         /**< Test passed successfully, no repairs needed */
+    IGSC_IFR_EXT_STS_SHALLOW_RST_PENDING = 1,            /**< Shallow reset already pending from previous test, aborting test */
+    IGSC_IFR_EXT_STS_DEEP_RST_PENDING = 2,               /**< Deep reset already pending from previous test, aborting test */
+    IGSC_IFR_EXT_STS_NO_REPAIR_NEEDED = 3,               /**< Test passed, recoverable error found, no repair needed */
+    IGSC_IFR_EXT_STS_REPAIRED_ARRAY = 4,                 /**< Test passed, recoverable error found and repaired using array repairs */
+    IGSC_IFR_EXT_STS_REPAIRED_SUBSLICE = 5,              /**< Test passed, recoverable error found and repaired using Subslice swaps */
+    IGSC_IFR_EXT_STS_REPAIRED_ARRAY_SUBSLICE = 6,        /**< Test passed, recoverable error found and repaired using array repairs and Subslice swaps */
     IGSC_IFR_EXT_STS_REPAIRED_ARRAY_FAULTY_SUBSLICE = 7, /**< Test passed, recoverable error found and repaired using array repairs and faulty spare Subslice */
-    IGSC_IFR_EXT_STS_REPAIR_NOT_SUPPORTED = 8, /**< Test completed, unrecoverable error found, part doesn't support in field repair */
-    IGSC_IFR_EXT_STS_NO_RESORCES = 9, /**< Test completed, unrecoverable error found, not enough repair resources available */
-    IGSC_IFR_EXT_STS_NON_SUBSLICE_IN_ARRAY = 10, /**< Test completed, unrecoverable error found, non-Subslice failure in Array test */
-    IGSC_IFR_EXT_STS_NON_SUBSLICE_IN_SCAN = 11, /**< Test completed, unrecoverable error found, non-Subslice failure in Scan test */
-    IGSC_IFR_EXT_STS_TEST_ERROR = 12, /**< Test error */
+    IGSC_IFR_EXT_STS_REPAIR_NOT_SUPPORTED = 8,            /**< Test completed, unrecoverable error found, part doesn't support in field repair */
+    IGSC_IFR_EXT_STS_NO_RESORCES = 9,                     /**< Test completed, unrecoverable error found, not enough repair resources available */
+    IGSC_IFR_EXT_STS_NON_SUBSLICE_IN_ARRAY = 10,          /**< Test completed, unrecoverable error found, non-Subslice failure in Array test */
+    IGSC_IFR_EXT_STS_NON_SUBSLICE_IN_SCAN = 11,           /**< Test completed, unrecoverable error found, non-Subslice failure in Scan test */
+    IGSC_IFR_EXT_STS_TEST_ERROR = 12,                     /**< Test error */
 };
 
 /**
