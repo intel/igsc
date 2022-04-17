@@ -321,7 +321,7 @@ struct igsc_device_info {
  * @}
  */
 
-/*
+/**
  * Hardware configuration blob size
  */
 #define IGSC_HW_CONFIG_BLOB_SIZE 48
@@ -1339,8 +1339,8 @@ struct igsc_gfsp_tile_mem_err {
  * gfsp number of memory errors on the card
  */
 struct igsc_gfsp_mem_err {
-    uint32_t num_of_tiles;                  /**< Number of entries in errors array(number of available entries
-                                                 when passed to function and number of filled entries when returned */
+    uint32_t num_of_tiles;                  /**< Number of entries in errors array (number of available entries
+                                                 when passed to the function and number of filled entries when returned) */
     struct igsc_gfsp_tile_mem_err errors[]; /**< array of memory errors structs for each tile */
 };
 
@@ -1750,11 +1750,11 @@ struct igsc_ppr_status {
                                                   /**< 1 - Pending boot time memory correction     */
     uint8_t  ppr_mode;                            /**< 0 – PPR enabled, 1 – PPR disabled, 2 – PPR test mode, */
                                                   /**< 3 – PPR auto run on next boot */
-    uint8_t  test_run_status; /**< test status @see enum igsc_ppr_test_status_mask */
+    uint8_t  test_run_status;                     /**< test status @see enum igsc_ppr_test_status_mask */
     uint8_t  reserved;
-    uint32_t ras_ppr_applied; /**< 0 - ppr not applied, 1 - ppr applied, 2 - ppr exhausted */
-    uint32_t mbist_completed; /**< 0 - Not Applied, Any set bit represents mbist completed */
-    uint32_t num_devices;     /**< real number of devices in the array (on Xe_HP SDV, PVC <= 8) */
+    uint32_t ras_ppr_applied;                     /**< 0 - ppr not applied, 1 - ppr applied, 2 - ppr exhausted */
+    uint32_t mbist_completed;                     /**< 0 - Not Applied, Any set bit represents mbist completed */
+    uint32_t num_devices;                         /**< real number of devices in the array (on Xe_HP SDV, PVC <= 8) */
     struct   igsc_device_mbist_ppr_status device_mbist_ppr_status[]; /**< Array of PPR statuses per device */
 };
 
@@ -1762,7 +1762,7 @@ struct igsc_ppr_status {
  *  @brief Retrieves GFSP number of memory PPR devices
  *
  *  @param handle A handle to the device.
- *  @param count pointer to number of memory PPR devices, the number is returned by the FW
+ *  @param device_count pointer to number of memory PPR devices, the number is returned by the FW
  *
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */

@@ -77,7 +77,7 @@ struct ifr_run_test_res {
 };
 
 struct ifr_get_status_req {
-    struct ifr_msg_hdr header;      /**< IFR header */
+    struct ifr_msg_hdr header;
 };
 
 struct ifr_get_status_res {
@@ -90,7 +90,7 @@ struct ifr_get_status_res {
 
 struct gfsp_get_num_memory_errors_req {
     struct mkhi_msg_hdr header;
-    uint32_t gfsp_heci_header;              /* defined by enum gfsp_cmd */
+    uint32_t gfsp_heci_header; /* contains enum gfsp_cmd */
 };
 
 struct gfsp_num_memory_errors_per_tile {
@@ -100,35 +100,34 @@ struct gfsp_num_memory_errors_per_tile {
 
 struct gfsp_get_num_memory_errors_res {
     struct mkhi_msg_hdr header;
-    uint32_t gfsp_heci_header;                 /* defined by enum gfsp_cmd */
-    uint32_t tiles_num;                        /* In Xe_HP SDV - 4, In PVC - 2 */
+    uint32_t gfsp_heci_header;        /* contains enum gfsp_cmd */
+    uint32_t tiles_num;               /**< In Xe_HP SDV - 4, In PVC - 2 */
     struct gfsp_num_memory_errors_per_tile num_memory_errors[];
 };
 
 struct gfsp_get_memory_ppr_status_req {
-    struct mkhi_msg_hdr header; /* mkhi heci header */
-    uint32_t gfsp_heci_header;  /* gfsp header */
+    struct mkhi_msg_hdr header; /**< mkhi heci header */
+    uint32_t gfsp_heci_header;  /**< gfsp header */
 };
 
 struct gfsp_device_mbist_ppr_status {
-    uint32_t mbist_test_status;           /* 0 – Pass, Any set bit represents that MBIST on the matching channel has failed */
-    uint32_t num_of_ppr_fuses_used_by_fw; /* Number of PPR fuses used by the FW */
-    uint32_t num_of_remaining_ppr_fuses;  /* Number of remaining PPR fuses */
+    uint32_t mbist_test_status;           /**< 0 – Pass, Any set bit represents that MBIST on the matching channel has failed */
+    uint32_t num_of_ppr_fuses_used_by_fw; /**< Number of PPR fuses used by the FW */
+    uint32_t num_of_remaining_ppr_fuses;  /**< Number of remaining PPR fuses */
 };
 
 struct gfsp_get_memory_ppr_status_res {
-    struct mkhi_msg_hdr header;                   /* 0x31 for GFSP MKHI command */
-    uint32_t gfsp_heci_header;                    /* 4 for Get memory PPR status */
-    uint8_t  boot_time_memory_correction_pending; /* 0 - No pending boot time memory correction, */
-                                                  /* 1 - Pending boot time memory correction */
-    uint8_t  ppr_mode;                            /* 0 – PPR enabled, 1 – PPR disabled, 2 – PPR test mode, */
-                                                  /* 3 – PPR auto run on next boot */
+    struct mkhi_msg_hdr header;                   /**< 0x31 for GFSP MKHI command */
+    uint32_t gfsp_heci_header;                    /**< 4 for Get memory PPR status */
+    uint8_t  boot_time_memory_correction_pending; /**< 0 - No pending boot time memory correction, */
+                                                  /**< 1 - Pending boot time memory correction */
+    uint8_t  ppr_mode;                            /**< 0 – PPR enabled, 1 – PPR disabled, 2 – PPR test mode, 3 – PPR auto run on next boot */
     uint8_t  test_run_status;
     uint8_t  reserved;
-    uint32_t ras_ppr_applied;                     /* 0 - ppr not applied, 1 - ppr applied, 2 - ppr exhausted */
-    uint32_t mbist_completed;                     /* 0 - Not Applied, Any set bit represents mbist completed */
-    uint32_t num_devices;                         /* real number of device in the array - in Xe_HP SDV / PVC - should be up to 8 */
-    struct   gfsp_device_mbist_ppr_status device_mbist_ppr_status[]; /* Array length is num_devices */
+    uint32_t ras_ppr_applied;                     /**< 0 - ppr not applied, 1 - ppr applied, 2 - ppr exhausted */
+    uint32_t mbist_completed;                     /**< 0 - Not Applied, Any set bit represents mbist completed */
+    uint32_t num_devices;                         /**< real number of device in the array - in Xe_HP SDV / PVC - should be up to 8 */
+    struct   gfsp_device_mbist_ppr_status device_mbist_ppr_status[]; /**< Array length is num_devices */
 };
 
 /**
@@ -189,7 +188,7 @@ enum {
 /* New ifr run test request */
 struct ifr_run_test_ext_req {
     struct mkhi_msg_hdr header; /**< IFR header */
-    uint8_t test; /**< IFR_TEST_ARRAY_AND_SCAN or IFR_TEST_MEMORY_PPR */
+    uint8_t test;               /**< IFR_TEST_ARRAY_AND_SCAN or IFR_TEST_MEMORY_PPR */
     uint8_t reserved[11];
 };
 
@@ -253,26 +252,26 @@ struct ifr_get_general_info_req {
 /* Get ifr general info response */
 struct ifr_get_general_info_res {
     struct mkhi_msg_hdr header;
-    uint16_t            supported_tiles; /**< Number of supported tiles */
-    uint8_t             reserved[26];
+    uint16_t supported_tiles;   /**< Number of supported tiles */
+    uint8_t reserved[26];
 };
 
 /* Get ifr tile repair info request */
 struct ifr_get_tile_repair_info_req {
     struct mkhi_msg_hdr header;
-    uint16_t            tile_idx; /**< The index of the tile the info is requested to */
-    uint8_t             reserved[6];
+    uint16_t tile_idx;          /**< The index of the tile the info is requested to */
+    uint8_t reserved[6];
 };
 
 /* Get ifr tile repair info response */
 struct ifr_get_tile_repair_info_res {
     struct mkhi_msg_hdr header;
-    uint16_t            requested_tile;                 /**< Index of the requested tile */
-    uint8_t             reserved1[2];
-    uint16_t            used_array_repair_entries;      /**< Number of array repair entries used by FW */
-    uint16_t            available_array_repair_entries; /**< Number of available array repair entries */
-    uint16_t            failed_dss;                     /**< Number of failed DSS */
-    uint8_t             reserved2[18];
+    uint16_t requested_tile;                 /**< Index of the requested tile */
+    uint8_t reserved1[2];
+    uint16_t used_array_repair_entries;      /**< Number of array repair entries used by FW */
+    uint16_t available_array_repair_entries; /**< Number of available array repair entries */
+    uint16_t failed_dss;                     /**< Number of failed DSS */
+    uint8_t reserved2[18];
 };
 
 /* Set ECC Configuration Request */
