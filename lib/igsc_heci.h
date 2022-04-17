@@ -398,8 +398,7 @@ struct gsc_fwu_heci_get_subsystem_ids_message_req {
  * @param ssdid Subsystem Device ID (SSDID)
  * @param reserved
  */
-struct gsc_fwu_heci_get_subsystem_ids_message_resp
-{
+struct gsc_fwu_heci_get_subsystem_ids_message_resp {
     struct gsc_fwu_heci_response    response;
     uint16_t                        ssvid;
     uint16_t                        ssdid;

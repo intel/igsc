@@ -223,11 +223,11 @@ struct ifr_get_tile_repair_info_req {
 /* Get ifr tile repair info response */
 struct ifr_get_tile_repair_info_res {
     struct mkhi_msg_hdr header;
-    uint16_t            requested_tile; /**< Index of the requested tile */
+    uint16_t            requested_tile;                 /**< Index of the requested tile */
     uint8_t             reserved1[2];
-    uint16_t            used_array_repair_entries; /**< Number of array repair entries used by FW */
+    uint16_t            used_array_repair_entries;      /**< Number of array repair entries used by FW */
     uint16_t            available_array_repair_entries; /**< Number of available array repair entries */
-    uint16_t            failed_dss; /**< Number of failed DSS */
+    uint16_t            failed_dss;                     /**< Number of failed DSS */
     uint8_t             reserved2[18];
 };
 
