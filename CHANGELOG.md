@@ -1,5 +1,11 @@
 # IGSC FUL
 
+## [v0.8.2] - 2022-04-18
+
+### Added
+
+1. lib: set power control to on during operations
+
 ## [v0.8.1] - 2022-03-22
 
 ### Changed
