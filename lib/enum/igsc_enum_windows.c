@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  */
 #include <windows.h>
 #include <stdlib.h>
@@ -106,8 +106,8 @@ void igsc_device_iterator_destroy(struct igsc_device_iterator *iter)
     free(iter);
 }
 
-static int gsc_dev_get_property(DEVINST devInst, const DEVPROPKEY *PropertyKey,
-                                BYTE **Property)
+static int gsc_dev_get_property_string(DEVINST devInst, const DEVPROPKEY *PropertyKey,
+                                       BYTE **Property)
 {
     CONFIGRET cr;
     ULONG PropertySize = 0;
@@ -147,6 +147,50 @@ static int gsc_dev_get_property(DEVINST devInst, const DEVPROPKEY *PropertyKey,
     return IGSC_SUCCESS;
 }
 
+static int gsc_dev_get_property_uint32(DEVINST devInst, const DEVPROPKEY *PropertyKey,
+                                      ULONG *Property)
+{
+    CONFIGRET cr;
+    ULONG PropertySize = 0;
+    DEVPROPTYPE PropType = 0;
+
+    cr = CM_Get_DevNode_PropertyW(devInst,
+                                  PropertyKey,
+                                  &PropType,
+                                  NULL,
+                                  &PropertySize,
+                                  0);
+    if (cr != CR_BUFFER_SMALL)
+    {
+        gsc_error("Error 0x%x retrieving device property size.\n", cr);
+        return IGSC_ERROR_INTERNAL;
+    }
+    if (PropType != DEVPROP_TYPE_UINT32)
+    {
+        gsc_error("Wrong property type: %lu != %lu\n", PropType, DEVPROP_TYPE_UINT32);
+        return IGSC_ERROR_INTERNAL;
+    }
+
+    if (PropertySize != sizeof(ULONG))
+    {
+        gsc_error("Wrong size %u for UINT32 device property.\n", PropertySize);
+        return IGSC_ERROR_INTERNAL;
+    }
+
+    cr = CM_Get_DevNode_PropertyW(devInst,
+                                  PropertyKey,
+                                  &PropType,
+                                  (BYTE*)Property,
+                                  &PropertySize,
+                                  0);
+    if (cr != CR_SUCCESS || (PropType != DEVPROP_TYPE_UINT32))
+    {
+        gsc_error("Error 0x%x retrieving device property.\n", cr);
+        return IGSC_ERROR_INTERNAL;
+    }
+    return IGSC_SUCCESS;
+}
+
 static int gsc_get_properties(const PWCHAR deviceInterfaceList,
                               struct igsc_device_info *info)
 {
@@ -154,6 +198,7 @@ static int gsc_get_properties(const PWCHAR deviceInterfaceList,
     CONFIGRET cr;
     BYTE DevID[MAX_DEVICE_ID_LEN];
     BYTE *Property;
+    ULONG lProperty;
     WCHAR *p;
     ULONG PropertySize = 0;
     DEVPROPTYPE PropType;
@@ -180,7 +225,7 @@ static int gsc_get_properties(const PWCHAR deviceInterfaceList,
         return IGSC_ERROR_INTERNAL;
     }
 
-    ret = gsc_dev_get_property(devInst, &DEVPKEY_Device_Parent, &Property);
+    ret = gsc_dev_get_property_string(devInst, &DEVPKEY_Device_Parent, &Property);
     if (ret == IGSC_SUCCESS)
     {
         gsc_debug("Parent Property %ws.\n", (WCHAR *)Property);
@@ -206,26 +251,19 @@ static int gsc_get_properties(const PWCHAR deviceInterfaceList,
     cr = CM_Get_Parent(&devParent, devInst, 0);
     if (cr == CR_SUCCESS)
     {
-        ret = gsc_dev_get_property(devParent, &DEVPKEY_Device_LocationInfo, &Property);
+        ret = gsc_dev_get_property_uint32(devParent, &DEVPKEY_Device_BusNumber, &lProperty);
         if (ret == IGSC_SUCCESS)
         {
-            gsc_debug("Location Property %ws.\n", (WCHAR *)Property);
-            p = wcsstr((WCHAR *)Property, L"PCI bus ");
-            if (p)
-            {
-                info->bus = (uint8_t)wcstol(p + 8, NULL, 10);
-            }
-            p = wcsstr((WCHAR *)Property, L"device ");
-            if (p)
-            {
-                info->dev = (uint8_t)wcstol(p + 7, NULL, 10);
-            }
-            p = wcsstr((WCHAR *)Property, L"function ");
-            if (p)
-            {
-                info->func = (uint8_t)wcstol(p + 9, NULL, 10);
-            }
-            free(Property);
+            gsc_debug("BusNumber Property 0x%lX.\n", lProperty);
+            info->domain = (lProperty & 0xFF00) >> 8;
+            info->bus = lProperty & 0xFF;
+        }
+        ret = gsc_dev_get_property_uint32(devParent, &DEVPKEY_Device_Address, &lProperty);
+        if (ret == IGSC_SUCCESS)
+        {
+            gsc_debug("Address Property 0x%lX.\n", lProperty);
+            info->dev = (uint8_t)((lProperty & 0xFF0000) >> 16);
+            info->func = lProperty & 0xFF;
         }
     }
 
