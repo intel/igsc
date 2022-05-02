@@ -203,10 +203,10 @@ struct igsc_device_iterator;
 struct igsc_device_info {
     char name[IGSC_INFO_NAME_SIZE];  /**<  the device node path */
 
-    uint16_t domain;                 /**< pci domain (Linux only) */
+    uint16_t domain;                 /**< pci domain for GFX device */
     uint8_t  bus;                    /**< pci bus number for GFX device */
     uint8_t  dev;                    /**< device number on pci bus */
-    uint8_t  func;                   /**< func the device function of the */
+    uint8_t  func;                   /**< device function number */
 
     uint16_t device_id;              /**< gfx device id */
     uint16_t vendor_id;              /**< gfx device vendor id */
