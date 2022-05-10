@@ -1,5 +1,15 @@
 # IGSC FUL
 
+## [v0.8.3] - 2022-05-10
+
+### Added
+
+1. lib: enum: windows: add domain (segment) retrieval
+
+### Fixed
+
+1. lib: enum: windows: fix device bdf retrieval
+
 ## [v0.8.2] - 2022-04-18
 
 ### Added
