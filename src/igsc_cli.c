@@ -92,7 +92,7 @@ static void fwupd_strerror(int errnum, char *buf, size_t buflen)
 static void print_fw_version(const char *prefix,
                              const struct igsc_fw_version *fw_version)
 {
-    printf("%sFW Version: %c%c%c%c->%d->%d\n",
+    printf("%sFW Version: %c%c%c%c_%d.%d\n",
            prefix,
            fw_version->project[0],
            fw_version->project[1],
@@ -121,7 +121,7 @@ static void print_fwdata_device_info(struct igsc_fwdata_device_info *info)
 
 static void print_fwdata_version(const char *prefix, const struct igsc_fwdata_version *fwdata_version)
 {
-    printf("%sFw Data Version: %d->%d->%d\n",
+    printf("%sFw Data Version: Major Version: %d, OEM Manufacturing Data Version: %d, Major VCN: %d\n",
            prefix,
            fwdata_version->major_version,
            fwdata_version->oem_manuf_data_version,
