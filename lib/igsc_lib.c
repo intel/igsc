@@ -1534,6 +1534,7 @@ int igsc_device_hw_config(IN struct igsc_device_handle *handle,
     /* the command is only supported on DG2 */
     if (memcmp(version.project, "DG02", sizeof(version.project)))
     {
+        gsc_error("Config option is not available\n");
         ret = IGSC_ERROR_NOT_SUPPORTED;
         goto exit;
     }
