@@ -849,7 +849,11 @@ static int image_hw_config(const char *image_path, struct igsc_hw_config *hw_con
     }
 
     ret = igsc_image_hw_config(img->blob, img->size, hw_config);
-    if (ret != IGSC_ERROR_NOT_SUPPORTED && ret != IGSC_SUCCESS)
+    if (ret == IGSC_ERROR_NOT_SUPPORTED)
+    {
+        fwupd_error("config option is not available\n");
+    }
+    else if (ret != IGSC_SUCCESS)
     {
         fwupd_error("Error in the image file\n");
     }
@@ -973,12 +977,14 @@ no_args:
         ret = image_hw_config(image_path, &img_hw_config);
         if (ret != IGSC_SUCCESS)
         {
+            fwupd_error("Failed to retrieve hw config from the image %s\n", image_path);
             goto out;
         }
 
         ret = firmware_hw_config(device_path, &dev_hw_config);
         if (ret != IGSC_SUCCESS)
         {
+            fwupd_error("Failed to retrieve hw config from the device %s\n", device_path);
             goto out;
         }
 
@@ -1697,8 +1703,14 @@ int oprom_check_devid_enforcement(struct igsc_device_handle *handle,
     memset(&device_hw_config, 0, sizeof(device_hw_config));
 
     ret = igsc_device_hw_config(handle, &device_hw_config);
+    if (ret == IGSC_ERROR_NOT_SUPPORTED)
+    {
+        fwupd_error("config option is not available\n");
+        return ret;
+    }
     if (ret != IGSC_SUCCESS)
     {
+        fwupd_error("failed to get hw config from device, returned code %d\n", ret);
         return ret;
     }
 
