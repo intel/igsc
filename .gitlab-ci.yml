@@ -89,7 +89,7 @@ gcc:no_enum:
         - *metee
         extends: .compile
         variables:
-                CMAKE_ARGS: '-DCMAKE_C_COMPILER=gcc -DLIBMETEE_REPO=$REPO_DIR -DENABLE_ENUM:BOOL=OFF'
+                CMAKE_ARGS: '-DCMAKE_C_COMPILER=gcc -DLIBMETEE_REPO=$REPO_DIR'
                 COMPILE_TARGET: 'package'
 
 clang:
@@ -133,7 +133,7 @@ meson:no_enum:
         - *metee
         extends: .meson
         variables:
-                MESON_ARGS: '-Dsyslog=true -Dbuildtype=debug -Denable_enum=false'
+                MESON_ARGS: '-Dsyslog=true -Dbuildtype=debug'
 
 vscode16:
         stage: build
@@ -189,7 +189,7 @@ vscode16:no_enum:
                 VS_CODE: "Visual Studio 16 2019"
                 COMPILE_TARGET: package
                 COMPILE_MODE: Release
-                CMAKE_ARGS: '-DENABLE_ENUM:BOOL=OFF'
+                CMAKE_ARGS: ''
 
 centos8:
         stage: build

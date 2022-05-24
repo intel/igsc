@@ -19,7 +19,6 @@ jobs:
         container:
         - "lms-ubuntu:18.04"
         - "lms-ubuntu:20.04"
-        device-enumeration: ['on', 'off']
 
     container:
       image: ger-registry.caas.intel.com/sfip-sw/${{ matrix.container }}
@@ -40,11 +39,6 @@ jobs:
         run: |
           CMAKE_BUILD_DIR=${BUILDDIR}/cmake
           CMAKE_ARGS="-DCMAKE_C_COMPILER=${{ inputs.compiler }}"
-          if [[ "${{ matrix.device-enumeration }}" = "on" ]]; then
-            CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_ENUM:BOOL=ON"
-          else
-            CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_ENUM:BOOL=OFF"
-          fi
           cmake --version
           mkdir -p ${CMAKE_BUILD_DIR}
           pushd ${CMAKE_BUILD_DIR}

@@ -11,18 +11,12 @@ srcs = [
   'oprom.c',
   'oprom_parser.c',
   'fw_data_parser.c',
+  'enum/igsc_enum_udev.c',
+  'power/igsc_power_udev.c',
 ]
 
-deps = []
-if get_option('enable_enum')
-  srcs += ['enum/igsc_enum_udev.c']
-  libudev_dep = dependency('libudev')
-  deps += [libudev_dep]
-else
-  srcs += ['enum/igsc_enum_stubs.c']
-endif
-
-srcs += ['power/igsc_power_udev.c']
+libudev_dep = dependency('libudev')
+deps = [libudev_dep]
 
 if get_option('enable_perf')
   add_project_arguments('-DIGSC_PERF', language : 'c')

@@ -20,14 +20,11 @@ option(ENABLE_DOCS "Enable docs build" OFF)
 option(ENABLE_TESTS "Perform unit tests after build" OFF)
 option(ENABLE_WERROR "Enable treat warnings as error" ON)
 option(ENABLE_CLI "Enable command line tool build" ON)
-option(ENABLE_CLI_FORCE "Enable command line tool build also if enumeration is not supported" OFF)
-option(ENABLE_ENUM "Enable enumeration build" ON)
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 option (BUILD_USE_CONAN "Use Conan for dependencies download" NO)
 
 include(CMakeDependentOption)
-cmake_dependent_option(CLI_ENABLED "Enable command line tool build" ON "ENABLE_ENUM;ENABLE_CLI" OFF)
-cmake_dependent_option(TESTS_ENABLED "Perform unit tests after build" ON "ENABLE_ENUM;ENABLE_CLI;ENABLE_TESTS" OFF)
+cmake_dependent_option(TESTS_ENABLED "Perform unit tests after build" ON "ENABLE_CLI;ENABLE_TESTS" OFF)
 
 if(BUILD_USE_CONAN)
   include(conan)
@@ -98,7 +95,7 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINK_OPTIONS}")
 
 add_subdirectory("lib")
 
-if(CLI_ENABLED OR ENABLE_CLI_FORCE)
+if(ENABLE_CLI)
   add_subdirectory("src")
 endif()
 
