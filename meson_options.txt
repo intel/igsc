@@ -3,4 +3,3 @@
 option('syslog', type : 'boolean', value : true, description : 'enabling logging into syslog')
 option('enable_perf', type : 'boolean', value : false, description : 'enabling performance counters')
 option('enable_cli', type: 'boolean', value : true, description : 'enabling command line tool build')
-option('enable_enum', type: 'boolean', value : true, description : 'enabling enumeration')

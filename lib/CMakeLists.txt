@@ -11,14 +11,10 @@ if(WIN32)
     )
 endif()
 
-if(ENABLE_ENUM)
-    set(ENUM_SOURCES
-        $<$<BOOL:${UNIX}>:enum/igsc_enum_udev.c>
-        $<$<BOOL:${WIN32}>:enum/igsc_enum_windows.c>
-    )
-else()
-    set(ENUM_SOURCES enum/igsc_enum_stubs.c)
-endif()
+set(ENUM_SOURCES
+     $<$<BOOL:${UNIX}>:enum/igsc_enum_udev.c>
+     $<$<BOOL:${WIN32}>:enum/igsc_enum_windows.c>
+)
 
 set(POWER_SOURCES
     $<$<BOOL:${UNIX}>:power/igsc_power_udev.c>
@@ -50,7 +46,6 @@ target_compile_definitions(
   ${PROJECT_NAME}
   PRIVATE $<$<BOOL:${BUILD_SHARED_LIBS}>:IGSC_DLL_EXPORTS>
   PRIVATE $<$<BOOL:${BUILD_SHARED_LIBS}>:IGSC_DLL>
-  PRIVATE $<$<BOOL:${ENABLE_ENUM}>:IGSC_ENUM>
   PRIVATE $<$<BOOL:${SYSLOG}>:SYSLOG>
   PRIVATE $<$<BOOL:${ENABLE_PERF}>:IGSC_PERF>
 )
@@ -59,17 +54,14 @@ set_target_properties(
   VERSION ${GSC_VERSION_STRING} SOVERSION ${GSC_VERSION_MAJOR}
 )
 
-if(ENABLE_ENUM)
-  if(UNIX)
-    find_library(UDEV_LIB udev REQUIRED)
-    find_path(UDEV_INCLUDE_DIR libudev.h REQUIRED)
-    target_include_directories(${PROJECT_NAME} PRIVATE ${UDEV_INCLUDE_DIR})
-  endif()
-  target_link_libraries(${PROJECT_NAME} $<$<BOOL:${UNIX}>:${UDEV_LIB}>)
+if(UNIX)
+  find_library(UDEV_LIB udev REQUIRED)
+  find_path(UDEV_INCLUDE_DIR libudev.h REQUIRED)
+  target_include_directories(${PROJECT_NAME} PRIVATE ${UDEV_INCLUDE_DIR})
 endif()
 
 target_link_libraries(${PROJECT_NAME}
-                      metee::metee $<$<BOOL:${WIN32}>:CfgMgr32.lib>)
+                      metee::metee $<$<BOOL:${WIN32}>:CfgMgr32.lib> $<$<BOOL:${UNIX}>:${UDEV_LIB}>)
 
 install(
   TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}Targets
