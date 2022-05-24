@@ -531,7 +531,7 @@ static bool verify_pci_header(struct oprom_header_ext_v2 *header, size_t buf_len
         header->pci_data_structure_pointer >= buf_len ||
         header->pci_data_structure_pointer + sizeof(*header) >= buf_len)
     {
-        gsc_error("Illegal oprom image structure : pci_data %d %zd\n",
+        gsc_error("Illegal oprom image structure : pci_data %d %zu\n",
                   header->pci_data_structure_pointer, buf_len);
         return false;
     }

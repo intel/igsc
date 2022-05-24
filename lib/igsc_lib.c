@@ -295,7 +295,7 @@ static int gsc_fwu_img_layout_parse(struct gsc_fwu_img_layout *layout,
 
     if (buffer_len < sizeof(fpt->header))
     {
-        gsc_error("Image size (%d) too small to contain FPT Header\n",
+        gsc_error("Image size (%u) too small to contain FPT Header\n",
                 buffer_len);
         status = IGSC_ERROR_BAD_IMAGE;
         goto exit;
@@ -303,7 +303,7 @@ static int gsc_fwu_img_layout_parse(struct gsc_fwu_img_layout *layout,
 
     if (buffer_len > IGSC_MAX_IMAGE_SIZE)
     {
-        gsc_error("Image size (%d) too big\n", buffer_len);
+        gsc_error("Image size (%u) too big\n", buffer_len);
         status = IGSC_ERROR_BAD_IMAGE;
         goto exit;
     }
@@ -324,7 +324,7 @@ static int gsc_fwu_img_layout_parse(struct gsc_fwu_img_layout *layout,
     if (fpt->header.num_of_entries < FWU_FPT_ENTRY_IMAGE_INSTANCE ||
         fpt->header.num_of_entries > FPT_MAX_ENTERIES)
     {
-        gsc_error("Invalid FPT number of entries (%d)\n",
+        gsc_error("Invalid FPT number of entries (%u)\n",
                 fpt->header.num_of_entries);
         status = IGSC_ERROR_BAD_IMAGE;
         goto exit;
@@ -335,7 +335,7 @@ static int gsc_fwu_img_layout_parse(struct gsc_fwu_img_layout *layout,
 
     if (buffer_len < total_size)
     {
-        gsc_error("Image size (%d) can't hold %d entries\n",
+        gsc_error("Image size (%u) can't hold %u entries\n",
                 buffer_len, fpt->header.num_of_entries);
         status = IGSC_ERROR_BAD_IMAGE;
         goto exit;
@@ -2281,7 +2281,7 @@ int igsc_device_oprom_version(IN struct igsc_device_handle *handle,
     partition = oprom_type_to_partition(oprom_type);
     if (partition == GSC_FWU_HECI_PART_VERSION_INVALID)
     {
-        gsc_error("Bad oprom type %d\n", oprom_type);
+        gsc_error("Bad oprom type %u\n", oprom_type);
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
@@ -2330,7 +2330,7 @@ static int igsc_oprom_update_from_buffer(IN  struct igsc_device_handle *handle,
     partition = oprom_type_to_partition(oprom_type);
     if (partition == GSC_FWU_HECI_PART_VERSION_INVALID)
     {
-        gsc_error("Bad oprom type %d\n", oprom_type);
+        gsc_error("Bad oprom type %u\n", oprom_type);
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
@@ -2460,7 +2460,7 @@ int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
 
     if (buffer == NULL || buffer_len == 0 || buffer_len > IGSC_MAX_IMAGE_SIZE)
     {
-        gsc_error("Image size (%zd) too big\n", buffer_len);
+        gsc_error("Image size (%zu) too big\n", buffer_len);
         return IGSC_ERROR_BAD_IMAGE;
     }
 
@@ -2635,7 +2635,7 @@ int igsc_device_fwdata_image_update(IN  struct igsc_device_handle *handle,
 
     if (buffer == NULL || buffer_len == 0 || buffer_len > IGSC_MAX_IMAGE_SIZE)
     {
-        gsc_error("Image size (%d) too big\n", buffer_len);
+        gsc_error("Image size (%u) too big\n", buffer_len);
         return IGSC_ERROR_BAD_IMAGE;
     }
     return gsc_update(handle, buffer, buffer_len, progress_f, ctx,
