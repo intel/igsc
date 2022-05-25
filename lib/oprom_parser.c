@@ -15,6 +15,7 @@
 
 #include <igsc_lib.h>
 #include "igsc_oprom.h"
+#include "oprom_parser.h"
 #include "igsc_log.h"
 
 #include "utils.h"
@@ -242,6 +243,7 @@ static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
 {
     size_t cur_offset = ext_start;
     struct mft_ext_header_with_data *header;
+    struct mdf_module_attr_ext *attr_ext;
 
     while (cur_offset < ext_end)
     {
@@ -350,7 +352,7 @@ static int image_oprom_parse_extensions(struct igsc_oprom_image *img,
                 return IGSC_ERROR_BAD_IMAGE;
             }
 
-            struct mdf_module_attr_ext *attr_ext = (struct mdf_module_attr_ext*)header;
+            attr_ext = (struct mdf_module_attr_ext*)header;
             if (attr_ext->compression_type != MANIFEST_COMPRESSION_TYPE_UNCOMPRESSED)
             {
                 gsc_error("Illegal oprom cpd image (mdf module attr ext comp type %u)\n",

@@ -90,8 +90,15 @@ int gsc_set_device_power_control(const char *devpath, uint8_t power_control)
     const char *val;
     int ret;
 
-    if (power_control != GSC_POWER_CONTROL_ON && power_control != GSC_POWER_CONTROL_AUTO)
+    switch (power_control)
     {
+    case GSC_POWER_CONTROL_ON:
+        val = "on";
+        break;
+    case GSC_POWER_CONTROL_AUTO:
+        val = "auto";
+        break;
+    default:
         gsc_error("Wrong power control %u\n", power_control);
         return IGSC_ERROR_INTERNAL;
     }
@@ -125,16 +132,6 @@ int gsc_set_device_power_control(const char *devpath, uint8_t power_control)
         gsc_error("Can't find device parent for '%s'\n", udev_device_get_sysname(dev));
         ret = IGSC_ERROR_INTERNAL;
         goto out;
-    }
-
-    switch (power_control)
-    {
-    case GSC_POWER_CONTROL_ON:
-        val = "on";
-        break;
-    case GSC_POWER_CONTROL_AUTO:
-        val = "auto";
-        break;
     }
 
     ret = udev_device_set_sysattr_value(parent, "power/control", (char *)val);
