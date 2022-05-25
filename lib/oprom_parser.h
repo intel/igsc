@@ -26,11 +26,6 @@ int image_oprom_get_next(struct igsc_oprom_image *img,
 
 void image_oprom_iterator_reset(struct igsc_oprom_image *img);
 
-int image_oprom_get_buffer(struct igsc_oprom_image *img,
-                           enum igsc_oprom_type type,
-                           const uint8_t **buffer,
-                           size_t *buffer_len);
-
 uint32_t image_oprom_count_devices_4ids(struct igsc_oprom_image *img,
                                         enum igsc_oprom_type type);
 void image_oprom_iterator_reset_4ids(struct igsc_oprom_image *img,
