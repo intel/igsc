@@ -1,0 +1,52 @@
+{
+  "version": 2,
+  "configurePresets": [
+      {
+      "name": "base",
+      "displayName": "Windows x86-64 base",
+      "description": "Build x86-64 Release, VS2019, Conan",
+      "hidden": true,
+      "generator": "Visual Studio 16 2019",
+      "architecture": {
+        "value": "x64",
+        "strategy": "set"
+      },
+      "cacheVariables": {
+        "BUILD_USE_CONAN": "True",
+        "CMAKE_SYSTEM_VERSION": "10.0"
+      }
+    },
+    {
+      "name": "Debug",
+      "displayName": "Windows x86-64 Debug",
+      "description": "Build x86-64 Debug, VS2019, Conan",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/Debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "Release",
+      "displayName": "Windows x86-64 Release",
+      "description": "Build x86-64 Release, VS2019, Conan",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/Release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "Debug",
+      "configurePreset": "Debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "Release",
+      "configurePreset": "Release",
+      "configuration": "Release"
+    }
+  ]
+}
