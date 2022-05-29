@@ -1,20 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright (C) 2019-2020 Intel Corporation
+# Copyright (C) 2019-2022 Intel Corporation
 cmake_minimum_required(VERSION 3.10)
 
-# Find install metee library
-find_library(
-  LIBMETEE_LIB
-  NAMES metee
-  PATHS ENV METEE_LIB_PATH)
-find_path(
-  LIBMETEE_HEADER
-  NAMES metee.h
-  PATHS ENV METEE_HEADER_PATH)
+find_package("metee")
 
 # In case there is no METEE install get it from git
-if(${LIBMETEE_LIB} MATCHES "LIBMETEE_LIB-NOTFOUND"
-   OR ${LIBMETEE_HEADER} MATCHES "LIBMETEE_HEADER-NOTFOUND")
+if(NOT METEE_FOUND)
   # Download and unpack metee at configure time
   if(DEFINED ENV{LIBMETEE_REPO})
     set(LIBMETEE_REPO $ENV{LIBMETEE_REPO})
@@ -69,12 +60,12 @@ if(${LIBMETEE_LIB} MATCHES "LIBMETEE_LIB-NOTFOUND"
     TEST_COMMAND ""
     INSTALL_COMMAND ""
     CMAKE_ARGS -DBUILD_MSVC_RUNTIME_STATIC=ON)
-endif()
 
-# Import METEE library to the project
-add_library(LIBMETEE STATIC IMPORTED)
-set_target_properties(
-  LIBMETEE
-  PROPERTIES IMPORTED_LOCATION ${LIBMETEE_LIB} IMPORTED_IMPLIB ${LIBMETEE_LIB}
-             INTERFACE_INCLUDE_DIRECTORIES ${LIBMETEE_HEADER})
-add_dependencies(LIBMETEE libmetee)
+  # Import METEE library to the project
+  add_library(metee::metee STATIC IMPORTED)
+  set_target_properties(
+    metee::metee
+    PROPERTIES IMPORTED_LOCATION ${LIBMETEE_LIB} IMPORTED_IMPLIB ${LIBMETEE_LIB}
+               INTERFACE_INCLUDE_DIRECTORIES ${LIBMETEE_HEADER})
+  add_dependencies(metee::metee libmetee)
+endif()

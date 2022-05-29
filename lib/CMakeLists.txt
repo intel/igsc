@@ -69,7 +69,7 @@ if(ENABLE_ENUM)
 endif()
 
 target_link_libraries(${PROJECT_NAME}
-                      LIBMETEE $<$<BOOL:${WIN32}>:CfgMgr32.lib>)
+                      metee::metee $<$<BOOL:${WIN32}>:CfgMgr32.lib>)
 
 install(
   TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}Targets
