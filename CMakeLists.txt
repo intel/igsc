@@ -4,13 +4,13 @@ cmake_minimum_required(VERSION 3.10)
 project(igsc C)
 set(LICENSE Apache)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_BINARY_DIR}")
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 include(version.cmake)
 add_definitions(-DIGSC_VERSION=\"${GSC_VERSION_STRING}\")
 include(GNUInstallDirs)
-include(metee.cmake)
 
 if(NOT WIN32)
     option(SYSLOG "Use syslog for logging" ON)
@@ -21,10 +21,22 @@ option(ENABLE_TESTS "Perform unit tests after build" OFF)
 option(ENABLE_WERROR "Enable treat warnings as error" ON)
 option(ENABLE_CLI "Enable command line tool build" ON)
 option(ENABLE_ENUM "Enable enumeration build" ON)
+option(BUILD_SHARED_LIBS "Build shared library" ON)
+option (BUILD_USE_CONAN "Use Conan for dependencies download" NO)
 
 include(CMakeDependentOption)
 cmake_dependent_option(CLI_ENABLED "Enable command line tool build" ON "ENABLE_ENUM;ENABLE_CLI" OFF)
 cmake_dependent_option(TESTS_ENABLED "Perform unit tests after build" ON "ENABLE_ENUM;ENABLE_CLI;ENABLE_TESTS" OFF)
+
+if(BUILD_USE_CONAN)
+  include(conan)
+  conan_cmake_autodetect(settings)
+  # conan.cmake failed to detect MT, force-replace it
+  string(REPLACE "compiler.runtime=MD" "compiler.runtime=MT" flags "${settings}")
+  conan_cmake_install(PATH_OR_REFERENCE ${CMAKE_CURRENT_SOURCE_DIR} SETTINGS ${flags})
+endif()
+message(${CMAKE_MODULE_PATH})
+include(metee.cmake)
 
 set(COMPILE_OPTIONS_NX
     -Wall
