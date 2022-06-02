@@ -3313,7 +3313,8 @@ static int do_ifr_get_repair_info(int argc, char *argv[])
     {
        fwupd_error("Failed to run test, library return code %d\n",
                    ret);
-       return EXIT_FAILURE;
+       ret = EXIT_FAILURE;
+       goto out;
     }
 
     printf("Number of used array repair entries: %u\n", used_array_repair_entries);
