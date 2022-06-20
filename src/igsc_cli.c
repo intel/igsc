@@ -1703,12 +1703,12 @@ static int do_oprom_version(int argc, char *argv[], enum igsc_oprom_type type)
  *
  * If oprom_code_devid_enforcement flag exists in the firmware image on the device (set by FIT tool)
  * and it is set to True:
- * The update is accepted only if the update file contains a Device IDs whitelist (0x37)
+ * The update is accepted only if the update file contains a Device IDs whitelist (37)
  * and the card's {VID, DID, SSVID, SSDID} is in the update file's Device IDs whitelist.
  * In this case the dev ids list will be checked by the match function elsewhere in the flow.
  *
  * If oprom_code_devid_enforcement flag doesn't exist in the FW image on the device or it is False:
- * The update is accepted only if the update file does not contain a Device ID whitelist (0x37).
+ * The update is accepted only if the update file does not contain a Device ID whitelist (37).
  * This case is checked here in this function.
  */
 int oprom_check_devid_enforcement(struct igsc_device_handle *handle,
