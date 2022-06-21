@@ -2606,17 +2606,47 @@ int igsc_device_fwdata_update(IN  struct igsc_device_handle *handle,
 {
     struct igsc_fwdata_image *img;
     int ret;
+    struct igsc_fwdata_version orig_ver;
+    struct igsc_fwdata_version new_ver;
 
     /* Calling igsc_image_fwdata_init() only for parsing and validation of the buffer */
     ret = igsc_image_fwdata_init(&img, buffer, buffer_len);
     if (ret != IGSC_SUCCESS)
     {
+        gsc_error("Failed to parse fwdata image: %d\n", ret);
         return ret;
     }
+    ret = image_fwdata_get_version(img, &orig_ver);
+    if (ret != IGSC_SUCCESS)
+    {
+        gsc_error("Failed to get fwdata version: %d\n", ret);
+        return ret;
+    }
+
     igsc_image_fwdata_release(img);
 
-    return gsc_update(handle, buffer, buffer_len, progress_f, ctx,
-                      GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA, false);
+    ret = gsc_update(handle, buffer, buffer_len, progress_f, ctx,
+                     GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA, false);
+    if (ret != IGSC_SUCCESS)
+    {
+        gsc_error("Failed to update fwdata: %d\n", ret);
+        return ret;
+    }
+
+    ret = igsc_device_fwdata_version(handle, &new_ver);
+    if (ret != IGSC_SUCCESS)
+    {
+       gsc_error("failed to receive fwdata version after the update\n");
+       return ret;
+    }
+
+    if (memcmp(&new_ver, &orig_ver, sizeof(struct igsc_fwdata_version)))
+    {
+       gsc_error("after the update fwdata version wasn't updated on the device\n");
+       return IGSC_ERROR_BAD_IMAGE;
+    }
+
+    return IGSC_SUCCESS;
 }
 
 int igsc_device_fwdata_image_update(IN  struct igsc_device_handle *handle,
