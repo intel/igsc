@@ -725,6 +725,14 @@ int firmware_update(const char *device_path,
     }
     print_dev_fw_version(&device_fw_version);
 
+    /* check the new version */
+    if (memcmp(&image_fw_version, &device_fw_version, sizeof(struct igsc_fw_version)))
+    {
+        fwupd_error("After the update fw version wasn't updated on the device\n");
+        ret = EXIT_FAILURE;
+        goto exit;
+    }
+
 exit:
     (void)igsc_device_close(&handle);
 
@@ -1914,6 +1922,15 @@ int oprom_update(const char *image_path,
     }
     print_oprom_version(type, &dev_version);
 
+    /* check the new version */
+    if (memcmp(&dev_version, &img_version, sizeof(struct igsc_oprom_version)))
+    {
+        fwupd_error("After the update oprom %s version wasn't updated on the device\n",
+                    oprom_type_to_str(type));
+        ret = EXIT_FAILURE;
+        goto exit;
+    }
+
 exit:
     igsc_image_oprom_release(oimg);
     free(img);
@@ -2492,6 +2509,14 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
         goto exit;
     }
     print_dev_fwdata_version(&dev_version);
+
+    /* check the new version */
+    if (memcmp(&img_version, &dev_version, sizeof(struct igsc_fwdata_version)))
+    {
+        fwupd_error("After the update fwdata version wasn't updated on the device\n");
+        ret = EXIT_FAILURE;
+        goto exit;
+    }
 
 exit:
     igsc_image_fwdata_release(oimg);
