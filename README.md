@@ -10,7 +10,11 @@
 
 ### Requirements:
 
+#### Cross-platform
   * MeTee: https://github.com/intel/metee
+
+#### Linux
+  * libudev (libudev-dev package in Debian)
 
 Both cmake and meson build framework are supported.
 
