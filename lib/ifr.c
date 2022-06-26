@@ -353,7 +353,7 @@ exit:
     return status;
 }
 
-#define MAX_SUPPORTED_NUM_OF_DEVICE 8 /* In ATS / PVC - should be 8 */
+#define MAX_SUPPORTED_NUM_OF_DEVICE 8 /* In Xe_HP SDV / PVC - should be 8 */
 
 static int gsc_memory_ppr(struct igsc_device_handle *handle,
                           uint32_t *count,
@@ -513,7 +513,7 @@ int igsc_memory_ppr_status(IN struct  igsc_device_handle *handle,
    return gsc_memory_ppr(handle, &device_count, ppr_status);
 }
 
-#define MAX_SUPPORTED_NUM_OF_TILES 4 /* In ATS - 4, In PVC - 2 */
+#define MAX_SUPPORTED_NUM_OF_TILES 4 /* In Xe_HP SDV - 4, In PVC - 2 */
 
 static int gsc_gfsp_memory_errors(IN  struct  igsc_device_handle *handle,
                                   IN OUT uint32_t  *num_of_tiles,

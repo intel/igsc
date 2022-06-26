@@ -1229,7 +1229,7 @@ struct igsc_ppr_status {
     uint8_t  reserved;
     uint32_t ras_ppr_applied;                     /**< 0 - ppr not applied, 1 - ppr applied, 2 - ppr exhausted */
     uint32_t mbist_completed;                     /**< 0 - Not Applied, Any set bit represents mbist completed */
-    uint32_t num_devices;                         /**< real number of devices in the array (on ATS, PVC <= 8) */
+    uint32_t num_devices;                         /**< real number of devices in the array (on Xe_HP SDV, PVC <= 8) */
     struct   igsc_device_mbist_ppr_status device_mbist_ppr_status[]; /**< Array of PPR statuses per device */
 };
 

@@ -105,7 +105,7 @@ struct gfsp_num_memory_errors_per_tile {
 struct gfsp_get_num_memory_errors_res {
     struct mkhi_msg_hdr header;
     uint32_t gfsp_heci_header;        /* contains enum gfsp_cmd */
-    uint32_t tiles_num;               /**< In ATS - 4, In PVC - 2 */
+    uint32_t tiles_num;               /**< In Xe_HP SDV - 4, In PVC - 2 */
     struct gfsp_num_memory_errors_per_tile num_memory_errors[];
 };
 
@@ -130,7 +130,7 @@ struct gfsp_get_memory_ppr_status_res {
     uint8_t  reserved;
     uint32_t ras_ppr_applied;                     /**< 0 - ppr not applied, 1 - ppr applied, 2 - ppr exhausted */
     uint32_t mbist_completed;                     /**< 0 - Not Applied, Any set bit represents mbist completed */
-    uint32_t num_devices;                         /**< real number of device in the array - in ATS / PVC - should be up to 8 */
+    uint32_t num_devices;                         /**< real number of device in the array - in Xe_HP SDV / PVC - should be up to 8 */
     struct   gfsp_device_mbist_ppr_status device_mbist_ppr_status[]; /**< Array length is num_devices */
 };
 
