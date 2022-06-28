@@ -1418,15 +1418,15 @@ static int gsc_device_hw_config(struct igsc_lib_ctx *lib_ctx,
     /* convert to firmware bit mask for easier comparison */
     if (resp->hw_step == GSC_DG2_SKUID_SOC1)
     {
-        hw_config_1->hw_sku = GSC_IFWI_TAG_512_SKU_BIT;
+        hw_config_1->hw_sku = GSC_IFWI_TAG_SOC1_SKU_BIT;
     }
     else if (resp->hw_step == GSC_DG2_SKUID_SOC3)
     {
-        hw_config_1->hw_sku = GSC_IFWI_TAG_256_SKU_BIT;
+        hw_config_1->hw_sku = GSC_IFWI_TAG_SOC3_SKU_BIT;
     }
     else if (resp->hw_step == GSC_DG2_SKUID_SOC2)
     {
-        hw_config_1->hw_sku = GSC_IFWI_TAG_128_SKU_BIT;
+        hw_config_1->hw_sku = GSC_IFWI_TAG_SOC2_SKU_BIT;
     }
     else
     {
@@ -1548,9 +1548,9 @@ int igsc_hw_config_to_string(IN const struct igsc_hw_config *hw_config,
     else
     {
         ret = snprintf(buf, length, "hw sku: [ %s%s%s]",
-                       (GSC_IFWI_TAG_128_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "128 " : "",
-                       (GSC_IFWI_TAG_256_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "256 " : "",
-                       (GSC_IFWI_TAG_512_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "512 " : "");
+                       (GSC_IFWI_TAG_SOC2_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "SOC2 " : "",
+                       (GSC_IFWI_TAG_SOC3_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "SOC3 " : "",
+                       (GSC_IFWI_TAG_SOC1_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "SOC1 " : "");
     }
     if (ret < 0)
     {
