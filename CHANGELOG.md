@@ -1,5 +1,41 @@
 # IGSC FUL
 
+## [v0.8.4] - 2022-07-03
+
+### Added
+
+1. README: mention libudev dependency
+2. qb: add linux build script
+3. ci: add quckbuild windows build script
+4. cmake: add windows presets
+5. cmake: add option to download dependencies from conan
+6. cmake: enchance metee search
+7. add error messages prints for unsupported hw config
+8. src: add check of the versions after update
+9. lib: add check of the versions after update
+10. ci: enable tests compile
+11. ci: print docker name also for cmake
+12. ci: add ctest to compilation tasks
+13. lib: add UNUSED_VAR cross platform macro
+
+### Fixed
+
+1. fix device ids extension number
+2. conan: clean conanfile
+3. cli: fix a memory leak in do_ifr_get_repair_info
+4. lib: fix compilation warnings of ISO C90
+5. lib: fix unsigned formats in print statements
+6. cli: make fw and fw data versions prints more readable
+7. tests: cmake: fix dependencies
+8. ut: power_stubs.h fix includes
+9. cmake: metee: the find package has to match the case
+10. ci: move to self-hosted runners to other resource
+11. ci: rename job clang-compile to compile
+
+### Removed
+
+1. lib: remove enable_enum option in cmake and meson
+
 ## [v0.8.3] - 2022-05-10
 
 ### Added
