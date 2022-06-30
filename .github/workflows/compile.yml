@@ -38,7 +38,7 @@ jobs:
         shell: bash
         run: |
           CMAKE_BUILD_DIR=${BUILDDIR}/cmake
-          CMAKE_ARGS="-DCMAKE_C_COMPILER=${{ inputs.compiler }}"
+          CMAKE_ARGS="-DCMAKE_C_COMPILER=${{ inputs.compiler }} -DENABLE_TESTS:BOOL=ON"
           cmake --version
           mkdir -p ${CMAKE_BUILD_DIR}
           pushd ${CMAKE_BUILD_DIR}
