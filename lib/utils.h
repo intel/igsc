@@ -8,6 +8,7 @@
 #include <stdint.h>
 #ifdef __linux__
 #include <unistd.h>
+#include <string.h>
 #endif /* __linux__ */
 
 #ifdef __linux__
