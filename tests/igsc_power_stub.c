@@ -2,7 +2,6 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (C) 2022 Intel Corporation
  */
-#include "msvc/config.h"
 #include "igsc_lib.h"
 #include "utils.h"
 
