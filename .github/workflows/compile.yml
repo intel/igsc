@@ -9,7 +9,7 @@ on:
          type: string
 
 jobs:
-  clang-compile:
+  compile:
     runs-on: [UbuntuJer]
     env:
       BUILDDIR: /tmp/build
