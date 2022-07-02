@@ -8,14 +8,14 @@
 
 int gsc_get_device_power_control(const char *devpath, uint8_t *power_control)
 {
-    (devpath);
+    UNUSED_VAR(devpath);
     *power_control = GSC_POWER_CONTROL_ON;
     return IGSC_SUCCESS;
 }
 
 int gsc_set_device_power_control(const char *devpath, uint8_t power_control)
 {
-    (devpath);
-    (power_control);
+    UNUSED_VAR(devpath);
+    UNUSED_VAR(power_control);
     return IGSC_SUCCESS;
 }
