@@ -44,6 +44,14 @@ jobs:
           popd
           make -C ${CMAKE_BUILD_DIR} -j$(nproc) package
 
+      - name: Run ctest on ${{ matrix.container }} with ${{ inputs.compiler }}
+        shell: bash
+        run: |
+          CMAKE_BUILD_DIR=${BUILDDIR}/cmake
+          pushd ${CMAKE_BUILD_DIR}/tests/
+          ctest
+          popd
+
       - name: Run on ${{ matrix.container }} meson compilation with ${{ inputs.compiler }}
         run: |
           CC=${{ inputs.compiler }} meson setup $BUILDDIR/meson/
