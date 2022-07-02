@@ -54,6 +54,10 @@ extern "C" {
 #define BIT(x) (1U << (x))
 #endif /* BIT */
 
+#ifndef UNUSED_VAR
+#define UNUSED_VAR(_v) (void)_v
+#endif
+
 /**
  * A file descriptor
  * @typedef igsc_handle_t
