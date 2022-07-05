@@ -2529,7 +2529,7 @@ static int gsc_fwdata_get_version(struct igsc_lib_ctx *lib_ctx, struct igsc_fwda
     request_len = sizeof(*req);
 
     resp = (struct gsc_fw_data_heci_version_resp *)lib_ctx->working_buffer;
-    response_len = sizeof(*resp) - sizeof((resp->response.header));
+    response_len = sizeof(*resp);
     buf_len = lib_ctx->working_buffer_length;
 
     status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
