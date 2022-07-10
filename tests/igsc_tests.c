@@ -444,6 +444,10 @@ static void igsc_device_oprom_update_bad_type(void **status)
     struct igsc_oprom_image img;
     igsc_progress_func_t progress_f;
     int ctx;
+    char buf[1];
+
+    img.buffer = buf;
+    img.buffer_len = sizeof(buf);
 
     assert_int_equal(igsc_device_oprom_update(&handle, 3, &img,  progress_f, (void *)&ctx), IGSC_ERROR_INVALID_PARAMETER);
 }
