@@ -4,7 +4,11 @@
 BUILD_TYPE=$1
 BUILD_TYPE=${BUILD_TYPE:-Release}
 
-export BUILD_DIR=$(dirname "$(readlink -f "$0")")
+export PUBLISH_DIR=Bin/Kit/IGSC_FUL
+
+# Create publish directories
+mkdir -p ${PUBLISH_DIR}
+mkdir -p ${PUBLISH_DIR}/INTERNAL
 
 # workaround for https://github.com/conan-io/conan/issues/4322
 export CC=$(which cc)
@@ -22,3 +26,11 @@ cmake -C cmake.config .. || exit $?
 make -j$(nproc) || exit $?
 
 popd
+
+#copy to kit
+cp include/igsc_lib.h ${PUBLISH_DIR}/
+cp ${BUILD_TYPE}/lib/libigsc.so ${PUBLISH_DIR}/
+cp ${BUILD_TYPE}/lib/libigsc.so.* ${PUBLISH_DIR}/
+cp ${BUILD_TYPE}/lib/libigsc.so ${PUBLISH_DIR}/INTERNAL/
+cp ${BUILD_TYPE}/lib/libigsc.so.* ${PUBLISH_DIR}/INTERNAL/
+cp ${BUILD_TYPE}/src/igsc ${PUBLISH_DIR}/INTERNAL/
