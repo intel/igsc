@@ -402,54 +402,50 @@ static void igsc_device_fw_update_buffer_len_zero(void **status)
 static void igsc_device_oprom_update_null_inputs(void **status)
 {
     struct igsc_device_handle handle;
-    uint32_t oprom_type;
-    struct igsc_oprom_image *img;
-    igsc_progress_func_t progress_f;
-    int ctx;
+    uint32_t oprom_type = IGSC_OPROM_CODE;
+    unsigned char buf[10];
+    struct igsc_oprom_image img = {
+        .buffer = buf,
+        .buffer_len = 10,
+        .code_part_len = 10,
+        .code_part_ptr = (void *)10,
+    };
+    igsc_progress_func_t progress_f = NULL;
 
-    assert_int_equal(igsc_device_oprom_update(&handle, IGSC_OPROM_CODE, NULL,  progress_f, (void *)&ctx), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_device_oprom_update(&handle, oprom_type, NULL,  progress_f, NULL), IGSC_ERROR_INVALID_PARAMETER);
 
-    img = (struct igsc_oprom_image *)malloc(sizeof(struct igsc_oprom_image));
-    img->buffer_len = 10;
-    img->code_part_len = 10;
+    assert_int_equal(igsc_device_oprom_update(NULL, oprom_type, &img,  progress_f, NULL), IGSC_ERROR_INVALID_PARAMETER);
 
-    assert_int_equal(igsc_device_oprom_update(NULL, IGSC_OPROM_CODE, img,  progress_f, (void *)&ctx), IGSC_ERROR_INVALID_PARAMETER);
+    img.buffer = NULL;
+    assert_int_equal(igsc_device_oprom_update(&handle, oprom_type, &img,  progress_f, NULL), IGSC_ERROR_BAD_IMAGE);
 
-    img->buffer = NULL;
-    assert_int_equal(igsc_device_oprom_update(&handle, IGSC_OPROM_CODE, img,  progress_f, (void *)&ctx), IGSC_ERROR_BAD_IMAGE);
-
-    free(img);
 }
 
 static void igsc_device_oprom_update_buffer_len_zero(void **status)
 {
     struct igsc_device_handle handle;
-    uint32_t oprom_type;
-    struct igsc_oprom_image *img;
-    igsc_progress_func_t progress_f;
-    int ctx;
+    uint32_t oprom_type = IGSC_OPROM_CODE;
+    struct igsc_oprom_image img = {
+        .buffer_len = 0,
+    };
+    igsc_progress_func_t progress_f = NULL;
 
-    img = (struct igsc_oprom_image *)malloc(sizeof(struct igsc_oprom_image));
-    img->buffer_len = 0;
+    assert_int_equal(igsc_device_oprom_update(&handle, oprom_type, &img,  progress_f, NULL), IGSC_ERROR_BAD_IMAGE);
 
-    assert_int_equal(igsc_device_oprom_update(&handle, IGSC_OPROM_CODE, img,  progress_f, (void *)&ctx), IGSC_ERROR_BAD_IMAGE);
-
-    free(img);
 }
 
 static void igsc_device_oprom_update_bad_type(void **status)
 {
     struct igsc_device_handle handle;
-    uint32_t oprom_type;
-    struct igsc_oprom_image img;
-    igsc_progress_func_t progress_f;
-    int ctx;
-    char buf[1];
+    uint32_t oprom_type = 3; /* bad type */
+    igsc_progress_func_t progress_f = NULL;
+    unsigned char buf[1];
+    struct igsc_oprom_image img = {
+        .buffer = buf,
+        .buffer_len = sizeof(buf),
+    };
 
-    img.buffer = buf;
-    img.buffer_len = sizeof(buf);
-
-    assert_int_equal(igsc_device_oprom_update(&handle, 3, &img,  progress_f, (void *)&ctx), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_device_oprom_update(&handle, oprom_type, &img,  progress_f, NULL), IGSC_ERROR_BAD_IMAGE);
 }
 
 static void test_params_version_null(void **state)
@@ -509,8 +505,6 @@ static void test_params_version_compare_older2(void **state)
     dev_ver.build = 12;
     assert_int_equal(igsc_fw_version_compare(&img_ver, &dev_ver), IGSC_VERSION_OLDER);
 }
-
-
 
 static void test_params_version_compare_newer(void **state)
 {
