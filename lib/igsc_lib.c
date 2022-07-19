@@ -2571,15 +2571,7 @@ static int gsc_fwdata_get_version(struct igsc_lib_ctx *lib_ctx, struct igsc_fwda
 
     version->major_vcn = resp->major_vcn;
     version->major_version = resp->major_version;
-
-    if (resp->oem_manuf_data_version_fitb_valid)
-    {
-        version->oem_manuf_data_version = resp->oem_manuf_data_version_fitb;
-    }
-    else
-    {
-        version->oem_manuf_data_version = resp->oem_manuf_data_version_nvm;
-    }
+    version->oem_manuf_data_version = resp->oem_manuf_data_version_nvm;
 
     status = IGSC_SUCCESS;
 
