@@ -1783,6 +1783,7 @@ int oprom_update(const char *image_path,
     struct igsc_oprom_image *oimg = NULL;
     struct igsc_oprom_version dev_version;
     struct igsc_oprom_version img_version;
+    struct igsc_fw_version fw_version;
     igsc_progress_func_t progress_func = NULL;
     uint32_t img_type;
     uint8_t cmp;
@@ -1828,6 +1829,13 @@ int oprom_update(const char *image_path,
         ret = EXIT_FAILURE;
         goto exit;
     }
+    ret = igsc_device_fw_version(handle, &fw_version);
+    if (ret != IGSC_SUCCESS)
+    {
+         fwupd_error("Failed to get firmware version from the device, returned %d\n", ret);
+         goto exit;
+    }
+    print_fw_version("Device firmware version: ", &fw_version);
 
     ret = igsc_image_oprom_version(oimg, type, &img_version);
     if (ret != IGSC_SUCCESS)
@@ -2382,6 +2390,7 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
     struct igsc_fwdata_image *oimg = NULL;
     struct igsc_fwdata_version dev_version;
     struct igsc_fwdata_version img_version;
+    struct igsc_fw_version fw_version;
     igsc_progress_func_t progress_func = NULL;
     uint8_t cmp;
     bool update = false;
@@ -2409,6 +2418,14 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
         ret = EXIT_FAILURE;
         goto exit;
     }
+
+    ret = igsc_device_fw_version(handle, &fw_version);
+    if (ret != IGSC_SUCCESS)
+    {
+         fwupd_error("Failed to get firmware version from the device, returned %d\n", ret);
+         goto exit;
+    }
+    print_fw_version("Device firmware version: ", &fw_version);
 
     ret = igsc_image_fwdata_version(oimg, &img_version);
     if (ret != IGSC_SUCCESS)
