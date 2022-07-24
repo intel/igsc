@@ -2416,29 +2416,14 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
     print_dev_fwdata_version(&dev_version);
 
     ret = igsc_image_fwdata_match_device(oimg, dev_info);
-    if (ret == IGSC_SUCCESS)
-    {
-        update = true;
-    }
-    else if (ret == IGSC_ERROR_NOT_SUPPORTED)
-    {
-        update = allow_downgrade;
-    }
-    else if (ret == IGSC_ERROR_DEVICE_NOT_FOUND)
+    if (ret == IGSC_ERROR_DEVICE_NOT_FOUND)
     {
         fwupd_error("The image is not compatible with the device\nDevice info doesn't match image device Id extension\n");
         goto exit;
     }
-    else
+    else if (ret != IGSC_SUCCESS)
     {
         fwupd_error("Internal error\n");
-        goto exit;
-    }
-
-    if (!update)
-    {
-        fwupd_msg("In order to update run with -a | --allow-downgrade\n");
-        ret = EXIT_FAILURE;
         goto exit;
     }
 
