@@ -1,5 +1,67 @@
 # IGSC FUL
 
+## [v0.8.4] - 2022-07-24
+
+### Changed
+
+1. conan: clean conanfile
+2. lib: remove enable_enum option in cmake and meson
+3. lib: extend igsc_hw_config_to_string
+
+### Fixed
+
+1. cli: fix return value treatment of match device function
+2. lib: fix get device config function
+3. lib: fix fw data heci version response handling
+4. cli: fix a memory leak in do_ifr_get_repair_info
+5. lib: fix compilation warnings of ISO C90
+6. ut: power_stubs.h fix includes
+7. tests: cmake: fix dependencies
+8. lib: fix unsigned formats in print statements
+9. cli: make fw and fw data versions prints more readable
+10. lib: enum: windows: fix device bdf retrieval
+11. cli: fix handling of match function return value
+12. ut: fix image type in the test setup
+13. lib: fix structures definition coding style
+14. lib: fix gfsp_heci_validate_response_header usage
+15. lib: fix error message in gfsp response validation
+16. lib: gsc_fwu_get_version() initialize received_len
+17. ut: fix unitialized oprom_image structure in tests
+
+### Added
+
+1. src: add check of the versions after update
+2. lib: add check of the versions after update
+3. README: mention libudev dependency
+4. lib: add UNUSED_VAR cross platform macro
+5. cli: add error messages prints for unsupported hw config
+6. lib: add error messages prints for unsupported hw config
+7. lib: set power control to on during operations
+8. lib: add debug prints for 4ids extension processing
+9. lib: implement special case for images with no device extensions
+10. cli: add oprom code update devId enforcement check
+11. lib: add igsc_image_oprom_code_devid_enforced()
+12. ut: add cli unit-tests for supported-devices
+13. ut: add tests for the 4ids library functions
+14. cli: implement supported-devices flag for oprom images
+15. lib: add oprom image has 4ids or 2ids extension API
+16. lib: add oprom image 4ids and 2ids extension query functions
+17. lib: implement oprom 4ids library api
+18. lib: implement oprom 4ids parsing helper functions
+19. lib: parse 4ids supported device list extension
+20. lib: use legacy device extension for oprom data only
+21. lib: define 4-ids extension structures
+22. lib: update the oprom code devId enforcement flag
+23. lib: add oprom code device ids flag to heci reply
+24. lib: add definitions of the new apis for 4-IDs oprom
+25. lib: define the oprom device info structure with 4 IDs
+26. cli: print status from fw in non-verbose mode
+27. README: recommend visual studio 2019
+28. cmake: add option to static build
+29. cli: add ecc config commands
+30. lib: implement ecc config commands
+31. lib: add heci definitions for ecc config commands
+
 ## [v0.8.0] - 2022-07-10
 
 Note: non backward compatible change (num_of_tiles to max_num_of_tiles)
