@@ -243,6 +243,10 @@ enum gsc_fwu_heci_metadata_version {
     GSC_FWU_HECI_METADATA_VERSION_MAX,
 };
 
+#define MCHI_GROUP_ID_MCA 0xA
+#define MCHI_READ_FILE_EX 0xA
+
+#define FILE_ID_MCA_OEM_VERSION 0x1001f000
 
 /**
  * @struct gsc_fwu_heci_image_metadata
@@ -425,6 +429,38 @@ struct gsc_fwu_heci_get_subsystem_ids_message_resp {
     uint16_t                        ssvid;
     uint16_t                        ssdid;
     uint32_t                        reserved[2];
+};
+
+/**
+ * @brief request to read a file
+ *
+ * @param header @ref mkhi_msg_hdr, (MCHI header is the same as MKHI one),
+ *               MCHI_GROUP_ID_MCA and MCHI_READ_FILE_EX for MCHI group_id and command
+ * @param file_id id of the file to read
+ * @param offset offset from the start of the file to read
+ * @param data_size size of data to read
+ * @param flags flags to pass to the read command (should be 0)
+ */
+struct mchi_read_file_ex_req {
+    struct mkhi_msg_hdr header;
+    uint32_t file_id;
+    uint32_t offset;
+    uint32_t data_size;
+    uint8_t flags;
+};
+
+/**
+ * @brief request to read a file
+ *
+ * @param header @ref mkhi_msg_hdr, (MCHI header is the same as MKHI one),
+ *               MCHI_GROUP_ID_MCA and MCHI_READ_FILE_EX for MCHI group_id and command
+ * @param data_size actual size of data that was read
+ * @param data file data payload
+ */
+struct mchi_read_file_ex_res {
+    struct mkhi_msg_hdr header;
+    uint32_t data_size;
+    uint8_t data[];
 };
 
 /** @} */
