@@ -6,6 +6,8 @@
 #ifndef __IGSC_IFR_HECI_H__
 #define __IGSC_IFR_HECI_H__
 
+#include "igsc_heci.h"
+
 #pragma pack(1)
 
 enum gfx_diag_group_id {
@@ -46,14 +48,6 @@ enum mkhi_group_id {
 #define GFX_SRV_MKHI_GET_IFR_STATUS_CMD 0x31
 #define GFX_SRV_MKHI_GET_IFR_GENERAL_INFO_CMD 0x32
 #define GFX_SRV_MKHI_GET_IFR_TILE_REPAIR_INFO_CMD 0x36
-
-struct mkhi_msg_hdr {
-    uint8_t  group_id;      /**< the target client id registered to process the message */
-    uint8_t  command    :7; /**< command specific to HECI client */
-    uint8_t  is_response:1; /**< response from client */
-    uint8_t  reserved;      /**< reserved bit field */
-    uint8_t  result;        /**< result */
-};
 
 /**
  * @brief Bitmap ifr repairs structure
