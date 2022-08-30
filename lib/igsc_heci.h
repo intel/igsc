@@ -83,6 +83,24 @@ enum gsc_fwu_heci_payload_type {
 #pragma pack(1)
 
 /**
+ * @struct mkhi_msg_hdr
+ * @brief  MKHI command header
+ *
+ * @param group_id the target client id registered to process the message
+ * @param command command specific to HECI client
+ * @param is_response set to 1 in heci response header
+ * @param reserved reserved bit field
+ * @param result result of the mkhi command
+ */
+struct mkhi_msg_hdr {
+    uint8_t  group_id;
+    uint8_t  command    :7;
+    uint8_t  is_response:1;
+    uint8_t  reserved;
+    uint8_t  result;
+};
+
+/**
  * @struct gsc_fwu_heci_header
  * @brief  GSF Firmware Update command header
  *
