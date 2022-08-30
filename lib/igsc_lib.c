@@ -3111,3 +3111,38 @@ exit:
 
     return status;
 }
+
+int igsc_device_oem_version(IN  struct igsc_device_handle *handle,
+                            OUT struct igsc_oem_version *version)
+{
+    int ret;
+    uint32_t received_version_size;
+
+    if (!handle || !version)
+    {
+       gsc_error("Invalid parameters\n");
+       return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    ret = mchi_read_file(handle, FILE_ID_MCA_OEM_VERSION,
+                         IGSC_MAX_OEM_VERSION_LENGTH, version->version,
+                         &received_version_size);
+    if (ret != IGSC_SUCCESS)
+    {
+       gsc_error("Failed to read OEM_VERSION file, ret=%d\n", ret);
+       return ret;
+    }
+
+    gsc_debug("ret = %d, received %u bytes\n", ret, received_version_size);
+
+    if (received_version_size == 0 || received_version_size > IGSC_MAX_OEM_VERSION_LENGTH)
+    {
+       gsc_error("Received wrong size of OEM_VERSION file (%u)\n", received_version_size);
+       return IGSC_ERROR_PROTOCOL;
+    }
+
+    gsc_debug_hex_dump("OEM Version:", version->version, received_version_size);
+
+    version->length = (uint16_t) received_version_size;
+    return ret;
+}
