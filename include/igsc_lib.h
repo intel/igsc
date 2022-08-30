@@ -96,6 +96,34 @@ struct igsc_fw_version {
 };
 
 /**
+ * Structure to store ifr binary version data
+ */
+struct igsc_ifr_bin_version {
+    uint16_t   major;      /**< IFR Binary Major Number */
+    uint16_t   minor;      /**< IFR Binary Minor Number */
+    uint16_t   hotfix;     /**< IFR Binary Hotfix Number */
+    uint16_t   build;      /**< IFR Binary Build Number */
+};
+
+/**
+ * Structure to store psc version data
+ */
+struct igsc_psc_version {
+    uint32_t   date;        /**< PSC date */
+    uint32_t   cfg_version; /**< PSC configuration version */
+};
+
+#define IGSC_MAX_OEM_VERSION_LENGTH 256
+
+/**
+ * Structure to store oem version data
+ */
+struct igsc_oem_version {
+    uint16_t length; /**< actual OEM version length */
+    uint8_t  version[IGSC_MAX_OEM_VERSION_LENGTH];  /**< buffer to store oem version */
+};
+
+/**
  * versions comparison results
  */
 enum igsc_version_compare_result {
@@ -1401,6 +1429,42 @@ IGSC_EXPORT
 int igsc_ecc_config_get(IN  struct igsc_device_handle *handle,
                         OUT uint8_t *cur_ecc_state,
                         OUT uint8_t *pen_ecc_state);
+
+/**
+ *  @brief Retrieves the OEM Version from the device.
+ *
+ *  @param handle A handle to the device.
+ *  @param version The memory to store obtained OEM version.
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_device_oem_version(IN  struct igsc_device_handle *handle,
+                            OUT struct igsc_oem_version *version);
+
+/**
+ *  @brief Retrieves the IFR Binary Version from the device.
+ *
+ *  @param handle A handle to the device.
+ *  @param version The memory to store obtained IFR binary version.
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_device_ifr_bin_version(IN  struct igsc_device_handle *handle,
+                                OUT struct igsc_ifr_bin_version *version);
+
+/**
+ *  @brief Retrieves the PSC Version from the device.
+ *
+ *  @param handle A handle to the device.
+ *  @param version The memory to store obtained PSC version.
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_device_psc_version(IN  struct igsc_device_handle *handle,
+                            OUT struct igsc_psc_version *version);
 
 /**
  * @}
