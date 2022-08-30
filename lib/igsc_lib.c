@@ -57,6 +57,9 @@ struct gsc_hw_config_1 {
 
 #define to_hw_config_1(cfg) ((struct gsc_hw_config_1 *)(cfg)->blob)
 
+DEFINE_GUID(GUID_METEE_MCHI, 0xfe2af7a6, 0xef22, 0x4b45,
+            0x87, 0x2f, 0x17, 0x6b, 0xb, 0xbc, 0x8b, 0x43);
+
 #define FWSTS(n) ((n) - 1)
 
 static int status_tee2fu(TEESTATUS status)
@@ -2859,4 +2862,254 @@ int igsc_image_fwdata_release(IN struct igsc_fwdata_image *img)
     image_fwdata_free_handle(img);
 
     return IGSC_SUCCESS;
+}
+
+static int mchi_heci_validate_response_header(struct igsc_lib_ctx *lib_ctx,
+                                              const struct mkhi_msg_hdr *resp_header,
+                                              uint32_t command)
+{
+    int status;
+
+    if (resp_header == NULL)
+    {
+        status = IGSC_ERROR_INTERNAL;
+        goto exit;
+    }
+
+    lib_ctx->last_firmware_status = resp_header->result;
+
+    if (resp_header->group_id != MCHI_GROUP_ID_MCA)
+    {
+        gsc_error("HECI Response group id is %u instead of expected %u\n",
+                  resp_header->group_id, MCHI_GROUP_ID_MCA);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp_header->command != command)
+    {
+        gsc_error("HECI Response header's command is %u instead of expected %u\n",
+                  resp_header->command, command);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp_header->is_response == false)
+    {
+        gsc_error("HECI Response not marked as response\n");
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp_header->reserved != 0)
+    {
+        gsc_error("HECI message response is leaking data\n");
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    status = IGSC_SUCCESS;
+
+exit:
+    return status;
+}
+
+#define MCHI_READ_FILE_DOES_NOT_EXIST 3
+
+static int mchi_read_chunk(IN  struct igsc_lib_ctx *lib_ctx,
+                           IN uint32_t file_id, IN uint32_t offset,
+                           IN uint32_t length, OUT void *buffer,
+                           OUT uint32_t *received_data_len)
+{
+    int status;
+    size_t request_len;
+    size_t response_len;
+    size_t received_len;
+    size_t buf_len;
+    struct mchi_read_file_ex_req *req;
+    struct mchi_read_file_ex_res *resp;
+    uint32_t copy_size;
+
+    req = (struct mchi_read_file_ex_req *)lib_ctx->working_buffer;
+    request_len = sizeof(*req);
+
+    resp = (struct mchi_read_file_ex_res *)lib_ctx->working_buffer;
+    response_len = sizeof(*resp);
+    buf_len = lib_ctx->working_buffer_length;
+
+    gsc_debug("read chunk: file id 0x%x, offset %u, length %u\n", file_id, offset, length);
+
+    gsc_debug("validating buffer\n");
+
+    status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Internal error - failed to validate buffer %d\n", status);
+        return status;
+    }
+
+    memset(req, 0, request_len);
+    req->header.group_id = MCHI_GROUP_ID_MCA;
+    req->header.command = MCHI_READ_FILE_EX;
+    req->file_id = file_id;
+    req->offset = offset;
+    req->data_size = length;
+    req->flags = 0;
+
+    gsc_debug("sending command\n");
+
+    status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        return status;
+    }
+
+    if (received_len < sizeof(resp->header))
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        return IGSC_ERROR_PROTOCOL;
+    }
+
+    gsc_debug("result = %u\n", resp->header.result);
+
+    status = mchi_heci_validate_response_header(lib_ctx, &resp->header, MCHI_READ_FILE_EX);
+    if (status != IGSC_SUCCESS)
+    {
+        return status;
+    }
+
+    if (resp->header.result == MCHI_READ_FILE_DOES_NOT_EXIST)
+    {
+        /* Special case - the file does not exist. It's legitimate, return success and 0 size */
+        *received_data_len = 0;
+        gsc_debug("Requested file does not exist\n");
+        return IGSC_SUCCESS;
+    }
+
+    if (resp->header.result != 0)
+    {
+        gsc_error("mchi read file command failed with error %u\n", resp->header.result);
+        return IGSC_ERROR_PROTOCOL;
+    }
+
+    if (received_len < response_len)
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        return IGSC_ERROR_PROTOCOL;
+    }
+
+    if (received_len - response_len < resp->data_size)
+    {
+        gsc_error("Error in HECI read - bad data size (%u), received %zu bytes\n",
+                  resp->data_size, received_len);
+        return IGSC_ERROR_PROTOCOL;
+    }
+
+    copy_size = resp->data_size;
+    if (length < resp->data_size)
+    {
+       /* this means we received more data than we have asked for, just truncate it */
+        copy_size = length;
+    }
+
+    if (gsc_memcpy_s(buffer, length, resp->data, copy_size))
+    {
+        gsc_error("Copy of file data failed, requested %u bytes, received %u bytes, copied %u bytes\n",
+                  length, resp->data_size, copy_size);
+        return IGSC_ERROR_PROTOCOL;
+    }
+
+    gsc_debug("mchi read chunk success, requested %u bytes, received %u bytes, copied %u bytes\n",
+              length, resp->data_size, copy_size);
+
+    *received_data_len = copy_size;
+
+    return IGSC_SUCCESS;
+}
+
+static int mchi_read_file(IN  struct igsc_device_handle *handle,
+                          IN uint32_t file_id, IN uint32_t size,
+                          OUT void *buffer, OUT uint32_t *received_data_size)
+{
+    int status;
+    uint32_t cur_size = size;
+    uint32_t cur_offset = 0;
+    uint32_t chunk_len;
+    uint32_t max_chunk_len;
+    uint32_t received_size = 0;
+    struct igsc_lib_ctx *lib_ctx;
+
+    if (!handle || !handle->ctx || !buffer || size == 0 || !received_data_size)
+    {
+        gsc_error("Bad parameters\n");
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    lib_ctx = handle->ctx;
+
+    gsc_debug("in mchi reaf file, initializing driver\n");
+
+    status = gsc_driver_init(lib_ctx, &GUID_METEE_MCHI);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("GFSP is not supported on this device, status %d\n", status);
+        return status;
+    }
+
+    if (lib_ctx->working_buffer_length <= sizeof(struct mchi_read_file_ex_res))
+    {
+       gsc_error("Max heci message length for this heci client is too small: %lu\n",
+                 lib_ctx->working_buffer_length);
+       status = IGSC_ERROR_INTERNAL;
+       goto exit;
+    }
+
+    max_chunk_len = (uint32_t)(lib_ctx->working_buffer_length - sizeof(struct mchi_read_file_ex_res));
+
+    while (cur_size > 0)
+    {
+        chunk_len = (cur_size > max_chunk_len) ? max_chunk_len : cur_size;
+
+        status = mchi_read_chunk(lib_ctx, file_id, cur_offset,
+                                 chunk_len, (uint8_t *)buffer + cur_offset, &received_size);
+        if (status != IGSC_SUCCESS)
+        {
+           gsc_error("Failed to read the chunk at offset %u, status %d\n", cur_offset, status);
+           goto exit;
+        }
+
+        gsc_debug("Got chunk at offset %u, requested size %u, received size %u\n",
+                  cur_offset, chunk_len, received_size);
+
+        if (received_size > chunk_len)
+        {
+           /* Something is wrong, we received more data than requested */
+           status = IGSC_ERROR_INTERNAL;
+           cur_offset += chunk_len;
+           goto exit;
+        }
+        else if (received_size < chunk_len)
+        {
+           /* This means that the actual file size is smaller than the requested one, and that
+            * we have finished reading the file
+            */
+           cur_offset += received_size;
+           goto exit;
+        }
+        else
+        {
+           cur_offset += received_size;
+           cur_size -= received_size;
+        }
+    }
+
+exit:
+    gsc_driver_deinit(lib_ctx);
+
+    *received_data_size = cur_offset;
+
+    gsc_debug("ret = %d, received %u bytes\n", status, cur_offset);
+
+    return status;
 }
