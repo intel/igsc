@@ -254,6 +254,51 @@ struct gfsp_get_ecc_config_res {
     uint8_t reserved[2];
 };
 
+/**
+ * @defgroup gsc_fw_api_ver GSC Firmware get version API
+ * @ingroup  gsc-fw-api
+ * @{
+ */
+
+/**
+ * @enum gsc_heci_partition_version
+ * @brief list of partition versions for GSC get version command
+ */
+enum gsc_heci_partition_version {
+    MKHI_GET_IP_VERSION_INVALID    = 0, /**< lower sentinel */
+    MKHI_GET_IP_VERSION_EXTERNAL   = 1, /**< graphics firmware */
+    MKHI_GET_IP_VERSION_PSC        = 4, /**< PSC version */
+    MKHI_GET_IP_VERSION_IFR        = 5, /**< IFR Binary version */
+};
+
+/**
+ * @brief get version request
+ *
+ * @param header @ref mkhi_msg_header
+ * @param partition firmware partition type @ref gsc_heci_partition_version
+ */
+struct gsc_heci_version_req {
+    struct mkhi_msg_hdr      header;
+    uint32_t                 partition;
+};
+
+/**
+ * @brief get version response
+ *
+ * @param header @ref mkhi_msg_header
+ * @param partition firmware partition type @ref gsc_heci_partition_version
+ * @param version_length version length
+ * @param version[] version
+ */
+struct gsc_heci_version_resp {
+    struct mkhi_msg_hdr      header;
+    uint32_t                 partition;
+    uint32_t                 version_length;
+    uint8_t                  version[];
+};
+
+/** @} */
+
 #pragma pack()
 
 #endif /* !__IGSC_IFR_HECI_H__ */
