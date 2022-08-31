@@ -89,6 +89,22 @@ static void fwupd_strerror(int errnum, char *buf, size_t buflen)
 }
 #endif /* __linux__ */
 
+static void print_oem_version(const struct igsc_oem_version *version)
+{
+    if (version->length > IGSC_MAX_OEM_VERSION_LENGTH)
+    {
+        printf("Illegal OEM Version: length bigger than %u\n", version->length);
+        return;
+    }
+
+    printf("OEM Version: ");
+    for (int i = 0; i < version->length; i++)
+    {
+         printf("%x", version->version[i]);
+    }
+    printf("\n");
+}
+
 static void print_fw_version(const char *prefix,
                              const struct igsc_fw_version *fw_version)
 {
@@ -775,6 +791,32 @@ int firmware_version(const char *device_path)
 
 exit:
     (void)igsc_device_close(&handle);
+    return ret;
+}
+
+mockable_static
+int oem_version(struct igsc_device_handle *handle)
+{
+    struct igsc_oem_version version;
+    int ret;
+
+    memset(&version, 0, sizeof(version));
+    ret = igsc_device_oem_version(handle, &version);
+    if (ret != IGSC_SUCCESS)
+    {
+        if (ret == IGSC_ERROR_PERMISSION_DENIED)
+        {
+           fwupd_error("Permission denied: missing required credentials to access the device\n");
+        }
+        else {
+            fwupd_error("Cannot retrieve OEM version from device\n");
+            print_device_fw_status(handle);
+        }
+        return EXIT_FAILURE;
+    }
+
+    print_oem_version(&version);
+
     return ret;
 }
 
@@ -3167,6 +3209,11 @@ out:
     return ret;
 }
 
+static int do_oem_version(int argc, char *argv[])
+{
+    return do_no_special_args_func(argc, argv, oem_version);
+}
+
 static int do_gfsp_get_mem_err(int argc, char *argv[])
 {
     return do_no_special_args_func(argc, argv, get_mem_err);
@@ -3538,6 +3585,29 @@ static int do_ifr(int argc, char *argv[])
     if (arg_is_token(sub_command, "count-tiles"))
     {
         return do_ifr_count_tiles(argc, argv);
+    }
+
+    fwupd_error("Wrong argument %s\n", sub_command);
+    return ERROR_BAD_ARGUMENT;
+}
+
+static int do_oem(int argc, char *argv[])
+{
+    const char *sub_command = NULL;
+
+    if (argc <= 0)
+    {
+        fwupd_error("Missing arguments\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    sub_command = argv[0];
+
+    arg_next(&argc, &argv);
+
+    if (arg_is_token(sub_command, "version"))
+    {
+        return do_oem_version(argc, argv);
     }
 
     fwupd_error("Wrong argument %s\n", sub_command);
@@ -3926,6 +3996,16 @@ static const struct gsc_op g_ops[] = {
                  "            device to communicate with\n"
                  "    -e | --ecc-config <[0|1]>\n"
                  "           0 - Disable 1 - Enable \n"
+    },
+    {
+        .name  = "oem",
+        .op    = do_oem,
+        .usage = {"version [--device <dev>]",
+                   NULL},
+        .help  = "Retrieve OEM version from the devices\n"
+                 "\nOPTIONS:\n\n"
+                 "    -d | --device <device>\n"
+                 "            device to be updated\n"
     },
 
     {
