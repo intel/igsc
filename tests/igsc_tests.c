@@ -15,6 +15,7 @@
 
 #include "igsc_lib.h"
 #include "oprom_parser.c"
+#include "ifr.c"
 #include "dev_info_mock.c"
 
 void *__real__test_calloc(size_t nmemb, size_t size,
@@ -586,6 +587,48 @@ static void igsc_device_subsystem_ids_bad_ids(void **status)
     assert_int_equal(igsc_device_subsystem_ids(&handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
 }
 
+static void igsc_device_oem_version_bad_handle(void **status)
+{
+    struct igsc_oem_version version;
+
+    assert_int_equal(igsc_device_oem_version(NULL, &version), IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_device_oem_version_bad_version(void **status)
+{
+    struct igsc_device_handle handle;
+
+    assert_int_equal(igsc_device_oem_version(&handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_device_psc_version_bad_handle(void **status)
+{
+    struct igsc_psc_version version;
+
+    assert_int_equal(igsc_device_psc_version(NULL, &version), IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_device_psc_version_bad_version(void **status)
+{
+    struct igsc_device_handle handle;
+
+    assert_int_equal(igsc_device_psc_version(&handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_device_ifr_bin_version_bad_handle(void **status)
+{
+    struct igsc_ifr_bin_version version;
+
+    assert_int_equal(igsc_device_ifr_bin_version(NULL, &version), IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_device_ifr_bin_version_bad_version(void **status)
+{
+    struct igsc_device_handle handle;
+
+    assert_int_equal(igsc_device_ifr_bin_version(&handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
+}
+
 int main(void)
 {
     const struct CMUnitTest device_image_tests[] = {
@@ -633,9 +676,19 @@ int main(void)
         cmocka_unit_test(test_get_type_null_3),
     };
 
+    const struct CMUnitTest get_version_tests[] = {
+        cmocka_unit_test(igsc_device_oem_version_bad_handle),
+        cmocka_unit_test(igsc_device_oem_version_bad_version),
+        cmocka_unit_test(igsc_device_psc_version_bad_handle),
+        cmocka_unit_test(igsc_device_psc_version_bad_version),
+        cmocka_unit_test(igsc_device_ifr_bin_version_bad_handle),
+        cmocka_unit_test(igsc_device_ifr_bin_version_bad_version),
+    };
+
     int status = cmocka_run_group_tests(device_image_tests, NULL, NULL);
     status += cmocka_run_group_tests(version_cmp_tests, NULL, NULL);
     status += cmocka_run_group_tests(get_type_tests, NULL, NULL);
+    status += cmocka_run_group_tests(get_version_tests, NULL, NULL);
 
     return status;
 }
