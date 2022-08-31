@@ -110,6 +110,16 @@ static void print_psc_version(const struct igsc_psc_version *version)
    printf("PSC Version: cfg_version: 0x%04x, date: 0x%04x\n", version->cfg_version, version->date);
 }
 
+static void print_ifr_bin_version(const struct igsc_ifr_bin_version *version)
+{
+    printf("IFR Version: %d.%d_%d.%d\n",
+           version->major,
+           version->minor,
+           version->hotfix,
+           version->build);
+}
+
+
 static void print_fw_version(const char *prefix,
                              const struct igsc_fw_version *fw_version)
 {
@@ -486,7 +496,7 @@ typedef int (*gsc_op)(int argc, char *argv[]);
 struct gsc_op {
     const char *name;
     gsc_op    op;
-    const char *usage[8]; /* up to 7 subcommands*/
+    const char *usage[9]; /* up to 8 subcommands*/
     const char  *help;  /* help */
 };
 
@@ -3134,6 +3144,33 @@ int ifr_count_tiles(struct igsc_device_handle *handle)
 }
 
 mockable_static
+int ifr_version(struct igsc_device_handle *handle)
+{
+    int ret;
+    struct igsc_ifr_bin_version version;
+
+    memset(&version, 0, sizeof(version));
+
+    ret = igsc_device_ifr_bin_version(handle, &version);
+    if (ret != IGSC_SUCCESS)
+    {
+        if (ret == IGSC_ERROR_PERMISSION_DENIED)
+        {
+           fwupd_error("Permission denied: missing required credentials to access the device\n");
+        }
+        else {
+            fwupd_error("Cannot retrieve IFR version from device, ret = %d\n", ret);
+            print_device_fw_status(handle);
+        }
+        return EXIT_FAILURE;
+    }
+
+    print_ifr_bin_version(&version);
+
+    return ret;
+}
+
+mockable_static
 int ecc_config_get(struct igsc_device_handle *handle)
 {
     int     ret;
@@ -3259,6 +3296,11 @@ static int do_ifr_count_tiles(int argc, char *argv[])
 static int do_iaf_psc_version(int argc, char *argv[])
 {
     return do_no_special_args_func(argc, argv, iaf_psc_version);
+}
+
+static int do_ifr_version(int argc, char *argv[])
+{
+    return do_no_special_args_func(argc, argv, ifr_version);
 }
 
 static void print_run_test_status(uint8_t run_status)
@@ -3625,6 +3667,11 @@ static int do_ifr(int argc, char *argv[])
     if (arg_is_token(sub_command, "count-tiles"))
     {
         return do_ifr_count_tiles(argc, argv);
+    }
+
+    if (arg_is_token(sub_command, "version"))
+    {
+        return do_ifr_version(argc, argv);
     }
 
     fwupd_error("Wrong argument %s\n", sub_command);
@@ -4014,8 +4061,10 @@ static const struct gsc_op g_ops[] = {
                   "get-status-ext [--device <dev>]",
                   "count-tiles [--device <dev>]",
                   "get-repair-info [--device <dev>] --tile <tile>",
+                  "version [--device <dev>]",
                   NULL},
         .help  = "Get IFR status or run IFR test or read IFR file\n"
+                 "or retrieve ifr version from the device\n"
                  "\nOPTIONS:\n\n"
                  "    -d | --device <device>\n"
                  "            device to communicate with\n"
