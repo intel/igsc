@@ -1524,3 +1524,144 @@ exit:
 
     return status;
 }
+
+static int gsc_get_version(struct igsc_lib_ctx *lib_ctx,
+                           uint32_t partition,
+                           uint8_t *version, size_t version_length)
+{
+    int status;
+    size_t request_len;
+    size_t response_len;
+    size_t received_len;
+    size_t buf_len;
+
+    struct gsc_heci_version_resp *resp;
+    struct gsc_heci_version_req *req;
+
+    if (version == NULL)
+    {
+        return IGSC_ERROR_INTERNAL;
+    }
+
+    req = (struct gsc_heci_version_req *)lib_ctx->working_buffer;
+    request_len = sizeof(*req);
+
+    resp = (struct gsc_heci_version_resp *)lib_ctx->working_buffer;
+    response_len = sizeof(*resp) + version_length;
+    buf_len = lib_ctx->working_buffer_length;
+
+    status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
+    if (status != IGSC_SUCCESS)
+    {
+        return status;
+    }
+
+    memset(req, 0, request_len);
+    req->header.command = GFX_SRV_MKHI_GET_IP_VERSION_CMD;
+    req->header.group_id = MKHI_GROUP_ID_GFX_SRV;
+    req->partition = partition;
+    status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response (%d)\n", status);
+        goto exit;
+    }
+
+    if (received_len < sizeof(resp))
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    status = mkhi_heci_validate_response_header(lib_ctx, &resp->header, GFX_SRV_MKHI_GET_IP_VERSION_CMD);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response (%d)\n", status);
+        goto exit;
+    }
+
+    if (received_len != response_len)
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp->partition != partition)
+    {
+        gsc_error("Invalid HECI message response payload (%u)\n", resp->partition);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp->version_length != version_length)
+    {
+        gsc_error("Invalid HECI message response version_length (%u)\n", resp->version_length);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (gsc_memcpy_s(version, version_length,
+                     resp->version, resp->version_length))
+    {
+        gsc_error("Copy of version data failed\n");
+        status = IGSC_ERROR_INTERNAL;
+        goto exit;
+    }
+
+    status = IGSC_SUCCESS;
+
+exit:
+    return status;
+}
+
+static int gsc_get_generic_version(IN  struct igsc_device_handle *handle,
+                                   uint32_t partition,
+                                   uint8_t *version, size_t version_length)
+{
+    struct igsc_lib_ctx *lib_ctx;
+    int ret;
+
+    if (!handle || !handle->ctx || !version)
+    {
+        gsc_error("Bad parameters\n");
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    lib_ctx = handle->ctx;
+
+    ret = gsc_driver_init(lib_ctx, &GUID_METEE_MKHI);
+    if (ret != IGSC_SUCCESS)
+    {
+        gsc_error("Cannot initialize driver, status %d\n", ret);
+        return ret;
+    }
+
+    ret = gsc_get_version(lib_ctx, partition, version, version_length);
+    if (ret != IGSC_SUCCESS)
+    {
+        gsc_error("Cannot get version for the partition, status %d\n", ret);
+        goto exit;
+    }
+
+exit:
+    gsc_driver_deinit(lib_ctx);
+
+    return ret;
+
+}
+
+int igsc_device_psc_version(IN  struct igsc_device_handle *handle,
+                            OUT struct igsc_psc_version *version)
+{
+    return gsc_get_generic_version(handle, MKHI_GET_IP_VERSION_PSC,
+                                   (uint8_t *)version, sizeof(*version));
+}
+
+int igsc_device_ifr_bin_version(IN  struct igsc_device_handle *handle,
+                                OUT struct igsc_ifr_bin_version *version)
+{
+    return gsc_get_generic_version(handle, MKHI_GET_IP_VERSION_IFR,
+                                   (uint8_t *)version, sizeof(*version));
+}
