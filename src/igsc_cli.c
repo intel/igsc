@@ -105,6 +105,11 @@ static void print_oem_version(const struct igsc_oem_version *version)
     printf("\n");
 }
 
+static void print_psc_version(const struct igsc_psc_version *version)
+{
+   printf("PSC Version: cfg_version: 0x%04x, date: 0x%04x\n", version->cfg_version, version->date);
+}
+
 static void print_fw_version(const char *prefix,
                              const struct igsc_fw_version *fw_version)
 {
@@ -822,6 +827,31 @@ int oem_version(struct igsc_device_handle *handle)
 }
 
 mockable_static
+int iaf_psc_version(struct igsc_device_handle *handle)
+{
+    struct igsc_psc_version version;
+    int ret;
+
+    memset(&version, 0, sizeof(version));
+    ret = igsc_device_psc_version(handle, &version);
+    if (ret != IGSC_SUCCESS)
+    {
+        if (ret == IGSC_ERROR_PERMISSION_DENIED)
+        {
+           fwupd_error("Permission denied: missing required credentials to access the device\n");
+        }
+        else {
+            fwupd_error("Cannot retrieve PSC version from device\n");
+            print_device_fw_status(handle);
+        }
+        return EXIT_FAILURE;
+    }
+
+    print_psc_version(&version);
+    return ret;
+}
+
+mockable_static
 int image_version(const char *image_path)
 {
     struct img *img = NULL;
@@ -1210,29 +1240,6 @@ static int do_firmware_update(int argc, char *argv[])
     }
 
     fwupd_error("No image to update\n");
-    return ERROR_BAD_ARGUMENT;
-}
-
-static int do_iaf_psc(int argc, char *argv[])
-{
-    const char *sub_command = NULL;
-
-    if (argc <= 0)
-    {
-        fwupd_error("Missing arguments\n");
-        return ERROR_BAD_ARGUMENT;
-    }
-
-    sub_command = argv[0];
-
-    arg_next(&argc, &argv);
-
-    if (arg_is_token(sub_command, "update"))
-    {
-        return do_iaf_psc_update(argc, argv);
-    }
-
-    fwupd_error("Wrong argument %s\n", sub_command);
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -3211,6 +3218,11 @@ static int do_ifr_count_tiles(int argc, char *argv[])
     return do_no_special_args_func(argc, argv, ifr_count_tiles);
 }
 
+static int do_iaf_psc_version(int argc, char *argv[])
+{
+    return do_no_special_args_func(argc, argv, iaf_psc_version);
+}
+
 static void print_run_test_status(uint8_t run_status)
 {
     switch (run_status)
@@ -3236,6 +3248,34 @@ static void print_run_test_status(uint8_t run_status)
         default:
             printf("Unknown IFR Test Run status %u\n", run_status);
     }
+}
+
+static int do_iaf_psc(int argc, char *argv[])
+{
+    const char *sub_command = NULL;
+
+    if (argc <= 0)
+    {
+        fwupd_error("Missing arguments\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    sub_command = argv[0];
+
+    arg_next(&argc, &argv);
+
+    if (arg_is_token(sub_command, "update"))
+    {
+        return do_iaf_psc_update(argc, argv);
+    }
+
+    if (arg_is_token(sub_command, "version"))
+    {
+        return do_iaf_psc_version(argc, argv);
+    }
+
+    fwupd_error("Wrong argument %s\n", sub_command);
+    return ERROR_BAD_ARGUMENT;
 }
 
 mockable_static
@@ -3845,8 +3885,10 @@ static const struct gsc_op g_ops[] = {
         .name  = "iaf",
         .op    = do_iaf_psc,
         .usage = {"update [options] [--device <dev>] --image  <image>",
+                  "version [--device <dev>]",
                    NULL},
         .help  = "Update Intel Accelerator Fabric configuration data on the devices by the supplied image\n"
+                 "or retrieve psc version from the device\n"
                  "\nOPTIONS:\n\n"
                  "    -d | --device <device>\n"
                  "            device to be updated\n"
