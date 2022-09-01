@@ -120,6 +120,37 @@ image.
        uint16_t ssdid;
    };
 
+8. Structure to store oem version data
+
+.. code-block:: c
+
+   #define IGSC_MAX_OEM_VERSION_LENGTH 256
+
+   struct igsc_oem_version {
+       uint16_t length; /**< actual OEM version length */
+       uint8_t  version[IGSC_MAX_OEM_VERSION_LENGTH];  /**< buffer to store oem version */
+   };
+
+9. Structure to store ifr binary version data
+
+.. code-block:: c
+
+    struct igsc_ifr_bin_version {
+        uint16_t   major;      /**< IFR Binary Major Number */
+        uint16_t   minor;      /**< IFR Binary Minor Number */
+        uint16_t   hotfix;     /**< IFR Binary Hotfix Number */
+        uint16_t   build;      /**< IFR Binary Build Number */
+    };
+
+10. Structure to store psc version data
+
+.. code-block:: c
+
+    struct igsc_psc_version {
+        uint32_t   cfg_version; /**< PSC configuration version */
+        uint32_t   date;        /**< PSC date */
+    };
+
 
 2.3 Device Access:
 ~~~~~~~~~~~~~~~~~~
@@ -1212,3 +1243,51 @@ done as a blob, without parsing the image and with zero metadata.
                               IN igsc_progress_func_t progress_f,
                               IN void *ctx);
 
+
+2.12 Retrieving versions of different firmware components
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+All firmware partitions (including IFR and PSC partitions) are identified by version,
+as these versions can be changed by a customer or internal teams.
+The following APIs retrieve versions of the relevant firmware components.
+
+1. PSC partition version:
+
+   PSC binary contains the Connectivity Die configuration data and exists in the SPI.
+   The PSC version is a combination of the fields cfg_version and date of the PSC header
+   which resides at the start of the PSC binary.
+   In case PSC is absent or not implemented by the firmware, the api returns
+   MKHI_STATUS_NOT_FOUND(0x81) or MKHI_STATUS_INVALID_PARAMS(0x85) depending on the
+   firmware.
+
+   .. code-block:: c
+
+      int igsc_device_psc_version(IN  struct igsc_device_handle *handle,
+                                  OUT struct igsc_psc_version *version);
+
+
+2. IFR Binary partition version:
+
+   IFR binary contains the In Field Repair test content
+   The IFR binary is not a mandatory ingredient in the firmware image.
+   In case IFR binary is absent or not implemented by the firmware, the api returns
+   MKHI_STATUS_NOT_FOUND(0x81) or MKHI_STATUS_INVALID_PARAMS(0x85) depending on the
+   firmware.
+
+   .. code-block:: c
+
+      int igsc_device_ifr_bin_version(IN  struct igsc_device_handle *handle,
+                                      OUT struct igsc_ifr_bin_version *version);
+
+
+3. OEM version:
+
+   The OEM version is Firmware Named Variable which a customer can use to set
+   its own version during building the image or at manufacturing line.
+   In case OEM version is not implemented by the firmware, the api returns
+   MKHI_STATUS_NOT_FOUND(0x81) or MKHI_STATUS_INVALID_PARAMS(0x85) depending on the
+   firmware.
+
+   .. code-block:: c
+
+      int igsc_device_oem_version(IN  struct igsc_device_handle *handle,
+                                  OUT struct igsc_oem_version *version);
