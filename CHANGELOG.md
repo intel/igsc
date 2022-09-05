@@ -1,6 +1,81 @@
 # IGSC FUL
 
-## [v0.8.4] - 2022-07-24
+## [v0.8.5] - 2022-09-06
+
+### Added
+1. doc: add documentation of oem, ifr and psc versions retrieval
+2. ut: add tests for oem, ifr and psc version api
+3. cli: implement retrieve ifr version in cli
+4. cli: implement retrieve psc version in cli
+5. lib: retrieve oem and psc binary versions
+6. lib: define mkhi get version heci messages
+7. cli: implement retrieval of oem version
+8. lib: implement retrieval of oem version
+9. lib: define oem, psc and ifr version api
+10. lib: implement read file functionality
+11. lib: define read file heci commands
+12. lib: move mkhi header definition from ifr.h to igsc_heci.h
+13. cli: retrieve firmware version before oprom and fw data update
+14. qb: linux: prepare files to publish
+
+### Fixed
+1. lib: fix firmware data version retrieval
+2. ci: fix docker user id for lms-ubuntu:19.10
+3. lib: fix fw data heci version response handling
+
+## [v0.8.4] - 2022-07-03
+
+### Added
+
+1. README: mention libudev dependency
+2. qb: add linux build script
+3. ci: add quckbuild windows build script
+4. cmake: add windows presets
+5. cmake: add option to download dependencies from conan
+6. cmake: enchance metee search
+7. add error messages prints for unsupported hw config
+8. src: add check of the versions after update
+9. lib: add check of the versions after update
+10. ci: enable tests compile
+11. ci: print docker name also for cmake
+12. ci: add ctest to compilation tasks
+13. lib: add UNUSED_VAR cross platform macro
+
+### Fixed
+
+1. fix device ids extension number
+2. conan: clean conanfile
+3. cli: fix a memory leak in do_ifr_get_repair_info
+4. lib: fix compilation warnings of ISO C90
+5. lib: fix unsigned formats in print statements
+6. cli: make fw and fw data versions prints more readable
+7. tests: cmake: fix dependencies
+8. ut: power_stubs.h fix includes
+9. cmake: metee: the find package has to match the case
+10. ci: move to self-hosted runners to other resource
+11. ci: rename job clang-compile to compile
+
+### Removed
+
+1. lib: remove enable_enum option in cmake and meson
+
+## [v0.8.3] - 2022-05-10
+
+### Added
+
+1. lib: enum: windows: add domain (segment) retrieval
+
+### Fixed
+
+1. lib: enum: windows: fix device bdf retrieval
+
+## [v0.8.2] - 2022-04-18
+
+### Added
+
+1. lib: set power control to on during operations
+
+## [v0.8.1] - 2022-03-22
 
 ### Changed
 
