@@ -1,5 +1,28 @@
 # IGSC FUL
 
+## [v0.8.5] - 2022-09-06
+
+### Added
+doc: add documentation of oem, ifr and psc versions retrieval
+ut: add tests for oem, ifr and psc version api
+cli: implement retrieve ifr version in cli
+cli: implement retrieve psc version in cli
+lib: retrieve oem and psc binary versions
+lib: define mkhi get version heci messages
+cli: implement retrieval of oem version
+lib: implement retrieval of oem version
+lib: define oem, psc and ifr version api
+ib: implement read file functionality
+lib: define read file heci commands
+lib: move mkhi header definition from ifr.h to igsc_heci.h
+cli: retrieve firmware version before oprom and fw data update
+qb: linux: prepare files to publish
+
+### Fixed
+lib: fix firmware data version retrieval
+ci: fix docker user id for lms-ubuntu:19.10
+lib: fix fw data heci version response handling
+
 ## [v0.8.4] - 2022-07-03
 
 ### Added
