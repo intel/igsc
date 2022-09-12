@@ -3,25 +3,25 @@
 ## [v0.8.5] - 2022-09-06
 
 ### Added
-doc: add documentation of oem, ifr and psc versions retrieval
-ut: add tests for oem, ifr and psc version api
-cli: implement retrieve ifr version in cli
-cli: implement retrieve psc version in cli
-lib: retrieve oem and psc binary versions
-lib: define mkhi get version heci messages
-cli: implement retrieval of oem version
-lib: implement retrieval of oem version
-lib: define oem, psc and ifr version api
-ib: implement read file functionality
-lib: define read file heci commands
-lib: move mkhi header definition from ifr.h to igsc_heci.h
-cli: retrieve firmware version before oprom and fw data update
-qb: linux: prepare files to publish
+1. doc: add documentation of oem, ifr and psc versions retrieval
+2. ut: add tests for oem, ifr and psc version api
+3. cli: implement retrieve ifr version in cli
+4. cli: implement retrieve psc version in cli
+5. lib: retrieve oem and psc binary versions
+6. lib: define mkhi get version heci messages
+7. cli: implement retrieval of oem version
+8. lib: implement retrieval of oem version
+9. lib: define oem, psc and ifr version api
+10. lib: implement read file functionality
+11. lib: define read file heci commands
+12. lib: move mkhi header definition from ifr.h to igsc_heci.h
+13. cli: retrieve firmware version before oprom and fw data update
+14. qb: linux: prepare files to publish
 
 ### Fixed
-lib: fix firmware data version retrieval
-ci: fix docker user id for lms-ubuntu:19.10
-lib: fix fw data heci version response handling
+1. lib: fix firmware data version retrieval
+2. ci: fix docker user id for lms-ubuntu:19.10
+3. lib: fix fw data heci version response handling
 
 ## [v0.8.4] - 2022-07-03
 
