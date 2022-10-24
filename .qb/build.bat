@@ -37,19 +37,23 @@ ECHO Building IGSC.
 RD /S /Q %COMPILE_MODE%
 md %COMPILE_MODE%
 
-cmake --preset %COMPILE_MODE%
+copy .qb\CMakeUserPresets.json CMakeUserPresets.json
+
+cmake --preset %COMPILE_MODE%CI
 IF ERRORLEVEL 1 (
 	echo Error while configuring IGSC in %COMPILE_MODE% mode
 	set ERROR_FLAG=1
 	goto FINISH
 )
 
-cmake --build --preset %COMPILE_Mode% -j 32
+cmake --build --preset %COMPILE_Mode%CI -j 32
 IF ERRORLEVEL 1 (
 	echo Error while building IGSC in %COMPILE_MODE% mode
 	set ERROR_FLAG=1
 	goto FINISH
 )
+
+del CMakeUserPresets.json
 
 copy include\igsc_lib.h %PUBLISH_DIR%\
 copy %COMPILE_MODE%\lib\%COMPILE_MODE%\igsc.lib %PUBLISH_DIR%\

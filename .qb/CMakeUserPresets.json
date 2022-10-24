@@ -1,0 +1,31 @@
+﻿{
+  "version": 2,
+  "configurePresets": [
+    {
+      "name": "ReleaseCI",
+      "inherits": "Release",
+      "cacheVariables": {
+        "CMAKE_SYSTEM_VERSION": "10.0.22000.0"
+      }
+    },
+    {
+      "name": "DebugCI",
+      "inherits": "Debug",
+      "cacheVariables": {
+        "CMAKE_SYSTEM_VERSION": "10.0.22000.0"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "ReleaseCI",
+      "configurePreset": "ReleaseCI",
+      "configuration": "Release"
+    },
+    {
+      "name": "DebugCI",
+      "configurePreset": "DebugCI",
+      "configuration": "Debug"
+    }
+  ]
+}

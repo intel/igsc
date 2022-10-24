@@ -58,3 +58,6 @@ _deps
 *.su
 *.idb
 *.pdb
+
+# Local files
+/CMakeUserPresets.json
