@@ -1532,6 +1532,25 @@ IGSC_EXPORT
 int igsc_device_psc_version(IN  struct igsc_device_handle *handle,
                             OUT struct igsc_psc_version *version);
 
+enum igsc_gfsp_health_indicators {
+    IGSC_HEALTH_INDICATOR_HEALTHY = 0,
+    IGSC_HEALTH_INDICATOR_DEGRADED = 1,
+    IGSC_HEALTH_INDICATOR_CRITICAL = 2,
+    IGSC_HEALTH_INDICATOR_REPLACE  = 3
+};
+
+/**
+ *  @brief Gets memory health indicator
+ *
+ *  @param handle A handle to the device.
+ *  @param health_indicator contains pointer to @enum igsc_gfsp_health_indicators
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+*/
+IGSC_EXPORT
+int igsc_gfsp_get_health_indicator(IN struct igsc_device_handle *handle,
+                                   OUT uint8_t *health_indicator);
+
 /**
  * @}
  */
