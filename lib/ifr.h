@@ -130,6 +130,54 @@ struct gfsp_get_memory_ppr_status_res {
     struct   gfsp_device_mbist_ppr_status device_mbist_ppr_status[]; /* Array length is num_devices */
 };
 
+/**
+ * @brief request to get memory error mitigation status
+ *
+ * @param header @ref mkhi_msg_hdr, MKHI_GROUP_ID_GFSP for GFSP MKHI command
+ * @param gfsp_heci_header contains enum gfsp_cmd GFSP_MEM_ERR_MITIG_STAT_CMD
+ */
+struct gfsp_get_mem_err_mitigation_status_req {
+    struct mkhi_msg_hdr header;
+    uint32_t gfsp_heci_header;
+};
+
+enum gfsp_health_indicators {
+    GFSP_HEALTH_INDICATOR_HEALTHY = 0,
+    GFSP_HEALTH_INDICATOR_DEGRADED = 1,
+    GFSP_HEALTH_INDICATOR_CRITICAL = 2,
+    GFSP_HEALTH_INDICATOR_REPLACE  = 3
+};
+
+/* Max tile per card */
+#define GFSP_MAX_TILES 4
+
+/**
+ * @brief response to the get memory error mitigation status request
+ *
+ * @param header @ref mkhi_msg_hdr, MKHI_GROUP_ID_GFSP for GFSP MKHI command
+ * @param gfsp_heci_header contains enum gfsp_cmd GFSP_MEM_ERR_MITIG_STAT_CMD
+ * @param boot_time_memory_correction_pending 0 - No pending boot time memory correction,
+ *                                            1 - Pending boot time memory correction
+ * @param bank_sparing_applied Bank Sparing status 0 - not applied, 1 - applied, 2 – exhausted
+ * @param health_indicator contains enum gfsp_health_indicators
+ * @param reserved reserved field
+ * @param max_num_of_tiles max number of tiles on the card
+ * @param error_mitigation_status A per tile error mitigation status
+ * @param error_mitigation_status A per tile health mitigation status
+ *
+ */
+struct gfsp_get_mem_err_mitigation_status_res {
+    struct mkhi_msg_hdr header;
+    uint32_t gfsp_heci_header;
+    uint8_t  boot_time_memory_correction_pending;
+    uint8_t  bank_sparing_applied;
+    uint8_t  health_indicator; /**< enum gfsp_health_indicators */
+    uint8_t  reserved;
+    uint32_t max_num_of_tiles;
+    uint8_t  error_mitigation_status[GFSP_MAX_TILES];
+    uint8_t  health_mitigation_status[GFSP_MAX_TILES];
+};
+
 /* IFR extended commands */
 
 enum {
