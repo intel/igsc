@@ -1665,3 +1665,114 @@ int igsc_device_ifr_bin_version(IN  struct igsc_device_handle *handle,
     return gsc_get_generic_version(handle, MKHI_GET_IP_VERSION_IFR,
                                    (uint8_t *)version, sizeof(*version));
 }
+
+int igsc_gfsp_get_health_indicator(IN struct igsc_device_handle *handle,
+                                   OUT uint8_t *health_indicator)
+{
+    int status;
+    size_t request_len;
+    size_t response_len;
+    size_t received_len;
+    size_t buf_len;
+    struct igsc_lib_ctx *lib_ctx;
+    struct gfsp_get_mem_err_mitigation_status_req *req;
+    struct gfsp_get_mem_err_mitigation_status_res *resp;
+
+    if (!handle || !handle->ctx || !health_indicator)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    lib_ctx = handle->ctx;
+
+    gsc_debug("in get memory health indicator, initializing driver\n");
+
+    status = gsc_driver_init(lib_ctx, &GUID_METEE_MKHI);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("GFSP is not supported on this device, status %d\n", status);
+        return status;
+    }
+
+    req = (struct gfsp_get_mem_err_mitigation_status_req *)lib_ctx->working_buffer;
+    request_len = sizeof(*req);
+
+    resp = (struct gfsp_get_mem_err_mitigation_status_res *)lib_ctx->working_buffer;
+    response_len = sizeof(*resp);
+    buf_len = lib_ctx->working_buffer_length;
+
+    gsc_debug("validating buffer\n");
+
+    status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Internal error - failed to validate buffer %d\n", status);
+        goto exit;
+    }
+
+    memset(req, 0, request_len);
+    req->header.group_id = MKHI_GROUP_ID_GFSP;
+    req->header.command = 0;
+    req->gfsp_heci_header = GFSP_MEM_ERR_MITIG_STAT_CMD;
+
+    gsc_debug("sending command\n");
+
+    status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        goto exit;
+    }
+
+    if (received_len < sizeof(resp->header))
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    gsc_debug("result = %u\n", resp->header.result);
+
+    status = gfsp_heci_validate_response_header(lib_ctx, &resp->header,
+                                                resp->gfsp_heci_header,
+                                                GFSP_MEM_ERR_MITIG_STAT_CMD);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        goto exit;
+    }
+
+    if (resp->header.result != 0)
+    {
+       gsc_error("Get memory health indicator command failed with result 0x%x\n",
+                 resp->header.result);
+       status = IGSC_ERROR_PROTOCOL;
+       goto exit;
+    }
+
+    if (received_len < response_len)
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp->max_num_of_tiles > GFSP_MAX_TILES)
+    {
+        gsc_error("Received bad number of tiles %u, must not be bigger than %u\n",
+                  resp->max_num_of_tiles, GFSP_MAX_TILES);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    *health_indicator = resp->health_indicator;
+
+    gsc_debug("get status success\n");
+
+exit:
+    gsc_driver_deinit(lib_ctx);
+
+    gsc_debug("ret = %d\n", status);
+
+    return status;
+}
