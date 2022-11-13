@@ -305,6 +305,48 @@ exit:
     return NULL;
 }
 
+static const char *translate_health_indicator(uint8_t health_indicator)
+{
+    switch (health_indicator) {
+    case  IGSC_HEALTH_INDICATOR_HEALTHY:
+        return "HEALTHY";
+    case  IGSC_HEALTH_INDICATOR_DEGRADED:
+        return "DEGRADED";
+    case  IGSC_HEALTH_INDICATOR_CRITICAL:
+        return "CRITICAL";
+    case  IGSC_HEALTH_INDICATOR_REPLACE:
+        return "REPLACE";
+    default:
+        return "UNKNOWN";
+    }
+}
+
+mockable_static
+int get_health_indicator(struct igsc_device_handle *handle)
+{
+    int ret = 0;
+    uint8_t health_indicator;
+
+    if (!handle)
+    {
+        fwupd_error("Illegal parameter\n");
+        return EXIT_FAILURE;
+    }
+
+    /* call the igsc library routine to get memory health indicator */
+    ret = igsc_gfsp_get_health_indicator(handle, &health_indicator);
+    if (ret)
+    {
+        fwupd_error("Failed to get memory health indicator, library return code %d\n", ret);
+        return EXIT_FAILURE;
+    }
+
+    printf("memory health indicator: 0x%x (%s)\n", health_indicator,
+           translate_health_indicator(health_indicator));
+
+    return ret;
+}
+
 mockable_static
 int get_first_device_info(struct igsc_device_info *dev_info)
 {
@@ -3801,6 +3843,10 @@ static int do_gfsp(int argc, char *argv[])
     {
         return do_no_special_args_func(argc, argv, ecc_config_get);
     }
+    if (arg_is_token(sub_command, "get-health-ind"))
+    {
+        return do_no_special_args_func(argc, argv, get_health_indicator);
+    }
 
     fwupd_error("Wrong argument %s\n", sub_command);
     return ERROR_BAD_ARGUMENT;
@@ -4043,8 +4089,10 @@ static const struct gsc_op g_ops[] = {
                   "get-mem-ppr-status [--device <dev>]",
                   "set-ecc-config [--device <dev>] --ecc-config <config>",
                   "get-ecc-config [--device <dev>]",
+                  "get-health-ind [--device <dev>]",
                   NULL},
         .help  = "Get number of memory errors for each tile\n"
+                 "Get memory health indicator\n"
                  "\nOPTIONS:\n\n"
                  "    -d | --device <device>\n"
                  "            device to communicate with\n"
