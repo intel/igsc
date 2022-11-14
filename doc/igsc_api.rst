@@ -972,6 +972,37 @@ which holds paring state of the OPROM image information.
                                    OUT uint16_t *available_array_repair_entries, /* Number of available array repair entries */
                                    OUT uint16_t *failed_dss); /* Number of failed DSS */
 
+  h. Get and set ECC configuration:
+
+    Provides API for ECC runtime configuration.
+
+    .. code-block:: c
+
+      int igsc_ecc_config_set(IN  struct igsc_device_handle *handle,
+                              IN  uint8_t req_ecc_state,   /* Requested ECC State */
+                              OUT uint8_t *cur_ecc_state,  /* Current ECC State after command execution */
+                              OUT uint8_t *pen_ecc_state); /* Pending ECC State after command execution */
+
+      int igsc_ecc_config_get(IN  struct igsc_device_handle *handle,
+                              OUT uint8_t *cur_ecc_state,   /* Current ECC State */
+                              OUT uint8_t *pen_ecc_state);  /* Pending ECC State */
+
+  i. Get memory health indicator
+
+    Provides API for retrieving memory health indicator.
+
+    .. code-block:: c
+
+      enum igsc_gfsp_health_indicators {
+          IGSC_HEALTH_INDICATOR_HEALTHY  = 0,
+          IGSC_HEALTH_INDICATOR_DEGRADED = 1,
+          IGSC_HEALTH_INDICATOR_CRITICAL = 2,
+          IGSC_HEALTH_INDICATOR_REPLACE  = 3
+      };
+
+      int igsc_gfsp_get_health_indicator(IN struct igsc_device_handle *handle,
+                                         OUT uint8_t *health_indicator);
+
 
 2.8 Device Enumeration API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
