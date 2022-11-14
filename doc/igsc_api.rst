@@ -986,6 +986,22 @@ which holds paring state of the OPROM image information.
                               OUT uint8_t *cur_ecc_state,   /* Current ECC State */
                               OUT uint8_t *pen_ecc_state);  /* Pending ECC State */
 
+  i. Get memory health indicator
+
+    Provides API for retrieving memory health indicator.
+
+    .. code-block:: c
+
+      enum igsc_gfsp_health_indicators {
+          IGSC_HEALTH_INDICATOR_HEALTHY = 0,
+          IGSC_HEALTH_INDICATOR_DEGRADED = 1,
+          IGSC_HEALTH_INDICATOR_CRITICAL = 2,
+          IGSC_HEALTH_INDICATOR_REPLACE  = 3
+      };
+
+      int igsc_gfsp_get_health_indicator(IN struct igsc_device_handle *handle,
+                                         OUT uint8_t *health_indicator);
+
 
 2.8 Device Enumeration API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
