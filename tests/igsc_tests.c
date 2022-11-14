@@ -629,6 +629,23 @@ static void igsc_device_ifr_bin_version_bad_version(void **status)
     assert_int_equal(igsc_device_ifr_bin_version(&handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
 }
 
+static void igsc_gfsp_get_health_indicator_bad_handle(void **status)
+{
+    UNUSED_VAR(status);
+    uint8_t health_indicator;
+
+    assert_int_equal(igsc_gfsp_get_health_indicator(NULL, &health_indicator), IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_gfsp_get_health_indicator_bad_indicator(void **status)
+{
+    UNUSED_VAR(status);
+    struct igsc_device_handle handle;
+
+    assert_int_equal(igsc_gfsp_get_health_indicator(&handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
+}
+
+
 int main(void)
 {
     const struct CMUnitTest device_image_tests[] = {
@@ -685,10 +702,16 @@ int main(void)
         cmocka_unit_test(igsc_device_ifr_bin_version_bad_version),
     };
 
+    const struct CMUnitTest gfsp_get_health_indicator_tests[] = {
+        cmocka_unit_test(igsc_gfsp_get_health_indicator_bad_handle),
+        cmocka_unit_test(igsc_gfsp_get_health_indicator_bad_indicator),
+    };
+
     int status = cmocka_run_group_tests(device_image_tests, NULL, NULL);
     status += cmocka_run_group_tests(version_cmp_tests, NULL, NULL);
     status += cmocka_run_group_tests(get_type_tests, NULL, NULL);
     status += cmocka_run_group_tests(get_version_tests, NULL, NULL);
+    status += cmocka_run_group_tests(gfsp_get_health_indicator_tests, NULL, NULL);
 
     return status;
 }
