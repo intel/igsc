@@ -4072,7 +4072,8 @@ static const struct gsc_op g_ops[] = {
                   "get-repair-info [--device <dev>] --tile <tile>",
                   "version [--device <dev>]",
                   NULL},
-        .help  = "Get IFR status or run IFR test or read IFR file\n"
+        .help  = "Get IFR status or run IFR test or run memory PPR test\n"
+                 "or count tiles on the device or retrieve repair info on the device\n"
                  "or retrieve ifr version from the device\n"
                  "\nOPTIONS:\n\n"
                  "    -d | --device <device>\n"
@@ -4092,6 +4093,9 @@ static const struct gsc_op g_ops[] = {
                   "get-health-ind [--device <dev>]",
                   NULL},
         .help  = "Get number of memory errors for each tile\n"
+                 "Get memory PPR status\n"
+                 "Set ECC configuration\n"
+                 "Get ECC configuration\n"
                  "Get memory health indicator\n"
                  "\nOPTIONS:\n\n"
                  "    -d | --device <device>\n"
