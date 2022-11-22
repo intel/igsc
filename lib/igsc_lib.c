@@ -1991,6 +1991,10 @@ static void get_version_loop(struct igsc_lib_ctx *lib_ctx)
     }
 }
 
+#define FWU_TIMEOUT_THRESHOLD_DEFAULT 300000 /* 5 min in units of 1 msec */
+#define FWU_TIMEOUT_THRESHOLD_FWDATA  12000 /* 12 sec in units of 1 msec */
+#define FWU_TIMEOUT_STEP 100
+
 static int gsc_update(IN struct igsc_device_handle *handle,
                       IN const void *buffer,
                       IN const uint32_t buffer_len,
@@ -2010,6 +2014,8 @@ static int gsc_update(IN struct igsc_device_handle *handle,
     bool retry_update = false;
     bool cp_mode;
     uint32_t sts5;
+    uint32_t timeout_counter = 0;
+    uint32_t timeout_threshold;
 
     struct gsc_perf_cnt _perf_ctx;
     struct gsc_perf_cnt *perf_ctx = &_perf_ctx;
@@ -2138,6 +2144,15 @@ retry:
         get_version_loop(lib_ctx);
     }
 
+    if (payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA)
+    {
+        timeout_threshold = FWU_TIMEOUT_THRESHOLD_FWDATA;
+    }
+    else
+    {
+        timeout_threshold = FWU_TIMEOUT_THRESHOLD_DEFAULT;
+    }
+
     while (gsc_fwu_is_in_progress(lib_ctx))
     {
         if (get_percentage(lib_ctx, &percentage) == IGSC_SUCCESS)
@@ -2147,9 +2162,13 @@ retry:
                 progress_f(percentage, 100, ctx);
             }
         }
-        else
+        gsc_msleep(FWU_TIMEOUT_STEP);
+        timeout_counter += FWU_TIMEOUT_STEP;
+        if (timeout_counter >= timeout_threshold)
         {
-            gsc_msleep(100);
+            gsc_error("The firmware failed to finish the update in %u sec timeout\n", timeout_threshold/1000);
+            ret = IGSC_ERROR_TIMEOUT;
+            goto exit;
         }
     }
     /*
