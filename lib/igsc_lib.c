@@ -171,20 +171,33 @@ void gsc_driver_deinit(struct igsc_lib_ctx *lib_ctx)
     lib_ctx->driver_init_called = false;
 }
 
+#define INIT_ITERATIONS  3
+#define INIT_TIMEOUT 1000
+
 mockable
 int gsc_driver_init(struct igsc_lib_ctx *lib_ctx, IN const GUID *guid)
 {
     TEESTATUS tee_status;
     int status;
     uint8_t power_control;
+    uint32_t counter = 0;
 
-    if (lib_ctx->dev_handle == IGSC_INVALID_DEVICE_HANDLE)
+    for (counter = 0; counter < INIT_ITERATIONS; counter++)
     {
-        tee_status = TeeInit(&lib_ctx->driver_handle, guid, lib_ctx->device_path);
-    }
-    else
-    {
-        tee_status = TeeInitHandle(&lib_ctx->driver_handle, guid, lib_ctx->dev_handle);
+        if (lib_ctx->dev_handle == IGSC_INVALID_DEVICE_HANDLE)
+        {
+            tee_status = TeeInit(&lib_ctx->driver_handle, guid, lib_ctx->device_path);
+        }
+        else
+        {
+            tee_status = TeeInitHandle(&lib_ctx->driver_handle, guid, lib_ctx->dev_handle);
+        }
+        if (tee_status != TEE_DEVICE_NOT_READY)
+        {
+            break;
+        }
+        gsc_debug("HECI init - device is not ready, retrying...\n");
+        gsc_msleep(INIT_TIMEOUT);
     }
 
     if (!TEE_IS_SUCCESS(tee_status))
