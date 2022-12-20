@@ -1,8 +1,25 @@
 # IGSC FUL
 
+## [v0.8.6] - 2022-12-24
+
+### Added
+
+1. lib: add timeout for update to finish
+2. lib: ifr: implement get health indicator api
+3. doc: add documentation for get memory health indicator api
+4. ut: add unit tests for health indicator api
+5. cli: implement get memory health indicator in cli
+6. lib: ifr: define get memory error mitigation status heci messages
+
+### Fixed
+
+1. cli: fix description in usage help
+
+
 ## [v0.8.5] - 2022-09-06
 
 ### Added
+
 1. doc: add documentation of oem, ifr and psc versions retrieval
 2. ut: add tests for oem, ifr and psc version api
 3. cli: implement retrieve ifr version in cli
@@ -16,9 +33,9 @@
 11. lib: define read file heci commands
 12. lib: move mkhi header definition from ifr.h to igsc_heci.h
 13. cli: retrieve firmware version before oprom and fw data update
-14. qb: linux: prepare files to publish
 
 ### Fixed
+
 1. lib: fix firmware data version retrieval
 2. ci: fix docker user id for lms-ubuntu:19.10
 3. lib: fix fw data heci version response handling
@@ -101,7 +118,7 @@
 14. lib: fix gfsp_heci_validate_response_header usage
 15. lib: fix error message in gfsp response validation
 16. lib: gsc_fwu_get_version() initialize received_len
-17. ut: fix unitialized oprom_image structure in tests
+17. ut: fix uninitialized oprom_image structure in tests
 
 ### Added
 
