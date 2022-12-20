@@ -1,5 +1,11 @@
 # IGSC FUL
 
+## [v0.8.6] - 2022-12-20
+
+### Added
+1. lib: add timeout for update to finish
+2. add get memory health indicator api
+
 ## [v0.8.5] - 2022-09-06
 
 ### Added
