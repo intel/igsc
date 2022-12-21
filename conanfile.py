@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
-# Copyright (C) 2021-2022 Intel Corporation
+# Copyright (C) 2021-2023 Intel Corporation
 from conans import ConanFile
 
 class IgscConan(ConanFile):
@@ -8,4 +8,4 @@ class IgscConan(ConanFile):
     generators = "cmake", "cmake_find_package", "visual_studio"
 
     def requirements(self):
-        self.requires("metee/3.1.4@mesw/stable")
+        self.requires("metee/3.1.5@mesw/stable")
