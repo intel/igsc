@@ -3,6 +3,8 @@
 
 BUILD_TYPE=$1
 BUILD_TYPE=${BUILD_TYPE:-Release}
+ENABLE_TESTS=$2
+ENABLE_TESTS=${ENABLE_TESTS:-NO}
 
 export PUBLISH_DIR=Bin/Kit/IGSC_FUL
 
@@ -20,6 +22,7 @@ pushd ${BUILD_TYPE}
 cat << EOF > cmake.config
 set(CMAKE_BUILD_TYPE ${BUILD_TYPE} CACHE STRING "CMAKE_BUILD_TYPE")
 set(BUILD_USE_CONAN "ON" CACHE STRING "Use Conan for dependencies download")
+set(ENABLE_TESTS "${ENABLE_TESTS}" CACHE STRING "Perform unit tests after build")
 EOF
 
 cmake -C cmake.config .. || exit $?
