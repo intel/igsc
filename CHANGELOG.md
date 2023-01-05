@@ -1,5 +1,21 @@
 # IGSC FUL
 
+## [v0.8.7] - 2023-01-09
+
+### Added
+1. lib: add retries on init
+2. tests: add test for retries in init
+3. qb: add option for test enablement
+
+### Changed
+1. conan: use MeTee 3.1.5
+2. ci: use v3 of checkout action
+
+### Fixed
+1. README: fix documentation link
+2. README: add explanation how to run windows build
+3. README: expand metee download explanations
+
 ## [v0.8.6] - 2022-12-20
 
 ### Added
