@@ -1,6 +1,23 @@
 # IGSC FUL
 
-## [v0.8.6] - 2022-12-24
+## [v0.8.7] - 2023-01-29
+
+### Added
+
+1. lib: add retries on initialization
+2. tests: add test for retries in init
+
+### Changed
+
+1. conan: use MeTee 3.1.5
+
+### Fixed
+
+1. README: fix documentation link to igsc_api.rst
+2. README: add explanation how to run windows build
+3. README: expand metee download explanations
+
+## [v0.8.6] - 2022-12-20
 
 ### Added
 
