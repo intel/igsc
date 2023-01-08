@@ -6,7 +6,7 @@
 
 ### Documentation
 
-[API Documentation](https://mesw.gitlab-pages.devtools.intel.com/fwupd/igsc/ "API Documentation")
+[API Documentation](doc/igsc_api.rst "API Documentation")
 
 ## Build
 
