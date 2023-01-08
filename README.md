@@ -6,6 +6,8 @@
 
 ### Documentation
 
+[API Documentation](doc/igsc_api.rst "API Documentation")
+
 ## Build
 
 ### Requirements:
