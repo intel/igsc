@@ -11,9 +11,18 @@
 ### Requirements:
 
 #### Cross-platform
-  * MeTee: https://github.com/intel/metee
+
+##### MeTee
+
+  If MeTee library is not found in the system paths CMake and Meson scripts downloads
+  the MeTee library sources from [GitHub](https://github.com/intel/metee)
+  (git installation and correct proxy setup are required).
+  Alternatively, in order to use pre-compiled MeTee one can set the following environment variables:
+   * METEE_LIB_PATH to pre-compiled library path
+   * METEE_HEADER_PATH to headers path
 
 #### Linux
+
   * libudev (libudev-dev package in Debian)
 
 Both cmake and meson build framework are supported.
