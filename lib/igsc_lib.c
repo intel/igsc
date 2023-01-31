@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  */
 
 #include <stdint.h>
@@ -2006,7 +2006,7 @@ static void get_version_loop(struct igsc_lib_ctx *lib_ctx)
 
 #define FWU_TIMEOUT_THRESHOLD_DEFAULT 300000 /* 5 min in units of 1 msec */
 #define FWU_TIMEOUT_THRESHOLD_FWDATA  12000 /* 12 sec in units of 1 msec */
-#define FWU_TIMEOUT_STEP 100
+#define FWU_TIMEOUT_STEP 500
 
 static int gsc_update(IN struct igsc_device_handle *handle,
                       IN const void *buffer,
