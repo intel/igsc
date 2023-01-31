@@ -2448,10 +2448,7 @@ static int igsc_oprom_update_from_buffer(IN  struct igsc_device_handle *handle,
                 progress_f(percentage, 100, ctx);
             }
         }
-        else
-        {
-            gsc_msleep(100);
-        }
+        gsc_msleep(FWU_TIMEOUT_STEP);
     }
 
     /*
