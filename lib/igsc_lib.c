@@ -2356,6 +2356,7 @@ static int igsc_oprom_update_from_buffer(IN  struct igsc_device_handle *handle,
 
     struct gsc_perf_cnt _perf_ctx;
     struct gsc_perf_cnt *perf_ctx = &_perf_ctx;
+    uint32_t timeout_counter = 0;
 
     if (handle == NULL || handle->ctx == NULL || buffer == NULL)
     {
@@ -2449,6 +2450,15 @@ static int igsc_oprom_update_from_buffer(IN  struct igsc_device_handle *handle,
             }
         }
         gsc_msleep(FWU_TIMEOUT_STEP);
+        timeout_counter += FWU_TIMEOUT_STEP;
+        if (timeout_counter >= FWU_TIMEOUT_THRESHOLD_DEFAULT)
+        {
+            gsc_error("The firmware failed to finish the update in %u sec timeout\n",
+                      FWU_TIMEOUT_THRESHOLD_DEFAULT/1000);
+            ret = IGSC_ERROR_TIMEOUT;
+            goto exit;
+        }
+
     }
 
     /*
