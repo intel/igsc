@@ -38,6 +38,13 @@ add_cmocka_test(version_tests
                 COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS} -g -Digsc_strdup=test_strdup -DUNIT_TESTING=1)
 add_cmocka_test_environment(version_tests)
 
+add_cmocka_test(update_tests
+                SOURCES ../lib/igsc_lib.c ../lib/oprom.c update_tests.c ../lib/fw_data_parser.c ${POWER_SOURCES}
+                LINK_LIBRARIES ${CMOCKA_LIBRARIES}
+                INCLUDE_DIRECTORIES ${IGCS_INCLUDE_DIRS} ${CMOCKA_INCLUDE_DIR} ${METEE_INCLUDE}
+                COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS} -g -DUNIT_TESTING=1)
+add_cmocka_test_environment(update_tests)
+
 add_cmocka_test(init_tests
                 SOURCES ../lib/igsc_lib.c ../lib/oprom.c ../lib/oprom_parser.c init_tests.c ../lib/fw_data_parser.c ${POWER_SOURCES}
                 LINK_LIBRARIES ${CMOCKA_LIBRARIES}
