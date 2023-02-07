@@ -595,7 +595,8 @@ static int gsc_fwu_heci_validate_response_header(struct igsc_lib_ctx *lib_ctx,
         goto exit;
     }
 
-    if (resp_header->reserved != 0)
+    if (resp_header->reserved != 0 || resp_header->header.reserved != 0 ||
+        resp_header->header.reserved2[0] != 0 || resp_header->header.reserved2[1] != 0)
     {
         gsc_error("HECI message response is leaking data\n");
         status = IGSC_ERROR_PROTOCOL;
