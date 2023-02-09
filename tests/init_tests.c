@@ -42,9 +42,16 @@ TEESTATUS TeeConnect(PTEEHANDLE handle)
 }
 
 TEESTATUS TeeRead(PTEEHANDLE handle, void *buffer, size_t bufferSize,
-            size_t *pNumOfBytesRead, uint32_t timeout)
+                  size_t *pNumOfBytesRead, uint32_t timeout)
 {
     struct gsc_fwu_heci_version_resp *fw_version = buffer;
+
+    if (bufferSize < sizeof(*fw_version))
+    {
+        return TEE_INSUFFICIENT_BUFFER;
+    }
+
+    memset(fw_version, 0, sizeof(*fw_version));
 
     fw_version->response.header.command_id = GSC_FWU_HECI_COMMAND_ID_GET_IP_VERSION;
     fw_version->response.header.is_response = 1;
@@ -56,11 +63,11 @@ TEESTATUS TeeRead(PTEEHANDLE handle, void *buffer, size_t bufferSize,
     {
         *pNumOfBytesRead = sizeof(struct gsc_fwu_heci_version_resp) + sizeof(struct igsc_fw_version);
     }
-    return 0;
+    return TEE_SUCCESS;
 }
 
 TEESTATUS TeeWrite(PTEEHANDLE handle, const void *buffer, size_t bufferSize,
-           size_t *numberOfBytesWritten, uint32_t timeout)
+                   size_t *numberOfBytesWritten, uint32_t timeout)
 {
     if (numberOfBytesWritten)
     {
@@ -124,7 +131,7 @@ static void test_fw_version_not_ready(void **state)
     int ret;
 
     struct igsc_device_handle *handle = *state;
-    struct igsc_fw_version version;
+    struct igsc_fw_version version = {};
 
     will_return_count(TeeInit, TEE_DEVICE_NOT_READY, 3);
 
