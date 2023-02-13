@@ -1,5 +1,6 @@
+#!/bin/bash
 # SPDX-License-Identifier: Apache-2.0
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2023 Intel Corporation
 
 BUILD_TYPE=$1
 BUILD_TYPE=${BUILD_TYPE:-Release}
