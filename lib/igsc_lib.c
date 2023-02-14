@@ -800,7 +800,7 @@ static int gsc_fwu_start(struct igsc_lib_ctx *lib_ctx, uint32_t payload_type, bo
     int status;
     size_t request_len;
     size_t response_len;
-    size_t received_len;
+    size_t received_len = 0;
     size_t buf_len;
     const uint8_t *fpt_info;
     uint32_t fpt_info_len;
@@ -907,7 +907,7 @@ static int gsc_fwu_data(struct igsc_lib_ctx *lib_ctx,
     int    status;
     size_t request_len;
     size_t response_len;
-    size_t received_len;
+    size_t received_len = 0;
     size_t buf_len = lib_ctx->working_buffer_length;
 
     struct gsc_fwu_heci_data_req  *req;
@@ -1034,7 +1034,7 @@ static bool gsc_fwu_is_in_progress(struct igsc_lib_ctx *lib_ctx)
     bool init_completed;
     bool fu_idle;
 
-    uint32_t value;
+    uint32_t value = 0;
 
     status = get_fwsts(lib_ctx, FWSTS(1), &value);
     if (status != IGSC_SUCCESS)
@@ -1066,7 +1066,7 @@ static int get_percentage(struct igsc_lib_ctx *lib_ctx, uint32_t *percentage)
 {
     int status;
 
-    uint32_t value;
+    uint32_t value = 0;
     uint32_t fwsts_phase;
     uint32_t fwsts_value;
 
@@ -1301,7 +1301,7 @@ static int gsc_device_subsystem_ids(struct igsc_lib_ctx  *lib_ctx,
     int status;
     size_t request_len;
     size_t response_len;
-    size_t received_len;
+    size_t received_len = 0;
     size_t buf_len;
     struct gsc_fwu_heci_get_subsystem_ids_message_req  *req;
     struct gsc_fwu_heci_get_subsystem_ids_message_resp *resp;
@@ -1378,7 +1378,7 @@ static int gsc_device_hw_config(struct igsc_lib_ctx *lib_ctx,
     int status;
     size_t request_len;
     size_t response_len;
-    size_t received_len;
+    size_t received_len = 0;
     size_t buf_len;
     struct gsc_hw_config_1 *hw_config_1;
 
@@ -2028,7 +2028,7 @@ static int gsc_update(IN struct igsc_device_handle *handle,
     const uint8_t *fpt_data = NULL;
     bool retry_update = false;
     bool cp_mode;
-    uint32_t sts5;
+    uint32_t sts5 = 0;
     uint32_t timeout_counter = 0;
     uint32_t timeout_threshold;
 
@@ -2962,7 +2962,7 @@ static int mchi_read_chunk(IN  struct igsc_lib_ctx *lib_ctx,
     int status;
     size_t request_len;
     size_t response_len;
-    size_t received_len;
+    size_t received_len = 0;
     size_t buf_len;
     struct mchi_read_file_ex_req *req;
     struct mchi_read_file_ex_res *resp;
