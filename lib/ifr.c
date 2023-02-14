@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  */
 
 #include <stdint.h>
@@ -81,7 +81,7 @@ int igsc_ifr_get_status(IN  struct igsc_device_handle *handle,
     int status;
     size_t request_len;
     size_t response_len;
-    size_t received_len;
+    size_t received_len = 0;
     size_t buf_len;
     struct igsc_lib_ctx       *lib_ctx;
     struct ifr_get_status_req *req;
@@ -192,7 +192,7 @@ int igsc_ifr_run_test(IN struct igsc_device_handle *handle,
     int status;
     size_t request_len;
     size_t response_len;
-    size_t received_len;
+    size_t received_len = 0;
     size_t buf_len;
     struct igsc_lib_ctx     *lib_ctx;
     struct ifr_run_test_req *req;
@@ -362,7 +362,7 @@ static int gsc_memory_ppr(struct igsc_device_handle *handle,
     int status;
     size_t request_len;
     size_t response_len;
-    size_t received_len;
+    size_t received_len = 0;
     size_t buf_len;
     struct igsc_lib_ctx *lib_ctx;
     uint32_t i;
@@ -522,7 +522,7 @@ static int gsc_gfsp_memory_errors(IN  struct  igsc_device_handle *handle,
     int status;
     size_t request_len;
     size_t response_len;
-    size_t received_len;
+    size_t received_len = 0;
     size_t buf_len;
     struct igsc_lib_ctx *lib_ctx;
     struct gfsp_get_num_memory_errors_req *req;
@@ -720,7 +720,7 @@ int igsc_ifr_run_array_scan_test(IN struct igsc_device_handle *handle,
     int status;
     size_t request_len;
     size_t response_len;
-    size_t received_len;
+    size_t received_len = 0;
     size_t buf_len;
     struct igsc_lib_ctx *lib_ctx;
     struct ifr_run_test_ext_req *req;
@@ -840,7 +840,7 @@ int igsc_ifr_run_mem_ppr_test(IN struct igsc_device_handle *handle,
     int status;
     size_t request_len;
     size_t response_len;
-    size_t received_len;
+    size_t received_len = 0;
     size_t buf_len;
     struct igsc_lib_ctx *lib_ctx;
     struct ifr_run_test_ext_req *req;
@@ -957,7 +957,7 @@ int igsc_ifr_count_tiles(IN  struct igsc_device_handle *handle,
     int status;
     size_t request_len;
     size_t response_len;
-    size_t received_len;
+    size_t received_len = 0;
     size_t buf_len;
     struct igsc_lib_ctx *lib_ctx;
     struct ifr_get_general_info_req *req;
@@ -1070,7 +1070,7 @@ int igsc_ifr_get_tile_repair_info(IN  struct igsc_device_handle *handle,
     unsigned int i;
     size_t request_len;
     size_t response_len;
-    size_t received_len;
+    size_t received_len = 0;
     size_t buf_len;
     struct igsc_lib_ctx *lib_ctx;
     struct ifr_get_tile_repair_info_req *req;
@@ -1211,7 +1211,7 @@ int igsc_ifr_get_status_ext(IN struct igsc_device_handle *handle,
     int status;
     size_t request_len;
     size_t response_len;
-    size_t received_len;
+    size_t received_len = 0;
     size_t buf_len;
     struct igsc_lib_ctx *lib_ctx;
     struct ifr_get_status_ext_req *req;
@@ -1324,7 +1324,7 @@ int igsc_ecc_config_set(IN  struct igsc_device_handle *handle,
     int status;
     size_t request_len;
     size_t response_len;
-    size_t received_len;
+    size_t received_len = 0;
     size_t buf_len;
     struct igsc_lib_ctx *lib_ctx;
     struct gfsp_set_ecc_config_req *req;
@@ -1431,7 +1431,7 @@ int igsc_ecc_config_get(IN  struct igsc_device_handle *handle,
     int status;
     size_t request_len;
     size_t response_len;
-    size_t received_len;
+    size_t received_len = 0;
     size_t buf_len;
     struct igsc_lib_ctx *lib_ctx;
     struct gfsp_get_ecc_config_req *req;
@@ -1532,7 +1532,7 @@ static int gsc_get_version(struct igsc_lib_ctx *lib_ctx,
     int status;
     size_t request_len;
     size_t response_len;
-    size_t received_len;
+    size_t received_len = 0;
     size_t buf_len;
 
     struct gsc_heci_version_resp *resp;
@@ -1672,7 +1672,7 @@ int igsc_gfsp_get_health_indicator(IN struct igsc_device_handle *handle,
     int status;
     size_t request_len;
     size_t response_len;
-    size_t received_len;
+    size_t received_len = 0;
     size_t buf_len;
     struct igsc_lib_ctx *lib_ctx;
     struct gfsp_get_mem_err_mitigation_status_req *req;

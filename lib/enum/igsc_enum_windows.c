@@ -198,12 +198,12 @@ static int gsc_get_properties(const PWCHAR deviceInterfaceList,
     CONFIGRET cr;
     BYTE DevID[MAX_DEVICE_ID_LEN];
     BYTE *Property;
-    ULONG lProperty;
+    ULONG lProperty = 0;
     WCHAR *p;
     ULONG PropertySize = 0;
-    DEVPROPTYPE PropType;
-    DEVINST devInst;
-    DEVINST devParent;
+    DEVPROPTYPE PropType = {0};
+    DEVINST devInst = {0};
+    DEVINST devParent = {0};
 
     PropertySize = sizeof(DevID);
     cr = CM_Get_Device_Interface_PropertyW(deviceInterfaceList,
