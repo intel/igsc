@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  */
 
 #include <stdint.h>
@@ -989,7 +989,7 @@ int image_oprom_get_buffer(struct igsc_oprom_image *img,
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
-    if (buffer == NULL || buffer_len == 0)
+    if (*buffer == NULL || *buffer_len == 0)
     {
         return IGSC_ERROR_BAD_IMAGE;
     }
