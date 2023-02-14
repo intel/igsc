@@ -1,6 +1,20 @@
 # IGSC FUL
 
-## [v0.8.7] - 2023-01-29
+## [v0.8.8] - 2023-02-14
+
+### Added
+1. lib: add timeout for oprom update to finish
+3. tests: add firmware update unit test
+
+### Changed
+1. lib: reduce frequency of calling progress function
+
+### Fixed
+1. lib: sleep unconditionally during firmware updates cycles
+2. lib: check the reserved fields of fwu response messages header
+3. tests: initialize firmware version before retrieving it
+
+## [v0.8.7] - 2023-01-09
 
 ### Added
 
