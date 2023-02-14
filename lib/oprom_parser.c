@@ -481,7 +481,7 @@ static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len, u
 
     cpd_img->manifest_ext_end = cpd_img->manifest_ext_start +
                     (cpd_img->manifest_header->size -
-                     cpd_img->manifest_header->header_length) * 4;
+                     cpd_img->manifest_header->header_length) * sizeof(uint32_t);
     gsc_debug("manifest end = %lu\n", cpd_img->manifest_ext_end);
 
     if (cpd_img->manifest_ext_end > buf_len)
