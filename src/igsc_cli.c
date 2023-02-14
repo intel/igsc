@@ -1276,7 +1276,6 @@ static int do_firmware_update(int argc, char *argv[])
         else if (arg_is_force(argv[0]))
         {
             force_update = true;
-            continue;
         }
         else
         {
