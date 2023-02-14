@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  */
 #include <stdint.h>
 #include <stdbool.h>
@@ -324,7 +324,7 @@ static const char *translate_health_indicator(uint8_t health_indicator)
 mockable_static
 int get_health_indicator(struct igsc_device_handle *handle)
 {
-    int ret = 0;
+    int ret;
     uint8_t health_indicator;
 
     if (!handle)
@@ -4383,7 +4383,7 @@ int main(int argc, char* argv[])
     char *exe_name = prog_name(argv[0]);
     const struct gsc_op *op = NULL;
     bool display_help = false;
-    int ret = EXIT_FAILURE;
+    int ret;
 
     arg_next(&argc, &argv);
 
