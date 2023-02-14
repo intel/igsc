@@ -1844,6 +1844,10 @@ int igsc_image_hw_config(IN  const uint8_t *buffer,
     }
 
     ret = gsc_image_fw_version(&layout, &version);
+    if (ret != IGSC_SUCCESS)
+    {
+        return ret;
+    }
 
     /* the command is only supported on DG2 */
     if (memcmp(version.project, "DG02", sizeof(version.project)))
