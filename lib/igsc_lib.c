@@ -1055,8 +1055,6 @@ static bool gsc_fwu_is_in_progress(struct igsc_lib_ctx *lib_ctx)
         is_in_progress = true;
     }
 
-    status = IGSC_SUCCESS;
-
 exit:
     return is_in_progress;
 }
