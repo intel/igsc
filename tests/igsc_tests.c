@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  */
 #include <stdarg.h>
 #include <stddef.h>
@@ -446,7 +446,7 @@ static void igsc_device_oprom_update_bad_type(void **status)
     igsc_progress_func_t progress_f;
     int ctx;
 
-    assert_int_equal(igsc_device_oprom_update(&handle, 3, &img,  progress_f, (void *)&ctx), IGSC_ERROR_BAD_IMAGE);
+    assert_int_equal(igsc_device_oprom_update(&handle, 3, &img,  progress_f, (void *)&ctx), IGSC_ERROR_INVALID_PARAMETER);
 }
 
 static void test_params_version_null(void **state)
