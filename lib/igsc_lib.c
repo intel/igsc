@@ -2497,6 +2497,18 @@ int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
     const uint8_t *buffer = NULL;
     size_t buffer_len;
 
+    if (!handle || handle->ctx == NULL || !img)
+    {
+        gsc_error("Invalid parameter: Null pointer\n");
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    if (oprom_type != IGSC_OPROM_DATA && oprom_type != IGSC_OPROM_CODE)
+    {
+        gsc_error("Invalid parameter: wrong oprom type %u\n", oprom_type);
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
     ret = image_oprom_get_buffer(img, oprom_type, &buffer, &buffer_len);
     if (ret != IGSC_SUCCESS)
     {
@@ -2645,6 +2657,12 @@ int igsc_device_fwdata_update(IN  struct igsc_device_handle *handle,
     struct igsc_fwdata_version orig_ver;
     struct igsc_fwdata_version new_ver;
 
+    if (handle == NULL || handle->ctx == NULL || buffer == NULL || buffer_len == 0)
+    {
+        gsc_error("Bad parameters\n");
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
     ret = igsc_image_fwdata_init(&img, buffer, buffer_len);
     if (ret != IGSC_SUCCESS)
     {
@@ -2692,6 +2710,12 @@ int igsc_device_fwdata_image_update(IN  struct igsc_device_handle *handle,
     int ret;
     const uint8_t *buffer = NULL;
     uint32_t buffer_len;
+
+    if (handle == NULL || handle->ctx == NULL || !img)
+    {
+        gsc_error("Bad parameters\n");
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
 
     ret = image_fwdata_get_buffer(img, &buffer, &buffer_len);
     if (ret != IGSC_SUCCESS)
