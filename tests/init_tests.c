@@ -131,7 +131,7 @@ static void test_fw_version_not_ready(void **state)
     int ret;
 
     struct igsc_device_handle *handle = *state;
-    struct igsc_fw_version version = {};
+    struct igsc_fw_version version = {0};
 
     will_return_count(TeeInit, TEE_DEVICE_NOT_READY, 3);
 
