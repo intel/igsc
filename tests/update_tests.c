@@ -253,7 +253,7 @@ int gsc_tee_command_get_ver(struct igsc_lib_ctx *lib_ctx,
     uint8_t version_buf[100];
 
     struct gsc_fwu_heci_version_req *req = req_buf;
-    struct gsc_fwu_heci_version_resp resp = {};
+    struct gsc_fwu_heci_version_resp resp = {0};
     void *version = version_buf;
 
     ret = create_response_get_ver(req, &resp, version);
@@ -306,7 +306,7 @@ int gsc_tee_command_fwu_data_info(struct igsc_lib_ctx *lib_ctx,
     int resp_len = mock_type(int);
 
     struct gsc_fw_data_heci_version_req *req = req_buf;
-    struct gsc_fw_data_heci_version_resp resp = {};
+    struct gsc_fw_data_heci_version_resp resp = {0};
 
     create_response_fwu_data_info(req, &resp);
     update_resp(&resp);
@@ -341,7 +341,7 @@ int gsc_tee_command_fwu_start(struct igsc_lib_ctx *lib_ctx,
     int resp_len = mock_type(int);
 
     struct gsc_fwu_heci_start_req *req = req_buf;
-    struct gsc_fwu_heci_start_resp resp = {};
+    struct gsc_fwu_heci_start_resp resp = {0};
 
     create_response_fwu_start(req, &resp);
     update_resp(&resp);
@@ -376,7 +376,7 @@ int gsc_tee_command_fwu_data(struct igsc_lib_ctx *lib_ctx,
     int resp_len = mock_type(int);
 
     struct gsc_fwu_heci_data_req *req = req_buf;
-    struct gsc_fwu_heci_data_resp resp = {};
+    struct gsc_fwu_heci_data_resp resp = {0};
 
     create_response_fwu_data(req, &resp);
     update_resp(&resp);
@@ -423,7 +423,7 @@ int gsc_tee_command_get_config(struct igsc_lib_ctx *lib_ctx,
     int resp_len = mock_type(int);
 
     struct gsc_fwu_heci_get_config_message_req *req = req_buf;
-    struct gsc_fwu_heci_get_config_message_resp resp = {};
+    struct gsc_fwu_heci_get_config_message_resp resp = {0};
 
     create_response_get_config(req, &resp);
     update_resp(&resp);
@@ -466,7 +466,7 @@ int gsc_tee_command_get_subsystem_ids(struct igsc_lib_ctx *lib_ctx,
     int resp_len = mock_type(int);
 
     struct gsc_fwu_heci_get_subsystem_ids_message_req *req = req_buf;
-    struct gsc_fwu_heci_get_subsystem_ids_message_resp resp = {};
+    struct gsc_fwu_heci_get_subsystem_ids_message_resp resp = {0};
 
     create_response_get_system_ids(req, &resp);
     update_resp(&resp);
