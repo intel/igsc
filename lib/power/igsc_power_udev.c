@@ -56,7 +56,7 @@ int gsc_get_device_power_control(const char *devpath, uint8_t *power_control)
     val = udev_device_get_sysattr_value(parent, "power/control");
     if (!val)
     {
-        gsc_error("failed to get power/control on %s\n", udev_device_get_sysname(parent));
+        gsc_debug("failed to get power/control on %s\n", udev_device_get_sysname(parent));
         ret = IGSC_ERROR_INTERNAL;
         goto out;
     }
