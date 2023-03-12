@@ -1,5 +1,23 @@
 # IGSC FUL
 
+## [v0.8.9] - 2023-02-12
+
+### Changed
+1. power: udev: demote error print in power/control open failure
+
+### Fixed
+1. ut: fix struct initializations for msvc
+2. ut: igsc_test: no need to alloc handle for ctx
+3. ut: fix the igsc_test to check for the correct return value
+4. lib: check parameters of library api functions
+5. lib: image_oprom_parse_cpd: prevent widening integer overflow
+6. cli: do_firmware_update: remove unnecessary continue statement
+7. lib: image_oprom_get_buffer check the assigned values
+8. lib: check return value of gsc_image_fw_version function
+9. lib: gsc_fwu_is_in_progress: don't assign unused value
+10. cli: remove assignments of values that are logically unused
+11. lib: initialize scalar variables
+
 ## [v0.8.8] - 2023-02-14
 
 ### Added
