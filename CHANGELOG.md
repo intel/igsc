@@ -1,5 +1,23 @@
 # IGSC FUL
 
+## [v0.8.9] - 2023-02-12
+
+### Changed
+1. power: udev: demote error print in power/control open failure
+
+### Fixed
+1. ut: fix struct initializations
+2. lib: fix struct initializations
+3. ut: fix the igsc_test to check for the correct return value
+4. lib: check parameters of library api functions
+5. lib: prevent unintentional integer overflow
+6. cli: remove unnecessary continue statement
+7. lib: fix the check of the assigned values
+8. lib: check return value of firmware version function
+9. lib: remove assignment of value that is logically unused
+10. cli: remove assignments of values that are logically unused
+11. lib: initialize scalar variables
+
 ## [v0.8.8] - 2023-02-14
 
 ### Added
