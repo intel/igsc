@@ -330,16 +330,15 @@ static void igsc_device_get_device_info_null_2(void **state)
 
 static void igsc_device_get_device_info_null_3(void **state)
 {
-    struct igsc_device_handle *handle = malloc(sizeof(struct igsc_device_handle));
+    struct igsc_device_handle handle = {
+        .ctx = NULL,
+    };
     struct igsc_device_info dev_info;
     int ret;
 
-    handle->ctx = NULL;
-
-    ret = igsc_device_get_device_info(handle, &dev_info);
+    ret = igsc_device_get_device_info(&handle, &dev_info);
 
     assert_int_equal(ret, IGSC_ERROR_INVALID_PARAMETER);
-    free(handle);
 }
 
 static void test_image_oprom_init_calloc_fail(void **status)
