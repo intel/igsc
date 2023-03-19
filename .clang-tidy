@@ -1,5 +1,5 @@
-Checks:          'clang-diagnostic-*,clang-analyzer-*,cppcoreguidelines-*,modernize-*,-modernize-use-trailing-return-type,-hicpp-signed-bitwise,-hicpp-no-assembler,-readability-isolate-declaration,-readability-braces-around-statements,-hicpp-braces-around-statements,-google-readability-braces-around-statements,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,-cppcoreguidelines-avoid-magic-numbers,-clang-analyzer-deadcode.DeadStores'
-WarningsAsErrors: false
+Checks:  'clang-diagnostic-*,clang-analyzer-*,cppcoreguidelines-*,modernize-*,-modernize-use-trailing-return-type,-modernize-macro-to-enum,-hicpp-signed-bitwise,-hicpp-no-assembler,-readability-isolate-declaration,-readability-braces-around-statements,-hicpp-braces-around-statements,-google-readability-braces-around-statements,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,-cppcoreguidelines-avoid-magic-numbers,-clang-analyzer-deadcode.DeadStores,-cppcoreguidelines-init-variables,-cppcoreguidelines-avoid-non-const-global-variables'
+WarningsAsErrors: true
 HeaderFilterRegex: ''
 AnalyzeTemporaryDtors: false
 FormatStyle:     none

@@ -46,7 +46,7 @@ jobs:
           rm -rf ${BUILDDIR}
           mkdir -p ${BUILDDIR}
           cd ${BUILDDIR}
-          cmake "-DCMAKE_C_CLANG_TIDY=clang-tidy" $GITHUB_WORKSPACE
+          cmake -DCMAKE_C_CLANG_TIDY="clang-tidy" $GITHUB_WORKSPACE
           make -j$(nproc) > tidy.out
           cat tidy.out | clang-tidy-to-junit.py $GITHUB_WORKSPACE > junit.xml
       - name: 'Upload Tidy Scan Results'
