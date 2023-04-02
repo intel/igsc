@@ -55,6 +55,15 @@ IF ERRORLEVEL 1 (
 
 del CMakeUserPresets.json
 
+if not "%KW_SCAN%"=="1" (
+        REM *** sign dll ***
+        call %SIGN_SCRIPT% %COMPILE_MODE%\lib\%COMPILE_MODE%\igsc.dll
+        if ERRORLEVEL 1 (
+		set ERROR_FLAG=1
+		goto FINISH
+        )
+)
+
 copy include\igsc_lib.h %PUBLISH_DIR%\
 copy %COMPILE_MODE%\lib\%COMPILE_MODE%\igsc.lib %PUBLISH_DIR%\
 copy %COMPILE_MODE%\lib\%COMPILE_MODE%\igsc.dll %PUBLISH_DIR%
