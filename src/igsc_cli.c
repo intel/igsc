@@ -1559,6 +1559,112 @@ static int do_firmware_update(int argc, char *argv[])
     return ERROR_BAD_ARGUMENT;
 }
 
+mockable_static
+int firmware_status(uint32_t index, const char *device_path)
+{
+    struct igsc_device_handle handle;
+    uint32_t fw_status = 0;
+    int ret;
+
+    memset(&handle, 0, sizeof(handle));
+    ret = igsc_device_init_by_device(&handle, device_path);
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Cannot initialize device: %s\n", device_path);
+        goto exit;
+    }
+
+    ret = igsc_read_fw_status_reg(&handle, index, &fw_status);
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_error("Cannot retrieve firmware status from device: %s, returned %d\n",
+                    device_path, ret);
+        goto exit;
+    }
+
+    printf("Firmware Status[%u] = 0x%x\n", index, fw_status);
+
+exit:
+    if (ret != IGSC_SUCCESS)
+    {
+        fwupd_verbose("last firmware transaction result: %s(%d)\n",
+                      igsc_translate_firmware_status(igsc_get_last_firmware_status(&handle)),
+                      igsc_get_last_firmware_status(&handle));
+    }
+
+    (void)igsc_device_close(&handle);
+    return ret;
+}
+
+static int do_firmware_status(int argc, char *argv[])
+{
+    uint32_t index;
+    char *device_path_found = NULL;
+
+    if (argc == 0)
+    {
+        fwupd_error("Wrong number of arguments\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    if (arg_is_token(argv[0], "0"))
+    {
+       index = 0;
+    }
+    else if (arg_is_token(argv[0], "1"))
+    {
+       index = 1;
+    }
+    else if (arg_is_token(argv[0], "2"))
+    {
+       index = 2;
+    }
+    else if (arg_is_token(argv[0], "3"))
+    {
+       index = 3;
+    }
+    else if (arg_is_token(argv[0], "4"))
+    {
+       index = 4;
+    }
+    else if (arg_is_token(argv[0], "5"))
+    {
+       index = 5;
+    }
+    else
+    {
+       fwupd_error("Wrong argument %s\n", argv[0]);
+       return ERROR_BAD_ARGUMENT;
+    }
+
+    if (argc == 3)
+    {
+        if (arg_is_device(argv[1]))
+        {
+            return firmware_status(index, argv[2]);
+        }
+        fwupd_error("Wrong argument %s\n", argv[1]);
+        return ERROR_BAD_ARGUMENT;
+    }
+    else if (argc == 1)
+    {
+        int ret;
+
+        if (get_first_device(&device_path_found) != IGSC_SUCCESS ||
+            device_path_found == NULL)
+        {
+            fwupd_error("No device found\n");
+            return EXIT_FAILURE;
+        }
+
+        ret = firmware_status(index, device_path_found);
+        free(device_path_found);
+        return ret;
+    }
+    fwupd_error("Wrong number of arguments\n");
+    return ERROR_BAD_ARGUMENT;
+}
+
 static int do_firmware(int argc, char *argv[])
 {
     const char *sub_command = NULL;
@@ -1576,6 +1682,11 @@ static int do_firmware(int argc, char *argv[])
     if (arg_is_token(sub_command, "version"))
     {
         return do_firmware_version(argc, argv);
+    }
+
+    if (arg_is_token(sub_command, "status"))
+    {
+        return do_firmware_status(argc, argv);
     }
 
     if (arg_is_token(sub_command, "update"))
@@ -4903,9 +5014,12 @@ static const struct gsc_op g_ops[] = {
         .op    = do_firmware,
         .usage = {"update [options] [--device <dev>] --image  <image>",
                   "version [--device <dev>] | --image <file> ",
+                  "status <index> [--device <dev>]",
                   "hwconfig [--check] [--device <dev> | --image  <image>]",
                    NULL},
-        .help  = "Update firmware partition or retrieve version from the devices or the supplied image\n"
+        .help  = "Update firmware partition\n"
+                 "Retrieve version from the devices or the supplied image\n"
+                 "Retrieve firmware status register values from device\n"
                  "\nOPTIONS:\n\n"
                  "    -a | --allow-downgrade\n"
                  "            allow downgrade or override the same version\n"
