@@ -386,6 +386,21 @@ uint32_t igsc_get_last_firmware_status(IN struct igsc_device_handle *handle);
 IGSC_EXPORT
 const char *igsc_translate_firmware_status(IN uint32_t firmware_status);
 
+#define IGSC_MAX_FW_STATUS_INDEX 5
+
+/**
+ *  @brief Read firmware status register
+ *
+ *  @param handle A handle to the device.
+ *  @param fwsts_index index of the firmware status register (0..IGSC_MAX_FW_STATUS_INDEX)
+ *  @param fwsts_value returned firmware status values
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_read_fw_status_reg(IN struct igsc_device_handle *handle,
+                            IN uint32_t fwsts_index,
+                            OUT uint32_t *fwsts_value);
 
  /**
   *  @brief Callback function template for printing igsc log messages.
