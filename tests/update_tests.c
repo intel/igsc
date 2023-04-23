@@ -537,26 +537,6 @@ static void setup_oprom_image(struct igsc_oprom_image *img)
     img->code_part_len = sizeof(global_buffer);
 }
 
-/* ger_version response generators */
-void good_response_get_ver(struct gsc_fwu_heci_version_resp *resp, void *version)
-{
-    UNUSED_VAR(resp);
-    UNUSED_VAR(version);
-}
-
-void bad_response_get_ver(struct gsc_fwu_heci_version_resp *resp, void *version)
-{
-    UNUSED_VAR(version);
-
-    resp->response.status = GSC_FWU_STATUS_FAILURE;
-}
-
-void good_response_get_ver_dg01(struct gsc_fwu_heci_version_resp *resp, void *version)
-{
-    UNUSED_VAR(resp);
-    memcpy(version, &fw_version_dg01, sizeof(fw_version_dg01));
-}
-
 /* get_config response generators */
 void good_response_get_config(struct gsc_fwu_heci_get_config_message_resp *resp)
 {
@@ -630,10 +610,6 @@ static void test_get_config_good(void **state)
     struct igsc_device_handle *handle = *state;
     struct igsc_hw_config hw_config = {0};
 
-    will_return(gsc_tee_command_get_ver, &good_response_get_ver);
-    will_return(gsc_tee_command_get_ver, IGSC_SUCCESS);
-    will_return(gsc_tee_command_get_ver, FW_VER_RESPONSE_SIZE);
-
     will_return(gsc_tee_command_get_config, &good_response_get_config);
     will_return(gsc_tee_command_get_config, IGSC_SUCCESS);
     will_return(gsc_tee_command_get_config, GET_CONFIG_RESPONSE_SIZE);
@@ -650,29 +626,13 @@ static void test_get_config_dg01(void **state)
     struct igsc_device_handle *handle = *state;
     struct igsc_hw_config hw_config = {0};
 
-    will_return(gsc_tee_command_get_ver, &good_response_get_ver_dg01);
-    will_return(gsc_tee_command_get_ver, IGSC_SUCCESS);
-    will_return(gsc_tee_command_get_ver, FW_VER_RESPONSE_SIZE);
+    will_return(gsc_tee_command_get_config, &good_response_get_config);
+    will_return(gsc_tee_command_get_config, IGSC_ERROR_NOT_SUPPORTED);
+    will_return(gsc_tee_command_get_config, GET_CONFIG_RESPONSE_SIZE);
 
     ret = igsc_device_hw_config(handle, &hw_config);
 
-    assert_true(ret != IGSC_SUCCESS);
-}
-
-static void test_get_config_bad_version(void **state)
-{
-    int ret;
-
-    struct igsc_device_handle *handle = *state;
-    struct igsc_hw_config hw_config = {0};
-
-    will_return(gsc_tee_command_get_ver, &bad_response_get_ver);
-    will_return(gsc_tee_command_get_ver, IGSC_SUCCESS);
-    will_return(gsc_tee_command_get_ver, FW_VER_RESPONSE_SIZE);
-
-    ret = igsc_device_hw_config(handle, &hw_config);
-
-    assert_true(ret != IGSC_SUCCESS);
+    assert_true(ret == IGSC_ERROR_NOT_SUPPORTED);
 }
 
 static void test_get_config_bad_size(void **state)
@@ -681,10 +641,6 @@ static void test_get_config_bad_size(void **state)
 
     struct igsc_device_handle *handle = *state;
     struct igsc_hw_config hw_config = {0};
-
-    will_return(gsc_tee_command_get_ver, &good_response_get_ver);
-    will_return(gsc_tee_command_get_ver, IGSC_SUCCESS);
-    will_return(gsc_tee_command_get_ver, FW_VER_RESPONSE_SIZE);
 
     will_return(gsc_tee_command_get_config, &bad_size_get_config);
     will_return(gsc_tee_command_get_config, IGSC_SUCCESS);
@@ -702,10 +658,6 @@ static void test_get_config_bad_command_id(void **state)
     struct igsc_device_handle *handle = *state;
     struct igsc_hw_config hw_config = {0};
 
-    will_return(gsc_tee_command_get_ver, &good_response_get_ver);
-    will_return(gsc_tee_command_get_ver, IGSC_SUCCESS);
-    will_return(gsc_tee_command_get_ver, FW_VER_RESPONSE_SIZE);
-
     will_return(gsc_tee_command_get_config, &bad_command_id_get_config);
     will_return(gsc_tee_command_get_config, IGSC_SUCCESS);
     will_return(gsc_tee_command_get_config, GET_CONFIG_RESPONSE_SIZE);
@@ -721,10 +673,6 @@ static void test_get_config_bad_command_id2(void **state)
 
     struct igsc_device_handle *handle = *state;
     struct igsc_hw_config hw_config = {0};
-
-    will_return(gsc_tee_command_get_ver, &good_response_get_ver);
-    will_return(gsc_tee_command_get_ver, IGSC_SUCCESS);
-    will_return(gsc_tee_command_get_ver, FW_VER_RESPONSE_SIZE);
 
     will_return(gsc_tee_command_get_config, &bad_command_id2_get_config);
     will_return(gsc_tee_command_get_config, IGSC_SUCCESS);
@@ -742,10 +690,6 @@ static void test_get_config_bad_is_response(void **state)
     struct igsc_device_handle *handle = *state;
     struct igsc_hw_config hw_config = {0};
 
-    will_return(gsc_tee_command_get_ver, &good_response_get_ver);
-    will_return(gsc_tee_command_get_ver, IGSC_SUCCESS);
-    will_return(gsc_tee_command_get_ver, FW_VER_RESPONSE_SIZE);
-
     will_return(gsc_tee_command_get_config, &bad_is_response_get_config);
     will_return(gsc_tee_command_get_config, IGSC_SUCCESS);
     will_return(gsc_tee_command_get_config, GET_CONFIG_RESPONSE_SIZE);
@@ -761,10 +705,6 @@ static void test_get_config_bad_reserved(void **state)
 
     struct igsc_device_handle *handle = *state;
     struct igsc_hw_config hw_config = {0};
-
-    will_return(gsc_tee_command_get_ver, &good_response_get_ver);
-    will_return(gsc_tee_command_get_ver, IGSC_SUCCESS);
-    will_return(gsc_tee_command_get_ver, FW_VER_RESPONSE_SIZE);
 
     will_return(gsc_tee_command_get_config, &bad_reserved_get_config);
     will_return(gsc_tee_command_get_config, IGSC_SUCCESS);
@@ -782,10 +722,6 @@ static void test_get_config_bad_header_reserved(void **state)
     struct igsc_device_handle *handle = *state;
     struct igsc_hw_config hw_config = {0};
 
-    will_return(gsc_tee_command_get_ver, &good_response_get_ver);
-    will_return(gsc_tee_command_get_ver, IGSC_SUCCESS);
-    will_return(gsc_tee_command_get_ver, FW_VER_RESPONSE_SIZE);
-
     will_return(gsc_tee_command_get_config, &bad_header_reserved_get_config);
     will_return(gsc_tee_command_get_config, IGSC_SUCCESS);
     will_return(gsc_tee_command_get_config, GET_CONFIG_RESPONSE_SIZE);
@@ -801,10 +737,6 @@ static void test_get_config_bad_header_reserved2(void **state)
 
     struct igsc_device_handle *handle = *state;
     struct igsc_hw_config hw_config = {0};
-
-    will_return(gsc_tee_command_get_ver, &good_response_get_ver);
-    will_return(gsc_tee_command_get_ver, IGSC_SUCCESS);
-    will_return(gsc_tee_command_get_ver, FW_VER_RESPONSE_SIZE);
 
     will_return(gsc_tee_command_get_config, &bad_header_reserved2_get_config);
     will_return(gsc_tee_command_get_config, IGSC_SUCCESS);
@@ -822,10 +754,6 @@ static void test_get_config_bad_header_reserved3(void **state)
     struct igsc_device_handle *handle = *state;
     struct igsc_hw_config hw_config = {0};
 
-    will_return(gsc_tee_command_get_ver, &good_response_get_ver);
-    will_return(gsc_tee_command_get_ver, IGSC_SUCCESS);
-    will_return(gsc_tee_command_get_ver, FW_VER_RESPONSE_SIZE);
-
     will_return(gsc_tee_command_get_config, &bad_header_reserved3_get_config);
     will_return(gsc_tee_command_get_config, IGSC_SUCCESS);
     will_return(gsc_tee_command_get_config, GET_CONFIG_RESPONSE_SIZE);
@@ -841,10 +769,6 @@ static void test_get_config_bad_status(void **state)
 
     struct igsc_device_handle *handle = *state;
     struct igsc_hw_config hw_config = {0};
-
-    will_return(gsc_tee_command_get_ver, &good_response_get_ver);
-    will_return(gsc_tee_command_get_ver, IGSC_SUCCESS);
-    will_return(gsc_tee_command_get_ver, FW_VER_RESPONSE_SIZE);
 
     will_return(gsc_tee_command_get_config, &bad_status_get_config);
     will_return(gsc_tee_command_get_config, IGSC_SUCCESS);
@@ -862,10 +786,6 @@ static void test_get_config_bad_command_param(void **state)
     struct igsc_device_handle *handle = *state;
     struct igsc_hw_config hw_config = {0};
 
-    will_return(gsc_tee_command_get_ver, &good_response_get_ver);
-    will_return(gsc_tee_command_get_ver, IGSC_SUCCESS);
-    will_return(gsc_tee_command_get_ver, FW_VER_RESPONSE_SIZE);
-
     will_return(gsc_tee_command_get_config, &bad_command_param_get_config);
     will_return(gsc_tee_command_get_config, IGSC_SUCCESS);
     will_return(gsc_tee_command_get_config, GET_CONFIG_RESPONSE_SIZE);
@@ -882,10 +802,6 @@ static void test_get_config_bad_format_version(void **state)
     struct igsc_device_handle *handle = *state;
     struct igsc_hw_config hw_config = {0};
 
-    will_return(gsc_tee_command_get_ver, &good_response_get_ver);
-    will_return(gsc_tee_command_get_ver, IGSC_SUCCESS);
-    will_return(gsc_tee_command_get_ver, FW_VER_RESPONSE_SIZE);
-
     will_return(gsc_tee_command_get_config, &bad_format_version_get_config);
     will_return(gsc_tee_command_get_config, IGSC_SUCCESS);
     will_return(gsc_tee_command_get_config, GET_CONFIG_RESPONSE_SIZE);
@@ -901,10 +817,6 @@ static void test_get_config_bad_hw_sku(void **state)
 
     struct igsc_device_handle *handle = *state;
     struct igsc_hw_config hw_config = {0};
-
-    will_return(gsc_tee_command_get_ver, &good_response_get_ver);
-    will_return(gsc_tee_command_get_ver, IGSC_SUCCESS);
-    will_return(gsc_tee_command_get_ver, FW_VER_RESPONSE_SIZE);
 
     will_return(gsc_tee_command_get_config, &bad_hw_sku_get_config);
     will_return(gsc_tee_command_get_config, IGSC_SUCCESS);
@@ -2201,6 +2113,7 @@ static void test_fwu_iaf_start_bad_command_param(void **state)
 int main(void)
 {
     const struct CMUnitTest tests[] = {
+
         cmocka_unit_test(test_oprom_code_update_good),
         cmocka_unit_test(test_oprom_data_update_good),
         cmocka_unit_test(test_iaf_update_good),
@@ -2265,7 +2178,6 @@ int main(void)
 
         cmocka_unit_test(test_get_config_good),
         cmocka_unit_test(test_get_config_dg01),
-        cmocka_unit_test(test_get_config_bad_version),
         cmocka_unit_test(test_get_config_bad_size),
         cmocka_unit_test(test_get_config_bad_command_id),
         cmocka_unit_test(test_get_config_bad_command_id2),
