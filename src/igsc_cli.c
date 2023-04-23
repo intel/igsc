@@ -633,7 +633,12 @@ int firmware_check_hw_config(struct igsc_device_handle *handle, const struct img
     memset(&image_hw_config, 0, sizeof(image_hw_config));
 
     ret = igsc_device_hw_config(handle, &device_hw_config);
-    if (ret != IGSC_SUCCESS && ret != IGSC_ERROR_NOT_SUPPORTED)
+    if (ret == IGSC_ERROR_NOT_SUPPORTED)
+    {
+        /* if firmware does not support hw_config command - don't check hw config matching */
+        return IGSC_SUCCESS;
+    }
+    if (ret != IGSC_SUCCESS)
     {
         return ret;
     }
