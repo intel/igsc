@@ -1837,8 +1837,8 @@ int oprom_check_devid_enforcement(struct igsc_device_handle *handle,
     ret = igsc_device_hw_config(handle, &device_hw_config);
     if (ret == IGSC_ERROR_NOT_SUPPORTED)
     {
-        fwupd_error("config option is not available\n");
-        return ret;
+        /* if firmware does not support hw_config command - don't check enforcement */
+        return IGSC_SUCCESS;
     }
     if (ret != IGSC_SUCCESS)
     {
