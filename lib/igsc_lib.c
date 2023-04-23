@@ -1423,6 +1423,14 @@ static int gsc_device_hw_config(struct igsc_lib_ctx *lib_ctx,
         goto exit;
     }
 
+    /* Some platforms do not support hw_config command, it should not be treated as error */
+    if (resp->response.status == GSC_FWU_STATUS_INVALID_COMMAND)
+    {
+        gsc_debug("Hw config command is not supported by the firmware\n");
+        status = IGSC_ERROR_NOT_SUPPORTED;
+        goto exit;
+    }
+
     status = gsc_fwu_heci_validate_response_header(lib_ctx, &resp->response, command_id);
     if (status != IGSC_SUCCESS)
     {
@@ -1519,7 +1527,6 @@ int igsc_device_hw_config(IN struct igsc_device_handle *handle,
                           OUT struct igsc_hw_config *hw_config)
 {
     struct igsc_lib_ctx *lib_ctx;
-    struct igsc_fw_version version;
     int ret;
 
     if (handle == NULL || handle->ctx == NULL || hw_config == NULL)
@@ -1527,9 +1534,6 @@ int igsc_device_hw_config(IN struct igsc_device_handle *handle,
         gsc_error("Bad parameters\n");
         return IGSC_ERROR_INVALID_PARAMETER;
     }
-
-    memset(&version, 0, sizeof(version));
-    memset(hw_config, 0, sizeof(*hw_config));
 
     lib_ctx = handle->ctx;
     ret = gsc_driver_init(lib_ctx, &GUID_METEE_FWU);
@@ -1539,28 +1543,19 @@ int igsc_device_hw_config(IN struct igsc_device_handle *handle,
         return ret;
     }
 
-    ret = gsc_get_fw_version(lib_ctx, &version);
-    if (ret != IGSC_SUCCESS)
-    {
-        gsc_error("Failed to retrieve firmware version %d\n", ret);
-        goto exit;
-    }
-
-    /* the command is only supported on DG2 */
-    if (memcmp(version.project, "DG02", sizeof(version.project)))
-    {
-        gsc_error("Config option is not available\n");
-        ret = IGSC_ERROR_NOT_SUPPORTED;
-        goto exit;
-    }
+    memset(hw_config, 0, sizeof(*hw_config));
 
     ret = gsc_device_hw_config(lib_ctx, hw_config);
-    if (ret != IGSC_SUCCESS)
+    if (ret == IGSC_ERROR_NOT_SUPPORTED)
+    {
+        /* some projects do not support get hw_config command, it's legal */
+        gsc_debug("Getting hardware config is not supported by the firmware\n");
+    }
+    else if (ret != IGSC_SUCCESS)
     {
         gsc_error("Failed to retrieve hardware config %d\n", ret);
     }
 
-exit:
     gsc_driver_deinit(lib_ctx);
 
     return ret;
@@ -1774,8 +1769,9 @@ static int gsc_image_hw_config(const struct gsc_fwu_img_layout *layout,
 
     if (info_len < sizeof(*info))
     {
-        gsc_error("No valid IMGI section in the image\n");
-        return IGSC_ERROR_BAD_IMAGE;
+        /* Some images (like DG1) do not have IMGI section, this is legal */
+        gsc_debug("No valid IMGI section in the image\n");
+        return IGSC_ERROR_NOT_SUPPORTED;
     }
 
     if (info->format_version != FWU_GWS_IMAGE_INFO_FORMAT_VERSION)
@@ -1820,14 +1816,12 @@ int igsc_image_hw_config(IN  const uint8_t *buffer,
 {
     int    ret;
     struct gsc_fwu_img_layout layout;
-    struct igsc_fw_version version;
 
     if (buffer == NULL || buffer_len == 0 || hw_config == NULL)
     {
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
-    memset(&version, 0, sizeof(version));
     memset(hw_config, 0, sizeof(*hw_config));
 
     gsc_fwu_img_layout_reset(&layout);
@@ -1840,18 +1834,6 @@ int igsc_image_hw_config(IN  const uint8_t *buffer,
     if (ret != IGSC_SUCCESS)
     {
         return ret;
-    }
-
-    ret = gsc_image_fw_version(&layout, &version);
-    if (ret != IGSC_SUCCESS)
-    {
-        return ret;
-    }
-
-    /* the command is only supported on DG2 */
-    if (memcmp(version.project, "DG02", sizeof(version.project)))
-    {
-        return IGSC_ERROR_NOT_SUPPORTED;
     }
 
     return gsc_image_hw_config(&layout, hw_config);
