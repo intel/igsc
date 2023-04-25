@@ -8,34 +8,38 @@
 
 #define PACKAGE_LOG_NAME "IGSC"
 
-#ifdef _WIN32
-    #include <stdio.h>
-    #include <stdarg.h>
-    #include <windows.h>
-    #define DEBUG_MSG_LEN 1024
-    static inline void debug_print(const char* fmt, ...)
-    {
-        char msg[DEBUG_MSG_LEN + 1];
-        va_list varl;
-        va_start(varl, fmt);
-        vsprintf_s(msg, DEBUG_MSG_LEN, fmt, varl);
-        va_end(varl);
+#ifdef SYSLOG
+    #ifdef _WIN32
+       #include <stdio.h>
+       #include <stdarg.h>
+       #include <windows.h>
+       #define DEBUG_MSG_LEN 1024
+       static inline void debug_print(const char* fmt, ...)
+       {
+           char msg[DEBUG_MSG_LEN + 1];
+           va_list varl;
+           va_start(varl, fmt);
+           vsprintf_s(msg, DEBUG_MSG_LEN, fmt, varl);
+           va_end(varl);
 
-        OutputDebugStringA(msg);
-    }
+           OutputDebugStringA(msg);
+       }
 
-    #define error_print(fmt, ...) debug_print(fmt, ##__VA_ARGS__)
-#else
-    #ifdef SYSLOG
+       #define error_print(fmt, ...) debug_print(fmt, ##__VA_ARGS__)
+
+    #else /* WIN32 */
+
         #include <syslog.h>
         #define debug_print(fmt, ...) syslog(LOG_DEBUG, fmt, ##__VA_ARGS__)
         #define error_print(fmt, ...) syslog(LOG_ERR, fmt, ##__VA_ARGS__)
-    #else
+
+    #endif /* _WIN32 */
+
+#else /* SYSLOG */
         #include <stdio.h>
         #define debug_print(fmt, ...) fprintf(stdout, fmt, ##__VA_ARGS__)
         #define error_print(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
-    #endif /* SYSLOG */
-#endif /* _WIN32 */
+#endif /* SYSLOG */
 
 #if defined(DEBUG) || defined(_DEBUG)
 #define gsc_debug(_fmt_, ...) \
