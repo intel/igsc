@@ -4171,6 +4171,7 @@ static void help(const char *exe_name)
     printf("\n");
     printf("    %s -V/--version: display version\n", exe_name);
     printf("    %s -v/--verbose: runs in verbose mode\n", exe_name);
+    printf("    %s -t/--trace: runs in trace mode\n", exe_name);
     printf("    %s -q/--quiet: runs in quiet mode\n", exe_name);
     printf("    %s help : shows this help\n", exe_name);
     printf("    %s help <command>: shows detailed help\n", exe_name);
@@ -4190,6 +4191,7 @@ static void usage(const char *exe_name)
     printf("\n");
     printf("    %s -V/--version: display version\n", exe_name);
     printf("    %s -v/--verbose: runs in verbose mode\n", exe_name);
+    printf("    %s -t/--trace: runs in trace mode\n", exe_name);
     printf("    %s -q/--quiet: runs in quiet mode\n", exe_name);
     printf("    %s help : shows this help\n", exe_name);
     printf("    %s help <command>: shows detailed help\n", exe_name);
@@ -4206,6 +4208,12 @@ static bool arg_is_verbose(const char *arg)
 {
     return !strcmp(arg, "-v") ||
            !strcmp(arg, "--verbose");
+}
+
+static bool arg_is_trace(const char *arg)
+{
+    return !strcmp(arg, "-t") ||
+           !strcmp(arg, "--trace");
 }
 
 static bool arg_is_version(const char *arg)
@@ -4259,6 +4267,18 @@ static int args_parse(const char *exe_name, int *argc, char **argv[],
         verbose = true;
         /* set log level to DEBUG in the library */
         igsc_set_log_level(IGSC_LOG_LEVEL_DEBUG);
+    }
+
+    if (arg_is_trace(*argv[0]))
+    {
+        if (!arg_next(argc, argv))
+        {
+            usage(exe_name);
+            return EXIT_FAILURE;
+        }
+        verbose = true;
+        /* set log level to TRACE in the library */
+        igsc_set_log_level(IGSC_LOG_LEVEL_TRACE);
     }
 
     if (arg_is_quiet(*argv[0]))
