@@ -75,6 +75,34 @@ typedef void *igsc_handle_t;
 #endif /* __linux__ */
 
 /**
+ * types of supported log levels
+ */
+enum igsc_log_level_type {
+    IGSC_LOG_LEVEL_ERROR = 0, /**< Errors only */
+    IGSC_LOG_LEVEL_DEBUG = 1, /**< Debug messages and errors */
+    IGSC_LOG_LEVEL_TRACE = 2, /**< Trace, debug messages and errors */
+    IGSC_LOG_LEVEL_MAX   = 3, /**< Upper boundary */
+};
+
+/**
+ *  @brief Sets log level
+ *
+ *  @param log_level log level to set
+ *
+ *  @return void
+ */
+IGSC_EXPORT
+void igsc_set_log_level(unsigned int log_level);
+
+/**
+ *  @brief Retrieves current log level
+ *
+ *  @return current log lelel
+ */
+IGSC_EXPORT
+unsigned int igsc_get_log_level(void);
+
+/**
  * types of supported update images
  */
 enum igsc_image_type {

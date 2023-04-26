@@ -7,6 +7,7 @@ endif
 
 srcs = [
   'igsc_lib.c',
+  'igsc_log.c',
   'ifr.c',
   'oprom.c',
   'oprom_parser.c',
