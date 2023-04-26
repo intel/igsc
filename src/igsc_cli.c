@@ -4294,6 +4294,8 @@ static int args_parse(const char *exe_name, int *argc, char **argv[],
             return EXIT_FAILURE;
         }
         verbose = true;
+        /* set log level to DEBUG in the library */
+        igsc_set_log_level(IGSC_LOG_LEVEL_DEBUG);
     }
 
     if (arg_is_quiet(*argv[0]))
