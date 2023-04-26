@@ -494,7 +494,7 @@ static int gsc_fwu_img_layout_parse(struct gsc_fwu_img_layout *layout,
     {
         if ((entries_found_bitmask & MANDATORY_FWDATA_ENTRY_BITMASK) != MANDATORY_FWDATA_ENTRY_BITMASK)
         {
-            gsc_debug("Mandatory FPT entries missing from update image\n");
+            gsc_error("Mandatory FPT entries missing from update image\n");
             status = IGSC_ERROR_BAD_IMAGE;
             goto exit;
         }
@@ -503,7 +503,7 @@ static int gsc_fwu_img_layout_parse(struct gsc_fwu_img_layout *layout,
     {
         if ((entries_found_bitmask & MANDATORY_ENTRY_BITMASK) != MANDATORY_ENTRY_BITMASK)
         {
-            gsc_debug("Mandatory FPT entries missing from update image\n");
+            gsc_error("Mandatory FPT entries missing from update image\n");
             status = IGSC_ERROR_BAD_IMAGE;
             goto exit;
         }
@@ -551,7 +551,7 @@ static int gsc_fwu_heci_validate_response_header(struct igsc_lib_ctx *lib_ctx,
 
     if (resp_header->header.command_id != command_id)
     {
-        gsc_debug("Invalid command ID (%d)\n",
+        gsc_error("Invalid command ID (%d)\n",
                 resp_header->header.command_id);
         status = IGSC_ERROR_PROTOCOL;
         goto exit;
@@ -559,7 +559,7 @@ static int gsc_fwu_heci_validate_response_header(struct igsc_lib_ctx *lib_ctx,
 
     if (resp_header->header.is_response != true)
     {
-        gsc_debug("HECI Response not marked as response\n");
+        gsc_error("HECI Response not marked as response\n");
         status = IGSC_ERROR_PROTOCOL;
         goto exit;
     }
