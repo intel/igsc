@@ -81,14 +81,14 @@ static int status_tee2fu(TEESTATUS status)
 }
 
 #if defined(DEBUG) || defined(_DEBUG)
-static void gsc_debug_hex_dump(const char *title, const void *buf, size_t len)
+static void gsc_trace_hex_dump(const char *title, const void *buf, size_t len)
 {
 #define pbufsz (16 * 3)
     char pbuf[pbufsz];
     const unsigned char *_buf = buf;
     size_t j = 0;
 
-    debug_print("%s\n", title);
+    trace_print("%s\n", title);
 
     while (len-- > 0)
     {
@@ -96,17 +96,17 @@ static void gsc_debug_hex_dump(const char *title, const void *buf, size_t len)
         j += 3;
         if (j == 16 * 3)
         {
-            debug_print("%s\n", pbuf);
+            trace_print("%s\n", pbuf);
             j = 0;
         }
     }
     if (j)
     {
-        debug_print("%s\n", pbuf);
+        trace_print("%s\n", pbuf);
     }
 }
 #else
-static void gsc_debug_hex_dump(const char *title, const void *buf, size_t len)
+static void gsc_trace_hex_dump(const char *title, const void *buf, size_t len)
 {
     (void)title; /* unused */
     (void)buf;   /* unused */
@@ -619,7 +619,7 @@ int gsc_tee_command(struct igsc_lib_ctx *lib_ctx,
     int status;
     TEESTATUS tee_status;
 
-    gsc_debug_hex_dump("Sending:", req_buf, request_len);
+    gsc_trace_hex_dump("Sending:", req_buf, request_len);
 
     num_bytes = 0;
     tee_status = TeeWrite(&lib_ctx->driver_handle, req_buf, request_len, &num_bytes, TEE_WRITE_TIMEOUT);
@@ -644,7 +644,7 @@ int gsc_tee_command(struct igsc_lib_ctx *lib_ctx,
         goto exit;
     }
 
-    gsc_debug_hex_dump("Received:", resp_buf, *response_len);
+    gsc_trace_hex_dump("Received:", resp_buf, *response_len);
 
     status = IGSC_SUCCESS;
 
@@ -672,7 +672,7 @@ static int gsc_send_no_update(struct igsc_lib_ctx *lib_ctx)
     req->header.command_id = GSC_FWU_HECI_COMMAND_ID_NO_UPDATE;
     req->reserved = 0;
 
-    gsc_debug_hex_dump("Sending:", (unsigned char *)req, request_len);
+    gsc_trace_hex_dump("Sending:", (unsigned char *)req, request_len);
 
     tee_status = TeeWrite(&lib_ctx->driver_handle, req, request_len, NULL, TEE_WRITE_TIMEOUT);
     if (!TEE_IS_SUCCESS(tee_status))
@@ -992,7 +992,7 @@ static int gsc_fwu_end(struct igsc_lib_ctx *lib_ctx)
     req->header.command_id = command_id;
     req->reserved = 0;
 
-    gsc_debug_hex_dump("Sending:", (unsigned char *)req, request_len);
+    gsc_trace_hex_dump("Sending:", (unsigned char *)req, request_len);
 
     tee_status = TeeWrite(&lib_ctx->driver_handle, req, request_len, NULL, TEE_WRITE_TIMEOUT);
     if (!TEE_IS_SUCCESS(tee_status))
@@ -3191,7 +3191,7 @@ int igsc_device_oem_version(IN  struct igsc_device_handle *handle,
        return IGSC_ERROR_PROTOCOL;
     }
 
-    gsc_debug_hex_dump("OEM Version:", version->version, received_version_size);
+    gsc_trace_hex_dump("OEM Version:", version->version, received_version_size);
 
     version->length = (uint16_t) received_version_size;
     return ret;
