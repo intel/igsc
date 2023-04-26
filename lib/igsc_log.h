@@ -49,17 +49,12 @@
         #define trace_print(fmt, ...) if (igsc_get_log_level() >= IGSC_LOG_LEVEL_TRACE) fprintf(stdout, fmt, ##__VA_ARGS__)
 #endif /* SYSLOG */
 
-#if defined(DEBUG) || defined(_DEBUG)
 #define gsc_debug(_fmt_, ...) \
     debug_print(PACKAGE_LOG_NAME ": (%s:%s():%d) " _fmt_, \
                 __FILE__, __func__, __LINE__,  ##__VA_ARGS__)
 #define gsc_trace(_fmt_, ...) \
     trace_print(PACKAGE_LOG_NAME ": (%s:%s():%d) " _fmt_, \
                 __FILE__, __func__, __LINE__,  ##__VA_ARGS__)
-#else
-    #define gsc_debug(_x_, ...)
-    #define gsc_trace(_x_, ...)
-#endif /* PRINTS_ENABLE */
 
 #define gsc_error(_fmt_, ...) \
     error_print(PACKAGE_LOG_NAME ": (%s:%s():%d) " _fmt_, \

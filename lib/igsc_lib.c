@@ -80,7 +80,6 @@ static int status_tee2fu(TEESTATUS status)
     }
 }
 
-#if defined(DEBUG) || defined(_DEBUG)
 static void gsc_trace_hex_dump(const char *title, const void *buf, size_t len)
 {
 #define pbufsz (16 * 3)
@@ -105,14 +104,6 @@ static void gsc_trace_hex_dump(const char *title, const void *buf, size_t len)
         trace_print("%s\n", pbuf);
     }
 }
-#else
-static void gsc_trace_hex_dump(const char *title, const void *buf, size_t len)
-{
-    (void)title; /* unused */
-    (void)buf;   /* unused */
-    (void)len;   /* unused */
-}
-#endif /* defined(DEBUG) || defined(_DEBUG) */
 
 mockable_static
 void driver_working_buffer_free(struct igsc_lib_ctx *lib_ctx)

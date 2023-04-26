@@ -93,7 +93,6 @@ struct igsc_oprom_image {
     uint32_t cur_device_4ids_data_pos;      /**< iterator's current 4ids data device position */
 };
 
-#if defined(DEBUG) || defined(_DEBUG)
 static void debug_print_device_type_ext(struct mft_oprom_device_type_ext *ext)
 {
     struct oprom_subsystem_device_id *dev = &ext->device_ids[0];
@@ -149,25 +148,6 @@ static void debug_print_oprom_version(enum igsc_oprom_type type,
            oprom_version->version[6],
            oprom_version->version[7]);
 }
-
-#else
-static inline void debug_print_device_type_ext(struct mft_oprom_device_type_ext *ext)
-{
-    (void)ext;
-}
-
-static void debug_print_oprom_version(enum igsc_oprom_type type,
-                                      const struct igsc_oprom_version *oprom_version)
-{
-    (void)type;
-    (void)oprom_version;
-}
-
-static void debug_print_device_4ids_ext(struct mft_oprom_device_4ids_array_ext *ext)
-{
-    (void)ext;
-}
-#endif
 
 static void debug_print_partition_directory_header(struct code_partition_directory_header *h)
 {
