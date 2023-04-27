@@ -113,7 +113,7 @@ static int image_fwdata_parse_cpd(struct igsc_fwdata_image *img, size_t buf_len)
     if (buf_len <= sizeof(*header) + header->num_of_entries * sizeof(header->entries[0]) ||
          header->num_of_entries < CPD_MAX_INDEX)
     {
-        gsc_error("Illegal fw data cpd image (size/num_of_entries %lu/%u)\n",
+        gsc_error("Illegal fw data cpd image (size/num_of_entries %zu/%u)\n",
                   buf_len, header->num_of_entries);
         return IGSC_ERROR_BAD_IMAGE;
     }
@@ -152,17 +152,17 @@ static int image_fwdata_parse_cpd(struct igsc_fwdata_image *img, size_t buf_len)
 
     cpd_img->manifest_offset = header->entries[CPD_MANIFEST_INDEX].offset;
     cpd_img->public_key_offset = cpd_img->manifest_offset + sizeof(struct mft_header);
-    gsc_debug("public key offset = %lu\n", cpd_img->public_key_offset);
+    gsc_debug("public key offset = %zu\n", cpd_img->public_key_offset);
 
     cpd_img->signature_offset = cpd_img->public_key_offset + sizeof(struct mft_rsa_3k_key);
-    gsc_debug("signature offset = %lu\n", cpd_img->signature_offset);
+    gsc_debug("signature offset = %zu\n", cpd_img->signature_offset);
 
     cpd_img->manifest_ext_start = cpd_img->signature_offset + sizeof (struct rsa_3072_pss_signature);
 
     if (cpd_img->public_key_offset > buf_len ||
        (cpd_img->public_key_offset + sizeof(struct mft_rsa_3k_key) > buf_len))
     {
-        gsc_error("Illegal fwdata cpd image (public key offset %lu)\n",
+        gsc_error("Illegal fwdata cpd image (public key offset %zu)\n",
                   cpd_img->public_key_offset);
         return IGSC_ERROR_BAD_IMAGE;
     }
@@ -172,7 +172,7 @@ static int image_fwdata_parse_cpd(struct igsc_fwdata_image *img, size_t buf_len)
     if (cpd_img->signature_offset > buf_len ||
        (cpd_img->signature_offset + sizeof(struct rsa_3072_pss_signature) > buf_len))
     {
-        gsc_error("Illegal fwdata cpd image (signature offset %lu)\n",
+        gsc_error("Illegal fwdata cpd image (signature offset %zu)\n",
                   cpd_img->signature_offset);
         return IGSC_ERROR_BAD_IMAGE;
     }
@@ -180,7 +180,7 @@ static int image_fwdata_parse_cpd(struct igsc_fwdata_image *img, size_t buf_len)
 
     if (cpd_img->manifest_ext_start > buf_len)
     {
-        gsc_error("Illegal fwdata cpd image (extensions start %lu)\n", cpd_img->manifest_ext_start);
+        gsc_error("Illegal fwdata cpd image (extensions start %zu)\n", cpd_img->manifest_ext_start);
         return IGSC_ERROR_BAD_IMAGE;
 
     }
@@ -195,11 +195,11 @@ static int image_fwdata_parse_cpd(struct igsc_fwdata_image *img, size_t buf_len)
     cpd_img->manifest_ext_end = cpd_img->manifest_ext_start +
                     (cpd_img->manifest_header->size -
                      cpd_img->manifest_header->header_length) * sizeof(uint32_t);
-    gsc_debug("manifest end = %lu\n", cpd_img->manifest_ext_end);
+    gsc_debug("manifest end = %zu\n", cpd_img->manifest_ext_end);
 
     if (cpd_img->manifest_ext_end > buf_len)
     {
-        gsc_error("Illegal fwdata cpd image (extensions end %lu)\n", cpd_img->manifest_ext_end);
+        gsc_error("Illegal fwdata cpd image (extensions end %zu)\n", cpd_img->manifest_ext_end);
         return IGSC_ERROR_BAD_IMAGE;
     }
 
