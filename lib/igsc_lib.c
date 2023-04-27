@@ -857,7 +857,7 @@ static int gsc_fwu_start(struct igsc_lib_ctx *lib_ctx, uint32_t payload_type, bo
     memset(req->reserved, 0, sizeof(req->reserved));
     if (gsc_memcpy_s(&req->data, buf_len - sizeof(*req), fpt_info, fpt_info_len))
     {
-        gsc_error("Copy of meta data failed, buf len %ld meta data len %u\n",
+        gsc_error("Copy of meta data failed, buf len %zu meta data len %u\n",
                   buf_len - sizeof(*req), fpt_info_len);
         status = IGSC_ERROR_INTERNAL;
         goto exit;
@@ -3107,7 +3107,7 @@ static int mchi_read_file(IN  struct igsc_device_handle *handle,
 
     if (lib_ctx->working_buffer_length <= sizeof(struct mchi_read_file_ex_res))
     {
-       gsc_error("Max heci message length for this heci client is too small: %lu\n",
+       gsc_error("Max heci message length for this heci client is too small: %zu\n",
                  lib_ctx->working_buffer_length);
        status = IGSC_ERROR_INTERNAL;
        goto exit;
