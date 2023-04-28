@@ -1,3 +1,10 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (C) 2023 Intel Corporation
+ */
+
+#include "msvc/config.h"
+#include "gcc/config.h"
 #include "igsc_lib.h"
 
 static enum igsc_log_level_type igsc_log_level =
