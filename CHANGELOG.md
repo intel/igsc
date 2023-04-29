@@ -1,5 +1,29 @@
 # IGSC FUL
 
+## [v0.8.11] - 2023-04-30
+
+### Added
+1. build: sign dll
+2. lib: add trace log level
+3. lib: implement log levels
+4. cli: set library log level in verbose mode
+5. cli: add trace mode to cli
+
+### Changed
+1. lib: expand windows logs
+2. lib: move received and sent data prints from debug to trace
+
+### Fixed
+1. lib: fix debug messages that should have been printed as errors
+2. lib: fix printf format specifiers
+
+### Removed
+1. lib: remove check for version in get_hw_config
+2. ut: remove get version from hw_config tests
+3. cli: don't check hw_config when firmware does not support it
+4. cli: remove unnecessary did enforcement check
+5. lib: drop ifdef DEBUG around log prints
+
 ## [v0.8.9] - 2023-02-12
 
 ### Changed
