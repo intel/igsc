@@ -1,5 +1,13 @@
 # IGSC FUL
 
+## [v0.8.11] - 2023-04-30
+
+### Added
+1. lib: include config headers in igsc_log.c
+
+### Fixed
+1. lib: fix printf format specifiers
+
 ## [v0.8.10] - 2023-04-27
 
 ### Added
