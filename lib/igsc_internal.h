@@ -18,6 +18,7 @@ struct igsc_lib_ctx {
     uint32_t last_firmware_status;    /**< last status code returned from the firmware */
     bool restore_power_control;       /**< need to restore power control for the device */
     bool suppress_errors;             /**< temporary suppress specific error messages */
+    uint32_t tee_prev_log_level;      /**< saved previous log level of metee, to restore */
 };
 
 int gsc_fwu_buffer_validate(struct igsc_lib_ctx *lib_ctx,

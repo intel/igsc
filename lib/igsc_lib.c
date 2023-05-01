@@ -234,11 +234,16 @@ exit:
 static void gsc_suppress_errors(struct igsc_lib_ctx *lib_ctx)
 {
     lib_ctx->suppress_errors = true;
+
+    lib_ctx->tee_prev_log_level = TeeSetLogLevel(&lib_ctx->driver_handle, TEE_LOG_LEVEL_QUIET);
+
 }
 
 static void gsc_unsuppress_errors(struct igsc_lib_ctx *lib_ctx)
 {
     lib_ctx->suppress_errors = false;
+
+    TeeSetLogLevel(&lib_ctx->driver_handle, lib_ctx->tee_prev_log_level);
 }
 
 static bool gsc_errors_suppressed(struct igsc_lib_ctx *lib_ctx)
@@ -2243,7 +2248,6 @@ retry:
     }
 
 exit:
-
     gsc_fwu_img_layout_reset(&lib_ctx->layout);
 
     gsc_driver_deinit(lib_ctx);
