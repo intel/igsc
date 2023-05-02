@@ -1,5 +1,16 @@
 # IGSC FUL
 
+## [v0.8.13] - 2023-06-13
+
+### Fixed
+
+1. lib: disconnect on failure in gsc_driver_init
+
+### Changed
+1. lib: suppress specific errors during firmware reset
+2. lib: quiet libmei errors around firmware reset flow
+3. conan: use metee 3.2.3
+
 ## [v0.8.11] - 2023-04-30
 
 ### Added
