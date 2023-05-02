@@ -231,6 +231,21 @@ exit:
     return status;
 }
 
+static void gsc_suppress_errors(struct igsc_lib_ctx *lib_ctx)
+{
+    lib_ctx->suppress_errors = true;
+}
+
+static void gsc_unsuppress_errors(struct igsc_lib_ctx *lib_ctx)
+{
+    lib_ctx->suppress_errors = false;
+}
+
+static bool gsc_errors_suppressed(struct igsc_lib_ctx *lib_ctx)
+{
+    return lib_ctx->suppress_errors;
+}
+
 #define RECONNECT_ITERATIONS  10
 #define RECONNECT_TIMEOUT    100
 
@@ -252,7 +267,7 @@ static int driver_reconnect(struct igsc_lib_ctx *lib_ctx)
 
     if (!TEE_IS_SUCCESS(tee_status))
     {
-        gsc_error("Error in HECI connect (%d)\n", tee_status);
+        gsc_debug("Error in HECI connect (%d)\n", tee_status);
         status = status_tee2fu(tee_status);
         goto exit;
     }
@@ -616,7 +631,14 @@ int gsc_tee_command(struct igsc_lib_ctx *lib_ctx,
     tee_status = TeeWrite(&lib_ctx->driver_handle, req_buf, request_len, &num_bytes, TEE_WRITE_TIMEOUT);
     if (!TEE_IS_SUCCESS(tee_status))
     {
-        gsc_error("Error in HECI write (%d)\n", tee_status);
+        if (gsc_errors_suppressed(lib_ctx))
+        {
+            gsc_debug("Error in HECI write (%d)\n", tee_status);
+        }
+        else
+        {
+            gsc_error("Error in HECI write (%d)\n", tee_status);
+        }
         status = status_tee2fu(tee_status);
         goto exit;
     }
@@ -630,7 +652,14 @@ int gsc_tee_command(struct igsc_lib_ctx *lib_ctx,
     tee_status = TeeRead(&lib_ctx->driver_handle, resp_buf, buf_size, response_len, TEE_READ_TIMEOUT);
     if (!TEE_IS_SUCCESS(tee_status))
     {
-        gsc_error("Error in HECI read %d\n", tee_status);
+        if (gsc_errors_suppressed(lib_ctx))
+        {
+            gsc_debug("Error in HECI read %d\n", tee_status);
+        }
+        else
+        {
+            gsc_error("Error in HECI read %d\n", tee_status);
+        }
         status = status_tee2fu(tee_status);
         goto exit;
     }
@@ -718,7 +747,7 @@ static int gsc_fwu_get_version(struct igsc_lib_ctx *lib_ctx,
     status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
     if (status != IGSC_SUCCESS)
     {
-        gsc_error("Invalid HECI message response (%d)\n", status);
+        gsc_debug("Invalid HECI message response (%d)\n", status);
         goto exit;
     }
 
@@ -1947,6 +1976,9 @@ static int reconnect_loop(struct igsc_lib_ctx *lib_ctx)
     unsigned int j;
     int ret;
 
+    /* replace error with debug prints because here failure is expected */
+    gsc_suppress_errors(lib_ctx);
+
     for (j = 0; j < MAX_RECONNECT_RETRIES; j++)
     {
         ret = driver_reconnect(lib_ctx);
@@ -1957,6 +1989,9 @@ static int reconnect_loop(struct igsc_lib_ctx *lib_ctx)
         gsc_debug("reconnect failed #%d\n", j);
         gsc_msleep(300);
     }
+
+    gsc_unsuppress_errors(lib_ctx);
+
     return ret;
 }
 
@@ -1971,6 +2006,9 @@ static void get_version_loop(struct igsc_lib_ctx *lib_ctx)
     struct igsc_fw_version version;
     unsigned int i;
 
+    /* replace error with debug prints because here failure is expected */
+    gsc_suppress_errors(lib_ctx);
+
     for (i = 0; i < MAX_GET_VERSION_RETRIES; i++)
     {
         if (gsc_get_fw_version(lib_ctx, &version) != IGSC_SUCCESS)
@@ -1979,6 +2017,9 @@ static void get_version_loop(struct igsc_lib_ctx *lib_ctx)
         }
         gsc_msleep(100);
     }
+
+    gsc_unsuppress_errors(lib_ctx);
+
 }
 
 #define FWU_TIMEOUT_THRESHOLD_DEFAULT 300000 /* 5 min in units of 1 msec */

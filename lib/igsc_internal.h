@@ -17,6 +17,7 @@ struct igsc_lib_ctx {
     struct gsc_fwu_img_layout layout; /**< Context for the image layout */
     uint32_t last_firmware_status;    /**< last status code returned from the firmware */
     bool restore_power_control;       /**< need to restore power control for the device */
+    bool suppress_errors;             /**< temporary suppress specific error messages */
 };
 
 int gsc_fwu_buffer_validate(struct igsc_lib_ctx *lib_ctx,
