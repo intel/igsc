@@ -95,7 +95,7 @@ struct igsc_oprom_image {
 
 static void debug_print_device_type_ext(struct mft_oprom_device_type_ext *ext)
 {
-    struct oprom_subsystem_device_id *dev = &ext->device_ids[0];
+    struct oprom_subsystem_device_id *dev;
     size_t len = sizeof(struct mft_ext_header_with_data);
 
     if (!ext)
@@ -103,6 +103,8 @@ static void debug_print_device_type_ext(struct mft_oprom_device_type_ext *ext)
         gsc_debug("2ids extension is NULL\n");
         return;
     }
+
+    dev = &ext->device_ids[0];
 
     gsc_debug("type %u len %u\n", ext->extension_type, ext->extension_length);
     for (; len < ext->extension_length; len += sizeof(*dev))
@@ -115,7 +117,7 @@ static void debug_print_device_type_ext(struct mft_oprom_device_type_ext *ext)
 
 static void debug_print_device_4ids_ext(struct mft_oprom_device_4ids_array_ext *ext)
 {
-    struct oprom_subsystem_device_4ids *dev = &ext->device_ids[0];
+    struct oprom_subsystem_device_4ids *dev;
     size_t len = sizeof(struct mft_ext_header_with_data);
 
     if (!ext)
@@ -123,6 +125,8 @@ static void debug_print_device_4ids_ext(struct mft_oprom_device_4ids_array_ext *
         gsc_debug("4ids extension is NULL\n");
         return;
     }
+
+    dev = &ext->device_ids[0];
 
     gsc_debug("type %u len %u\n", ext->extension_type, ext->extension_length);
     for (; len < ext->extension_length; len += sizeof(*dev), dev++)
