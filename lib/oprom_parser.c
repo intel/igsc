@@ -485,9 +485,6 @@ static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len, u
         return IGSC_ERROR_BAD_IMAGE;
     }
 
-    cpd_img->metadata_start = header->entries[METADATA_INDEX].offset;
-    cpd_img->metadata_end = cpd_img->metadata_start + header->entries[METADATA_INDEX].length;
-
     if (image_oprom_parse_extensions(img, cpd_img->metadata_start, cpd_img->metadata_end, type))
     {
         return IGSC_ERROR_BAD_IMAGE;
