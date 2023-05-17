@@ -85,6 +85,16 @@ void TEEAPI TeeDisconnect(PTEEHANDLE handle)
 {
 }
 
+uint32_t TEEAPI TeeGetLogLevel(IN const PTEEHANDLE handle)
+{
+    return 0;
+}
+
+uint32_t TEEAPI TeeSetLogLevel(IN PTEEHANDLE handle, IN uint32_t log_level)
+{
+    return 0;
+}
+
 static int group_setup(void **state)
 {
     struct igsc_device_handle *handle;
