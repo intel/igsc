@@ -121,6 +121,16 @@ void TEEAPI TeeDisconnect(PTEEHANDLE handle)
 {
 }
 
+uint32_t TEEAPI TeeGetLogLevel(IN const PTEEHANDLE handle)
+{
+    return 0;
+}
+
+uint32_t TEEAPI TeeSetLogLevel(IN PTEEHANDLE handle, IN uint32_t log_level)
+{
+    return 0;
+}
+
 int driver_working_buffer_alloc(struct igsc_lib_ctx *lib_ctx);
 void driver_working_buffer_free(struct igsc_lib_ctx *lib_ctx);
 
