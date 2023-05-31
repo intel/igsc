@@ -1,0 +1,47 @@
+name: msvc-compile
+on:
+   workflow_call:
+     inputs:
+       enable_tests:
+         description: 'Enable Tests'
+         default: 'OFF'
+         required: false
+         type: string
+
+jobs:
+  compile-windows:
+    runs-on: Windows
+    name: Build Windows MSVC
+    strategy:
+      matrix:
+        build:
+        - "Debug"
+        - "Release"
+    steps:
+      - name: Enable long path
+        run:  git config --global core.longpaths true
+      - name: Checkout the PR branch
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+      - name: Build x86_64 ${{ matrix.build }} with Visual Studio
+        shell: powershell
+        run: |
+          echo "Setup VS2019 Command Environment"
+          "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\Common7\Tools\VsMSBuildCmd.bat"
+          echo "Create build directory"
+          if (Test-Path ${{ matrix.build }}) {
+           Remove-Item -Recurse -Force ${{ matrix.build }}
+          }
+          New-Item -Path . -Name ${{ matrix.build }} -ItemType "directory"
+          echo "Build x86_64 ${{ matrix.build }} VS2019"
+          cd ${{ matrix.build }}
+          cmake -G "Visual Studio 16 2019" -A x64 -S . -B builddir -DENABLE_TESTS=${{ inputs.enable_tests }} ..
+          if ($lastexitcode -ne 0) {
+              exit $lastexitcode
+          }
+          cmake --build builddir --config ${{ matrix.build }} --target package
+          if ($lastexitcode -ne 0) {
+              exit $lastexitcode
+          }
+          cd ..

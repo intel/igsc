@@ -19,6 +19,10 @@ jobs:
     uses: ./.github/workflows/compile.yml
     with:
       compiler: gcc
+  check-msvc:
+    uses: ./.github/workflows/compile-msvc.yml
+    with:
+      enable_tests: OFF
   fastci:
     runs-on: [self-hosted, Linux]
     needs:
@@ -28,6 +32,7 @@ jobs:
     - check-clang-scan
     - check-clang
     - check-gcc
+    - check-msvc
     steps:
     - name: fastci
       run: |
