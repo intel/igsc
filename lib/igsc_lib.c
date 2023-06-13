@@ -201,6 +201,7 @@ int gsc_driver_init(struct igsc_lib_ctx *lib_ctx, IN const GUID *guid)
     tee_status = TeeConnect(&lib_ctx->driver_handle);
     if (!TEE_IS_SUCCESS(tee_status))
     {
+        TeeDisconnect(&lib_ctx->driver_handle);
         gsc_error("Error in HECI connect (%d)\n", tee_status);
         status = status_tee2fu(tee_status);
         goto exit;
