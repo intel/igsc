@@ -1,5 +1,11 @@
 # IGSC FUL
 
+## [v0.8.13] - 2023-06-13
+
+### Fixed
+
+1. lib: disconnect on failure in gsc_driver_init
+
 ## [v0.8.12] - 2023-05-03
 
 ### Changed
