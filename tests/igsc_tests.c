@@ -679,6 +679,47 @@ static void igsc_gfsp_get_health_indicator_bad_indicator(void **status)
     assert_int_equal(igsc_gfsp_get_health_indicator(handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
 }
 
+static void igsc_gfsp_heci_cmd_bad_handle(void **status)
+{
+    UNUSED_VAR(status);
+    uint8_t buffer;
+    size_t actual_response_size;
+
+    assert_int_equal(igsc_gfsp_heci_cmd(NULL, 0x30, &buffer, 1,
+                                        &buffer, 1, &actual_response_size), IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_gfsp_heci_cmd_bad_in_buf(void **status)
+{
+    UNUSED_VAR(status);
+    struct igsc_device_handle handle;
+    uint8_t buffer;
+    size_t actual_response_size;
+
+    assert_int_equal(igsc_gfsp_heci_cmd(&handle, 0x31, NULL, 1,
+                                        &buffer, 1, &actual_response_size), IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_gfsp_heci_cmd_bad_out_buf(void **status)
+{
+    UNUSED_VAR(status);
+    struct igsc_device_handle handle;
+    uint8_t buffer;
+    size_t actual_response_size;
+
+    assert_int_equal(igsc_gfsp_heci_cmd(&handle, 0x30, &buffer, 1,
+                                        NULL, 1, &actual_response_size), IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_gfsp_heci_cmd_bad_actual_response_size(void **status)
+{
+    UNUSED_VAR(status);
+    struct igsc_device_handle handle;
+    uint8_t buffer;
+
+    assert_int_equal(igsc_gfsp_heci_cmd(&handle, 0x30, &buffer, 1,
+                                        &buffer, 1, NULL), IGSC_ERROR_INVALID_PARAMETER);
+}
 
 int main(void)
 {
@@ -741,12 +782,18 @@ int main(void)
         cmocka_unit_test(igsc_gfsp_get_health_indicator_bad_indicator),
     };
 
-    int status = 0;
-    status += cmocka_run_group_tests(device_image_tests, group_setup, group_teardown);
-    status += cmocka_run_group_tests(version_cmp_tests, group_setup, group_teardown);
-    status += cmocka_run_group_tests(get_type_tests, NULL, NULL);
-    status += cmocka_run_group_tests(get_version_tests, group_setup, group_teardown);
-    status += cmocka_run_group_tests(gfsp_get_health_indicator_tests, group_setup, group_teardown);
+    const struct CMUnitTest gfsp_heci_cmd_tests[] = {
+        cmocka_unit_test(igsc_gfsp_heci_cmd_bad_handle),
+        cmocka_unit_test(igsc_gfsp_heci_cmd_bad_in_buf),
+        cmocka_unit_test(igsc_gfsp_heci_cmd_bad_out_buf),
+        cmocka_unit_test(igsc_gfsp_heci_cmd_bad_actual_response_size),
+    };
+
+    int status = cmocka_run_group_tests(device_image_tests, group_setup, NULL);
+    status += cmocka_run_group_tests(version_cmp_tests, group_setup, NULL);
+    status += cmocka_run_group_tests(get_type_tests, group_setup, NULL);
+    status += cmocka_run_group_tests(get_version_tests, group_setup, NULL);
+    status += cmocka_run_group_tests(gfsp_get_health_indicator_tests, group_setup, NULL);
 
     return status;
 }
