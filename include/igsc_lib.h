@@ -1514,6 +1514,24 @@ int igsc_gfsp_get_health_indicator(IN struct igsc_device_handle *handle,
                                    OUT uint8_t *health_indicator);
 
 /**
+ *  @brief Send generic GFSP command and receive response
+ *
+ *  @param handle A handle to the device.
+ *  @param in_buffer pointer to the input buffer
+ *  @param in_buffer_size input buffer size
+ *  @param out_buffer pointer to the output buffer
+ *  @param out_buffer_size output buffer size
+ *  @param actual_out_buffer_size pointer to the actual data size returned in the output buffer
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+*/
+IGSC_EXPORT
+int igsc_gfsp_heci_cmd(struct igsc_device_handle *handle, uint32_t gfsp_cmd,
+                       uint8_t* in_buffer, size_t in_buffer_size,
+                       uint8_t* out_buffer, size_t out_buffer_size,
+                       size_t *actual_out_buffer_size);
+
+/**
  * @}
  */
 
