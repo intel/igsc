@@ -303,6 +303,19 @@ struct gfsp_get_ecc_config_res {
     uint8_t reserved[2];
 };
 
+/* Generic gfsp Request */
+struct gfsp_generic_req {
+    struct mkhi_msg_hdr header;
+    uint32_t gfsp_heci_header;
+    uint8_t buffer[];
+};
+
+struct gfsp_generic_res {
+    struct mkhi_msg_hdr header;
+    uint32_t gfsp_heci_header;
+    uint8_t buffer[];
+};
+
 /**
  * @defgroup gsc_fw_api_ver GSC Firmware get version API
  * @ingroup  gsc-fw-api
