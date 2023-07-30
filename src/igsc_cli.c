@@ -521,6 +521,21 @@ static bool arg_is_ecc_config(const char *arg)
            arg_is_token(arg, "--ecc-config");
 }
 
+static bool arg_is_cmd(const char *arg)
+{
+    return arg_is_token(arg, "--cmd");
+}
+
+static bool arg_is_in(const char *arg)
+{
+    return arg_is_token(arg, "--in");
+}
+
+static bool arg_is_out(const char *arg)
+{
+    return arg_is_token(arg, "--out");
+}
+
 /* prevent optimization
  * FIXME: try to use:
  *   __attribute__((optimize("O0")))
@@ -3832,6 +3847,278 @@ out:
     return ret;
 }
 
+static int read_from_file_to_buf(const char *p_path, uint8_t *buf, size_t buf_len, size_t *actual_size)
+{
+    FILE  *fp = NULL;
+    long file_size;
+    char err_msg[64] = {0};
+    int ret = 0;
+
+    errno = 0;
+
+    if (fopen_s(&fp, p_path, "rb") != 0 || fp == NULL)
+    {
+        fwupd_strerror(errno, err_msg, sizeof(err_msg));
+        fwupd_verbose("Failed to open file %s : %s\n", p_path, err_msg);
+        ret = -1;
+        goto exit;
+    }
+
+    if (fseek(fp, 0L, SEEK_END) != 0)
+    {
+        fwupd_verbose("Failed to get file size %s : %s\n",
+                      p_path, err_msg);
+        ret = -1;
+        goto exit;
+    }
+
+    file_size = ftell(fp);
+    if (file_size < 0)
+    {
+        fwupd_strerror(errno, err_msg, sizeof(err_msg));
+        fwupd_verbose("Failed to get file size %s : %s\n",
+                      p_path, err_msg);
+        ret = -1;
+        goto exit;
+    }
+
+    if (file_size == 0)
+    {
+        *actual_size = 0;
+        ret = 0;
+        goto exit;
+    }
+
+    if ((size_t)file_size > buf_len)
+    {
+        fwupd_verbose("file size (%ld) too large\n", file_size);
+        ret = -1;
+        goto exit;
+    }
+
+    if (fseek(fp, 0L, SEEK_SET) != 0)
+    {
+        fwupd_strerror(errno, err_msg, sizeof(err_msg));
+        fwupd_verbose("Failed to reset file position %s : %s\n",
+                      p_path, err_msg);
+        ret = -1;
+        goto exit;
+    }
+
+    if (fread(buf, 1, (size_t)file_size, fp) != (size_t)file_size)
+    {
+        fwupd_strerror(errno, err_msg, sizeof(err_msg));
+        fwupd_verbose("Failed to read file %s : %s\n",
+                      p_path, err_msg);
+        ret = -1;
+        goto exit;
+    }
+    *actual_size = (uint32_t)file_size;
+
+exit:
+    if (fp)
+    {
+        fclose(fp);
+    }
+
+    return ret;
+}
+
+
+static int write_to_file_from_buf(const char *p_path, uint8_t *buf, size_t buf_len)
+{
+    FILE  *fp = NULL;
+    char err_msg[64] = {0};
+    errno = 0;
+
+    if (fopen_s(&fp, p_path, "wb") != 0 || fp == NULL)
+    {
+        fwupd_strerror(errno, err_msg, sizeof(err_msg));
+        fwupd_verbose("Failed to open file %s : %s\n", p_path, err_msg);
+        goto exit;
+    }
+
+    if (fwrite(buf, 1, buf_len, fp) != buf_len)
+    {
+        fwupd_strerror(errno, err_msg, sizeof(err_msg));
+        fwupd_verbose("Failed to read file %s : %s\n",
+                      p_path, err_msg);
+        goto exit;
+    }
+
+    fclose(fp);
+
+    return 0;
+
+exit:
+    if (fp)
+    {
+        fclose(fp);
+    }
+
+    return -1;
+}
+
+
+#define MAX_BUF_SIZE 2048
+
+mockable_static
+int do_gfsp_generic_cmd(int argc, char *argv[])
+{
+    struct igsc_device_handle handle;
+    const char *device_path = NULL;
+    struct igsc_device_info dev_info;
+    uint32_t cmd = 0;
+    char *infile = NULL, *outfile = NULL;
+    uint8_t in_buf[MAX_BUF_SIZE], out_buf[MAX_BUF_SIZE];
+    size_t in_buf_size = 0;
+    int ret;
+    size_t actual_received_size = 0;
+
+    if (argc <= 0)
+    {
+        fwupd_error("Missing arguments\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    memset(&handle, 0, sizeof(handle));
+
+    do
+    {
+        if (arg_is_device(argv[0]))
+        {
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No device was provided\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            device_path = argv[0];
+        }
+        else if (arg_is_cmd(argv[0]))
+        {
+            if (infile)
+            {
+                fwupd_error("The in-file argument appears twice\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No fgsp command value provided\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            cmd = (uint32_t)atol(argv[0]);
+            if (!cmd)
+            {
+                fwupd_error("Bad gfsp command value argument '%s'\n", argv[0]);
+                return ERROR_BAD_ARGUMENT;
+            }
+        }
+        else if (arg_is_in(argv[0]))
+        {
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No in-file name provided\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            infile = argv[0];
+        }
+        else if (arg_is_out(argv[0]))
+        {
+            if (outfile)
+            {
+                fwupd_error("The out-file argument appears twice\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No out-file name provided\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            outfile = argv[0];
+        }
+        else
+        {
+            fwupd_error("Wrong argument %s\n", argv[0]);
+            return ERROR_BAD_ARGUMENT;
+        }
+    } while(arg_next(&argc, &argv));
+
+    if (cmd == 0 || !infile || !outfile)
+    {
+        fwupd_error("Not enough arguments\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    if (device_path)
+    {
+        ret = igsc_device_init_by_device(&handle, device_path);
+        if (ret)
+        {
+           ret = EXIT_FAILURE;
+           fwupd_error("Cannot initialize device: %s\n", device_path);
+           goto out;
+        }
+    }
+    else
+    {
+        if (get_first_device_info(&dev_info))
+        {
+            ret = EXIT_FAILURE;
+            fwupd_error("No device to work with\n");
+            goto out;
+        }
+
+        ret = igsc_device_init_by_device_info(&handle, &dev_info);
+        if (ret)
+        {
+            ret = EXIT_FAILURE;
+            fwupd_error("Cannot initialize device: %s\n", dev_info.name);
+            goto out;
+        }
+    }
+
+    if (read_from_file_to_buf(infile, in_buf, sizeof(in_buf), &in_buf_size) != 0)
+    {
+        printf("Failed to read file : %s, using empty in buffer\n", infile);
+        in_buf_size = 0;
+    }
+    printf("Sending %zu bytes of input data by gfsp generic api\n", in_buf_size);
+    if (in_buf_size)
+    {
+        ret = igsc_gfsp_heci_cmd(&handle, cmd, in_buf, in_buf_size,
+                                 out_buf, sizeof(out_buf), &actual_received_size);
+    }
+    else
+    {
+        ret = igsc_gfsp_heci_cmd(&handle, cmd, NULL, 0,
+                                 out_buf, sizeof(out_buf), &actual_received_size);
+    }
+    printf("Received %zu bytes of data\n", actual_received_size);
+    if (ret)
+    {
+        fwupd_error("gfsp command failed, return code %d, bytes received %zu\n",
+                     ret, actual_received_size);
+    }
+    if (ret == 0 || ret == IGSC_ERROR_BUFFER_TOO_SMALL)
+    {
+        /* copy data to the out_buf */
+        if (write_to_file_from_buf(outfile, out_buf, actual_received_size) != 0)
+        {
+            ret = EXIT_FAILURE;
+            fwupd_error("Failed to write file : %s\n", outfile);
+            goto out;
+        }
+        printf("Wrote %zu bytes to %s\n", actual_received_size, outfile);
+    }
+    else
+    {
+        fwupd_error("Wrote nothing to %s\n", outfile);
+    }
+
+out:
+    igsc_device_close(&handle);
+    return ret;
+}
 static int do_gfsp(int argc, char *argv[])
 {
     const char *sub_command = NULL;
@@ -3865,6 +4152,10 @@ static int do_gfsp(int argc, char *argv[])
     if (arg_is_token(sub_command, "get-health-ind"))
     {
         return do_no_special_args_func(argc, argv, get_health_indicator);
+    }
+    if (arg_is_token(sub_command, "generic"))
+    {
+        return do_gfsp_generic_cmd(argc, argv);
     }
 
     fwupd_error("Wrong argument %s\n", sub_command);
@@ -4110,6 +4401,7 @@ static const struct gsc_op g_ops[] = {
                   "set-ecc-config [--device <dev>] --ecc-config <config>",
                   "get-ecc-config [--device <dev>]",
                   "get-health-ind [--device <dev>]",
+                  "generic --cmd <id> --in <infile> --out <outfile> [--device <dev>]",
                   NULL},
         .help  = "Get number of memory errors for each tile\n"
                  "Get memory PPR status\n"
