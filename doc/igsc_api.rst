@@ -1002,6 +1002,18 @@ which holds paring state of the OPROM image information.
       int igsc_gfsp_get_health_indicator(IN struct igsc_device_handle *handle,
                                          OUT uint8_t *health_indicator);
 
+  j. Send generic GFSP command and receive response
+
+     Provides API for sending a generic GFSP command cmd with
+     data taken from the in_buffer of size in_buffer_size.
+     The data received in the GFSP reply is stored in the
+     out_buffer of size out_buffer_size. The actual received data
+     size is stored in *actual_response_size
+
+      int igsc_gfsp_heci_cmd(struct igsc_device_handle *handle, uint32_t gfsp_cmd,
+                             uint8_t* in_buffer, size_t in_buffer_size,
+                             uint8_t* out_buffer, size_t out_buffer_size,
+                             size_t *actual_response_size);
 
 2.8 Device Enumeration API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
