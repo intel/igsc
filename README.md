@@ -47,6 +47,12 @@ Both cmake and meson build framework are supported.
     ninja -v -C builddir
 ```
 
+*Linux Debug with tests:*
+
+```sh
+    cmake -DSYSLOG:BOOL=OFF -DENABLE_TESTS:BOOL=ON -DCMAKE_BUILD_TYPE=Debug -G Ninja -S . -B builddir
+    ninja -v -C builddir
+```
 
 *Windows: (Visual Studio 2019)*
 
