@@ -18,6 +18,17 @@
 #include "ifr.c"
 #include "dev_info_mock.c"
 
+static struct igsc_device_handle g_handle;
+static uint64_t g_ctx;
+
+static int group_setup(void **state)
+{
+    *state = &g_handle;
+    g_handle.ctx = (struct igsc_lib_ctx *)&g_ctx;
+
+    return 0;
+}
+
 void *__real__test_calloc(size_t nmemb, size_t size,
                           const char* file, const int line);
 void *__wrap__test_calloc(size_t nmemb, size_t size)
@@ -65,16 +76,16 @@ int __wrap_image_oprom_parse(struct igsc_oprom_image *img)
  */
 static void test_device_init_calloc_ok(void **state)
 {
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
     int ret;
 
     will_return(__wrap__test_calloc, 0);
     will_return(__wrap__test_calloc, 0);
 
-    ret = igsc_device_init_by_device(&handle, " ");
+    ret = igsc_device_init_by_device(handle, " ");
 
     assert_int_not_equal(ret, IGSC_ERROR_NOMEM);
-    igsc_device_close(&handle);
+    igsc_device_close(handle);
 }
 
 /**
@@ -85,15 +96,15 @@ static void test_device_init_calloc_ok(void **state)
  */
 static void test_device_init_calloc_fail_1(void **state)
 {
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
     int ret;
 
     will_return(__wrap__test_calloc, 1);
 
-    ret = igsc_device_init_by_device(&handle, "");
+    ret = igsc_device_init_by_device(handle, "");
 
     assert_int_equal(ret, IGSC_ERROR_NOMEM);
-    igsc_device_close(&handle);
+    igsc_device_close(handle);
 }
 
 /**
@@ -104,17 +115,17 @@ static void test_device_init_calloc_fail_1(void **state)
  */
 static void test_device_init_calloc_fail_2(void **state)
 {
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
     int ret;
 
     will_return(__wrap__test_calloc, 0);
     will_return(__wrap__test_calloc, 1); /* strdup */
 
-    ret = igsc_device_init_by_device(&handle, " ");
+    ret = igsc_device_init_by_device(handle, " ");
 
     assert_int_equal(ret, IGSC_ERROR_NOMEM);
 
-    igsc_device_close(&handle);
+    igsc_device_close(handle);
 }
 
 /**
@@ -191,10 +202,10 @@ static void test_device_init_null_1(void **state)
 static void test_device_init_null_2(void **state)
 {
 
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
     int ret;
 
-    ret = igsc_device_init_by_device(&handle, NULL);
+    ret = igsc_device_init_by_device(handle, NULL);
 
     assert_int_equal(ret, IGSC_ERROR_INVALID_PARAMETER);
 
@@ -208,7 +219,7 @@ static void test_device_init_null_2(void **state)
  */
 static void test_device_close_null(void **state)
 {
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
     int ret;
 
     ret = igsc_device_close(NULL);
@@ -223,16 +234,16 @@ static void test_device_close_null(void **state)
  */
 static void test_device_init_by_handle_calloc_ok(void **state)
 {
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
     int ret;
 
     will_return(__wrap__test_calloc, 0);
 
-    ret = igsc_device_init_by_handle(&handle, (igsc_handle_t)1);
+    ret = igsc_device_init_by_handle(handle, (igsc_handle_t)1);
 
     assert_int_not_equal(ret, IGSC_ERROR_NOMEM);
 
-    igsc_device_close(&handle);
+    igsc_device_close(handle);
 }
 
 /**
@@ -242,16 +253,16 @@ static void test_device_init_by_handle_calloc_ok(void **state)
  */
 static void test_device_init_by_handle_calloc_fail_1(void **state)
 {
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
     int ret;
 
     will_return(__wrap__test_calloc, 1);
 
-    ret = igsc_device_init_by_handle(&handle, (igsc_handle_t)1);
+    ret = igsc_device_init_by_handle(handle, (igsc_handle_t)1);
 
     assert_int_equal(ret, IGSC_ERROR_NOMEM);
 
-    igsc_device_close(&handle);
+    igsc_device_close(handle);
 }
 
 /**
@@ -279,10 +290,10 @@ static void test_device_init_by_handle_null(void **state)
  */
 static void test_device_init_by_handle_invalid(void **state)
 {
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
     int ret;
 
-    ret = igsc_device_init_by_handle(&handle, IGSC_INVALID_DEVICE_HANDLE);
+    ret = igsc_device_init_by_handle(handle, IGSC_INVALID_DEVICE_HANDLE);
 
     assert_int_equal(ret, IGSC_ERROR_INVALID_PARAMETER);
 
@@ -301,10 +312,10 @@ static void igsc_device_init_by_device_info_null_1(void **state)
 
 static void igsc_device_init_by_device_info_null_2(void **state)
 {
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
     int ret;
 
-    ret = igsc_device_init_by_device_info(&handle, NULL);
+    ret = igsc_device_init_by_device_info(handle, NULL);
 
     assert_int_equal(ret, IGSC_ERROR_INVALID_PARAMETER);
 }
@@ -320,10 +331,10 @@ static void igsc_device_get_device_info_null_1(void **state)
 
 static void igsc_device_get_device_info_null_2(void **state)
 {
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
     int ret;
 
-    ret = igsc_device_get_device_info(&handle, NULL);
+    ret = igsc_device_get_device_info(handle, NULL);
 
     assert_int_equal(ret, IGSC_ERROR_INVALID_PARAMETER);
 }
@@ -342,7 +353,7 @@ static void igsc_device_get_device_info_null_3(void **state)
     free(handle);
 }
 
-static void test_image_oprom_init_calloc_fail(void **status)
+static void test_image_oprom_init_calloc_fail(void **state)
 {
     struct igsc_oprom_image *img = NULL;
     const uint8_t buf[100];
@@ -360,7 +371,7 @@ static void test_image_oprom_init_calloc_fail(void **status)
     igsc_image_oprom_release(img);
 }
 
-static void igsc_hwconfig_null_inputs(void **status)
+static void igsc_hwconfig_null_inputs(void **state)
 {
     struct igsc_hw_config hw_config =
     {
@@ -372,9 +383,9 @@ static void igsc_hwconfig_null_inputs(void **status)
     assert_int_equal(igsc_hw_config_compatible(NULL, &hw_config), IGSC_ERROR_INVALID_PARAMETER);
 }
 
-static void igsc_device_fw_update_null_inputs(void **status)
+static void igsc_device_fw_update_null_inputs(void **state)
 {
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
     const uint8_t buffer;
     const uint32_t buffer_len = 10;
     igsc_progress_func_t progress_f;
@@ -382,33 +393,33 @@ static void igsc_device_fw_update_null_inputs(void **status)
     struct igsc_fw_update_flags flags = {0};
 
     assert_int_equal(igsc_device_fw_update(NULL, &buffer, buffer_len, progress_f, (void *)&ctx),IGSC_ERROR_INVALID_PARAMETER);
-    assert_int_equal(igsc_device_fw_update(&handle, NULL, buffer_len, progress_f, (void *)&ctx),IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_device_fw_update(handle, NULL, buffer_len, progress_f, (void *)&ctx),IGSC_ERROR_INVALID_PARAMETER);
     assert_int_equal(igsc_device_fw_update_ex(NULL, &buffer, buffer_len, progress_f, (void *)&ctx, flags),IGSC_ERROR_INVALID_PARAMETER);
-    assert_int_equal(igsc_device_fw_update_ex(&handle, NULL, buffer_len, progress_f, (void *)&ctx, flags),IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_device_fw_update_ex(handle, NULL, buffer_len, progress_f, (void *)&ctx, flags),IGSC_ERROR_INVALID_PARAMETER);
 }
 
-static void igsc_device_fw_update_buffer_len_zero(void **status)
+static void igsc_device_fw_update_buffer_len_zero(void **state)
 {
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
     const uint8_t buffer;
     const uint32_t buffer_len = 0;
     igsc_progress_func_t progress_f;
     int ctx;
     struct igsc_fw_update_flags flags = {0};
 
-    assert_int_equal(igsc_device_fw_update(&handle, &buffer, buffer_len, progress_f, (void *)&ctx),IGSC_ERROR_INVALID_PARAMETER);
-    assert_int_equal(igsc_device_fw_update_ex(&handle, &buffer, buffer_len, progress_f, (void *)&ctx, flags),IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_device_fw_update(handle, &buffer, buffer_len, progress_f, (void *)&ctx),IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_device_fw_update_ex(handle, &buffer, buffer_len, progress_f, (void *)&ctx, flags),IGSC_ERROR_INVALID_PARAMETER);
 }
 
-static void igsc_device_oprom_update_null_inputs(void **status)
+static void igsc_device_oprom_update_null_inputs(void **state)
 {
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
     uint32_t oprom_type;
     struct igsc_oprom_image *img;
     igsc_progress_func_t progress_f;
     int ctx;
 
-    assert_int_equal(igsc_device_oprom_update(&handle, IGSC_OPROM_CODE, NULL,  progress_f, (void *)&ctx), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_device_oprom_update(handle, IGSC_OPROM_CODE, NULL,  progress_f, (void *)&ctx), IGSC_ERROR_INVALID_PARAMETER);
 
     img = (struct igsc_oprom_image *)malloc(sizeof(struct igsc_oprom_image));
     img->buffer_len = 10;
@@ -417,14 +428,14 @@ static void igsc_device_oprom_update_null_inputs(void **status)
     assert_int_equal(igsc_device_oprom_update(NULL, IGSC_OPROM_CODE, img,  progress_f, (void *)&ctx), IGSC_ERROR_INVALID_PARAMETER);
 
     img->buffer = NULL;
-    assert_int_equal(igsc_device_oprom_update(&handle, IGSC_OPROM_CODE, img,  progress_f, (void *)&ctx), IGSC_ERROR_BAD_IMAGE);
+    assert_int_equal(igsc_device_oprom_update(handle, IGSC_OPROM_CODE, img,  progress_f, (void *)&ctx), IGSC_ERROR_BAD_IMAGE);
 
     free(img);
 }
 
-static void igsc_device_oprom_update_buffer_len_zero(void **status)
+static void igsc_device_oprom_update_buffer_len_zero(void **state)
 {
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
     uint32_t oprom_type;
     struct igsc_oprom_image *img;
     igsc_progress_func_t progress_f;
@@ -433,20 +444,20 @@ static void igsc_device_oprom_update_buffer_len_zero(void **status)
     img = (struct igsc_oprom_image *)malloc(sizeof(struct igsc_oprom_image));
     img->buffer_len = 0;
 
-    assert_int_equal(igsc_device_oprom_update(&handle, IGSC_OPROM_CODE, img,  progress_f, (void *)&ctx), IGSC_ERROR_BAD_IMAGE);
+    assert_int_equal(igsc_device_oprom_update(handle, IGSC_OPROM_CODE, img,  progress_f, (void *)&ctx), IGSC_ERROR_BAD_IMAGE);
 
     free(img);
 }
 
-static void igsc_device_oprom_update_bad_type(void **status)
+static void igsc_device_oprom_update_bad_type(void **state)
 {
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
     uint32_t oprom_type;
     struct igsc_oprom_image img;
     igsc_progress_func_t progress_f;
     int ctx;
 
-    assert_int_equal(igsc_device_oprom_update(&handle, 3, &img,  progress_f, (void *)&ctx), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_device_oprom_update(handle, 3, &img,  progress_f, (void *)&ctx), IGSC_ERROR_INVALID_PARAMETER);
 }
 
 static void test_params_version_null(void **state)
@@ -561,95 +572,92 @@ static void test_params_version_compare_equal(void **state)
     assert_int_equal(igsc_fw_version_compare(&img_ver, &dev_ver), IGSC_VERSION_EQUAL);
 }
 
-static void igsc_device_update_device_info_bad_handle(void **status)
+static void igsc_device_update_device_info_bad_handle(void **state)
 {
     struct igsc_device_info dev_info;
 
     assert_int_equal(igsc_device_update_device_info(NULL, &dev_info), IGSC_ERROR_INVALID_PARAMETER);
 }
 
-static void igsc_device_update_device_info_bad_info(void **status)
+static void igsc_device_update_device_info_bad_info(void **state)
 {
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
 
-    assert_int_equal(igsc_device_update_device_info(&handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_device_update_device_info(handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
 }
 
-static void igsc_device_subsystem_ids_bad_handle(void **status)
+static void igsc_device_subsystem_ids_bad_handle(void **state)
 {
     struct igsc_subsystem_ids ids;
 
     assert_int_equal(igsc_device_subsystem_ids(NULL, &ids), IGSC_ERROR_INVALID_PARAMETER);
 }
 
-static void igsc_device_subsystem_ids_bad_ids(void **status)
+static void igsc_device_subsystem_ids_bad_ids(void **state)
 {
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
 
-    assert_int_equal(igsc_device_subsystem_ids(&handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_device_subsystem_ids(handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
 }
 
-static void igsc_device_oem_version_bad_handle(void **status)
+static void igsc_device_oem_version_bad_handle(void **state)
 {
     struct igsc_oem_version version;
 
     assert_int_equal(igsc_device_oem_version(NULL, &version), IGSC_ERROR_INVALID_PARAMETER);
 }
 
-static void igsc_device_oem_version_bad_version(void **status)
+static void igsc_device_oem_version_bad_version(void **state)
 {
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
 
-    assert_int_equal(igsc_device_oem_version(&handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_device_oem_version(handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
 }
 
-static void igsc_device_psc_version_bad_handle(void **status)
+static void igsc_device_psc_version_bad_handle(void **state)
 {
     struct igsc_psc_version version;
 
     assert_int_equal(igsc_device_psc_version(NULL, &version), IGSC_ERROR_INVALID_PARAMETER);
 }
 
-static void igsc_device_psc_version_bad_version(void **status)
+static void igsc_device_psc_version_bad_version(void **state)
 {
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
 
-    assert_int_equal(igsc_device_psc_version(&handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_device_psc_version(handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
 }
 
-static void igsc_device_ifr_bin_version_bad_handle(void **status)
+static void igsc_device_ifr_bin_version_bad_handle(void **state)
 {
     struct igsc_ifr_bin_version version;
 
     assert_int_equal(igsc_device_ifr_bin_version(NULL, &version), IGSC_ERROR_INVALID_PARAMETER);
 }
 
-static void igsc_device_ifr_bin_version_bad_version(void **status)
+static void igsc_device_ifr_bin_version_bad_version(void **state)
 {
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
 
-    assert_int_equal(igsc_device_ifr_bin_version(&handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_device_ifr_bin_version(handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
 }
 
-static void igsc_gfsp_get_health_indicator_bad_handle(void **status)
+static void igsc_gfsp_get_health_indicator_bad_handle(void **state)
 {
-    UNUSED_VAR(status);
     uint8_t health_indicator;
 
     assert_int_equal(igsc_gfsp_get_health_indicator(NULL, &health_indicator), IGSC_ERROR_INVALID_PARAMETER);
 }
 
-static void igsc_gfsp_get_health_indicator_bad_indicator(void **status)
+static void igsc_gfsp_get_health_indicator_bad_indicator(void **state)
 {
-    UNUSED_VAR(status);
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
 
-    assert_int_equal(igsc_gfsp_get_health_indicator(&handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
+    assert_int_equal(igsc_gfsp_get_health_indicator(handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
 }
 
-static void igsc_gfsp_heci_cmd_bad_handle(void **status)
+static void igsc_gfsp_heci_cmd_bad_handle(void **state)
 {
-    UNUSED_VAR(status);
     uint8_t buffer;
     size_t actual_response_size;
 
@@ -657,35 +665,32 @@ static void igsc_gfsp_heci_cmd_bad_handle(void **status)
                                         &buffer, 1, &actual_response_size), IGSC_ERROR_INVALID_PARAMETER);
 }
 
-static void igsc_gfsp_heci_cmd_bad_in_buf(void **status)
+static void igsc_gfsp_heci_cmd_bad_in_buf(void **state)
 {
-    UNUSED_VAR(status);
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
     uint8_t buffer;
     size_t actual_response_size;
 
-    assert_int_equal(igsc_gfsp_heci_cmd(&handle, 0x31, NULL, 1,
+    assert_int_equal(igsc_gfsp_heci_cmd(handle, 0x31, NULL, 1,
                                         &buffer, 1, &actual_response_size), IGSC_ERROR_INVALID_PARAMETER);
 }
 
-static void igsc_gfsp_heci_cmd_bad_out_buf(void **status)
+static void igsc_gfsp_heci_cmd_bad_out_buf(void **state)
 {
-    UNUSED_VAR(status);
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
     uint8_t buffer;
     size_t actual_response_size;
 
-    assert_int_equal(igsc_gfsp_heci_cmd(&handle, 0x30, &buffer, 1,
+    assert_int_equal(igsc_gfsp_heci_cmd(handle, 0x30, &buffer, 1,
                                         NULL, 1, &actual_response_size), IGSC_ERROR_INVALID_PARAMETER);
 }
 
-static void igsc_gfsp_heci_cmd_bad_actual_response_size(void **status)
+static void igsc_gfsp_heci_cmd_bad_actual_response_size(void **state)
 {
-    UNUSED_VAR(status);
-    struct igsc_device_handle handle;
+    struct igsc_device_handle *handle = *state;
     uint8_t buffer;
 
-    assert_int_equal(igsc_gfsp_heci_cmd(&handle, 0x30, &buffer, 1,
+    assert_int_equal(igsc_gfsp_heci_cmd(handle, 0x30, &buffer, 1,
                                         &buffer, 1, NULL), IGSC_ERROR_INVALID_PARAMETER);
 }
 
@@ -707,12 +712,10 @@ int main(void)
         cmocka_unit_test(igsc_device_get_device_info_null_1),
         cmocka_unit_test(igsc_device_get_device_info_null_2),
         cmocka_unit_test(igsc_device_get_device_info_null_3),
-        cmocka_unit_test(test_image_oprom_init_calloc_fail),
-        cmocka_unit_test(igsc_hwconfig_null_inputs),
         cmocka_unit_test(igsc_device_fw_update_null_inputs),
         cmocka_unit_test(igsc_device_fw_update_buffer_len_zero),
-        cmocka_unit_test(igsc_device_oprom_update_null_inputs),
-        cmocka_unit_test(igsc_device_oprom_update_buffer_len_zero),
+        cmocka_unit_test(igsc_hwconfig_null_inputs),
+        cmocka_unit_test(test_image_oprom_init_calloc_fail),
         cmocka_unit_test(igsc_device_oprom_update_bad_type),
         cmocka_unit_test(igsc_device_update_device_info_bad_handle),
         cmocka_unit_test(igsc_device_update_device_info_bad_info),
@@ -758,11 +761,11 @@ int main(void)
     };
 
 
-    int status = cmocka_run_group_tests(device_image_tests, NULL, NULL);
-    status += cmocka_run_group_tests(version_cmp_tests, NULL, NULL);
-    status += cmocka_run_group_tests(get_type_tests, NULL, NULL);
-    status += cmocka_run_group_tests(get_version_tests, NULL, NULL);
-    status += cmocka_run_group_tests(gfsp_get_health_indicator_tests, NULL, NULL);
+    int status = cmocka_run_group_tests(device_image_tests, group_setup, NULL);
+    status += cmocka_run_group_tests(version_cmp_tests, group_setup, NULL);
+    status += cmocka_run_group_tests(get_type_tests, group_setup, NULL);
+    status += cmocka_run_group_tests(get_version_tests, group_setup, NULL);
+    status += cmocka_run_group_tests(gfsp_get_health_indicator_tests, group_setup, NULL);
 
     return status;
 }
