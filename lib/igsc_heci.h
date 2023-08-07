@@ -30,16 +30,54 @@
 #define GSC_FWU_STATUS_SUCCESS                        0x0
 /** GSC firmware update status size error */
 #define GSC_FWU_STATUS_SIZE_ERROR                     0x5
-/** GSC oprom structure is invalid error */
-#define GSC_FWU_STATUS_UPDATE_OPROM_INVALID_STRUCTURE 0x1035
-/** GSC Update oprom section does not exists error */
-#define GSC_FWU_STATUS_UPDATE_OPROM_SECTION_NOT_EXIST 0x1032
+
 /** GSC firmware update status invalid command error */
 #define GSC_FWU_STATUS_INVALID_COMMAND                0x8D
 /** GSC firmware update status invalid param error */
 #define GSC_FWU_STATUS_INVALID_PARAMS                 0x85
 /** GSC firmware update general failure */
-#define  GSC_FWU_STATUS_FAILURE                       0x9E
+#define GSC_FWU_STATUS_FAILURE                        0x9E
+
+/** Update to Image with lower ARB SVN is not allowed */
+#define GSC_FWU_STATUS_LOWER_ARB_SVN                  0x233
+/** Update to Image with lower TCB SVN is not allowed */
+#define GSC_FWU_STATUS_LOWER_TCB_SVN                  0x23B
+/** Update to Image with lower VCN is not allowed */
+#define GSC_FWU_STATUS_LOWER_VCN                      0x23C
+
+/** Update Image must not have SVN smaller than SVN of Flash Image */
+#define GSC_FWU_STATUS_UPDATE_IUP_SVN                 0x29A
+/** Update Image must not have VCN smaller than VCN of Flash Image */
+#define GSC_FWU_STATUS_UPDATE_IUP_VCN                 0x29B
+/** Update Image length is not the same as Flash Image length */
+#define GSC_FWU_STATUS_UPDATE_IMAGE_LEN               0x29C
+/** Update from PV bit ON to PV bit OFF is not allowed */
+#define GSC_FWU_STATUS_UPDATE_PV_BIT                  0x29D
+
+/** Update between engineering build vs regular build is not allowed.
+    Both builds have to be the same type: regular or engineering build */
+#define GSC_FWU_STATUS_UPDATE_ENGINEERING_MISMATCH    0x2B2
+
+/** Loader failed to verify manifest signature of OROM */
+#define GSC_FWU_STATUS_UPDATE_VER_MAN_FAILED_OROM      0x102C
+/** Device ID does not match any device ID entry in the array of
+    supported Device IDs in the manifest extension */
+#define GSC_FWU_STATUS_UPDATE_DEVICE_ID_NOT_MATCH      0x102F
+
+/** GSC Update oprom section does not exists error */
+#define GSC_FWU_STATUS_UPDATE_OPROM_SECTION_NOT_EXIST  0x1032
+/** GSC oprom structure is invalid error */
+#define GSC_FWU_STATUS_UPDATE_OPROM_INVALID_STRUCTURE  0x1035
+/** Failed to get OPROM version */
+#define GSC_FWU_STATUS_UPDATE_GET_OPROM_VERSION_FAILED 0x103C
+
+/** OPROM is not signed */
+#define GSC_FWU_STATUS_UPDATE_OROM_INVALID_STRUCTURE   0x1045
+/** Loader failed to verify manifest signature of GFX data */
+#define GSC_FWU_STATUS_UPDATE_VER_MAN_FAILED_GFX_DATA  0x1048
+/** GFX Data OEM manufacturing data version must be bigger than current version */
+#define GSC_FWU_STATUS_UPDATE_GFX_DATA_OEM_MANUF_VER   0x104B
+
 /** @} */
 
 /**

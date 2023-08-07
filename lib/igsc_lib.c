@@ -611,29 +611,8 @@ static int gsc_fwu_heci_validate_response_header(struct igsc_lib_ctx *lib_ctx,
 
     if (resp_header->status != GSC_FWU_STATUS_SUCCESS)
     {
-        const char *msg;
-        switch(resp_header->status) {
-        case GSC_FWU_STATUS_SIZE_ERROR:
-            msg = "Num of bytes to read/write/erase is bigger than partition size";
-            break;
-        case GSC_FWU_STATUS_UPDATE_OPROM_INVALID_STRUCTURE:
-            msg = "Wrong oprom signature";
-            break;
-        case GSC_FWU_STATUS_UPDATE_OPROM_SECTION_NOT_EXIST:
-            msg = "Update oprom section does not exists on flash";
-            break;
-        case GSC_FWU_STATUS_INVALID_COMMAND:
-            msg = "Invalid HECI message sent";
-            break;
-        case GSC_FWU_STATUS_INVALID_PARAMS:
-            msg = "Invalid command parameters";
-            break;
-        case GSC_FWU_STATUS_FAILURE:
-        /* fall through */
-        default:
-            msg = "General firmware error";
-            break;
-        }
+        const char *msg = igsc_translate_firmware_status(resp_header->status);
+
         gsc_error("HECI message failed with status %s 0x%x\n",
                 msg, resp_header->status);
         status = IGSC_ERROR_PROTOCOL;
@@ -2643,7 +2622,7 @@ const char *igsc_translate_firmware_status(IN  uint32_t firmware_status)
         msg = "Success";
         break;
     case GSC_FWU_STATUS_SIZE_ERROR:
-        msg = "Num of bytes to read/write/erase is bigger than partition size";
+        msg = "Num of bytes to read/write/erase is wrong";
         break;
     case GSC_FWU_STATUS_UPDATE_OPROM_INVALID_STRUCTURE:
         msg = "Wrong oprom signature";
@@ -2656,6 +2635,48 @@ const char *igsc_translate_firmware_status(IN  uint32_t firmware_status)
         break;
     case GSC_FWU_STATUS_INVALID_PARAMS:
         msg = "Invalid command parameters";
+        break;
+    case GSC_FWU_STATUS_LOWER_ARB_SVN:
+        msg = "Update to Image with lower ARB SVN is not allowed";
+        break;
+    case GSC_FWU_STATUS_LOWER_TCB_SVN:
+        msg = "Update to Image with lower TCB SVN is not allowed";
+        break;
+    case GSC_FWU_STATUS_LOWER_VCN:
+        msg = "Update to Image with lower VCN is not allowed";
+        break;
+    case GSC_FWU_STATUS_UPDATE_IUP_SVN:
+        msg = "Update Image must not have SVN smaller than SVN of Flash Image";
+        break;
+    case GSC_FWU_STATUS_UPDATE_IUP_VCN:
+        msg = "Update Image must not have VCN smaller than VCN of Flash Image";
+        break;
+    case GSC_FWU_STATUS_UPDATE_IMAGE_LEN:
+        msg = "Update Image length is not the same as Flash Image length";
+        break;
+    case GSC_FWU_STATUS_UPDATE_PV_BIT:
+        msg = "Update from PV bit ON to PV bit OFF is not allowed";
+        break;
+    case GSC_FWU_STATUS_UPDATE_ENGINEERING_MISMATCH:
+        msg = "Update between engineering build vs regular build is not allowed";
+        break;
+    case GSC_FWU_STATUS_UPDATE_VER_MAN_FAILED_OROM:
+        msg = "Loader failed to verify manifest signature of OROM";
+        break;
+    case GSC_FWU_STATUS_UPDATE_DEVICE_ID_NOT_MATCH:
+        msg = "Device ID does not match any device ID entry in the array of supported Device IDs in the manifest extension";
+        break;
+    case GSC_FWU_STATUS_UPDATE_GET_OPROM_VERSION_FAILED:
+        msg = "Failed to get OPROM version";
+        break;
+    case GSC_FWU_STATUS_UPDATE_OROM_INVALID_STRUCTURE:
+        msg = "OPROM is not signed";
+        break;
+    case GSC_FWU_STATUS_UPDATE_VER_MAN_FAILED_GFX_DATA:
+        msg = "Loader failed to verify manifest signature of GFX data";
+        break;
+    case GSC_FWU_STATUS_UPDATE_GFX_DATA_OEM_MANUF_VER:
+        msg = "GFX Data OEM manufacturing data version must be bigger than current version";
         break;
     case GSC_FWU_STATUS_FAILURE:
     /* fall through */
