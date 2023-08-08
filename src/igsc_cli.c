@@ -572,7 +572,7 @@ struct gsc_op {
 
 static inline void print_device_fw_status(struct igsc_device_handle *handle)
 {
-    fwupd_msg("Firmware status: %s (%d)\n",
+    fwupd_msg("Firmware status: %s (0x%x)\n",
               igsc_translate_firmware_status(igsc_get_last_firmware_status(handle)),
               igsc_get_last_firmware_status(handle));
 }
