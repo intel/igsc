@@ -1085,6 +1085,24 @@ exit:
     return is_in_progress;
 }
 
+static bool gsc_fwu_is_finishing(struct igsc_lib_ctx *lib_ctx)
+{
+    int status;
+    uint32_t value = 0;
+
+    status = get_fwsts(lib_ctx, FWSTS(5), &value);
+    if (status != IGSC_SUCCESS)
+    {
+        return true;
+    }
+
+    if (value & HECI1_CSE_FS_BACKGROUND_OPERATION_NEEDED_BIT)
+    {
+        return true;
+    }
+
+    return false;
+}
 
 static int get_percentage(struct igsc_lib_ctx *lib_ctx, uint32_t *percentage)
 {
@@ -2204,19 +2222,6 @@ retry:
             goto exit;
         }
     }
-    /*
-     * In the case that the actual update was completed
-     * between the fwu_end message and the progress
-     * check gsc_fwu_is_in_progress() the progress_f(100)
-     * needs to be called explicitly to announce the completion.
-     */
-    if (percentage != 100)
-    {
-         if (progress_f)
-         {
-             progress_f(100, 100, ctx);
-         }
-    }
 
     gsc_pref_cnt_checkpoint(perf_ctx, "After PLRs");
 
@@ -2238,12 +2243,50 @@ retry:
             if (ret != IGSC_SUCCESS)
             {
                gsc_error("failed to send 'no update' message after reset\n");
+               goto exit;
             }
         }
         else
         {
             gsc_error("failed to reconnect to the driver after reset\n");
+            goto exit;
         }
+
+        /* wait for bit 13 to clear */
+        timeout_threshold = FWU_TIMEOUT_THRESHOLD_DEFAULT;
+        timeout_counter = 0;
+        while (gsc_fwu_is_finishing(lib_ctx))
+        {
+            if (get_percentage(lib_ctx, &percentage) == IGSC_SUCCESS)
+            {
+                if (progress_f)
+                {
+                    progress_f(percentage, 100, ctx);
+                }
+            }
+            gsc_msleep(FWU_TIMEOUT_STEP);
+            timeout_counter += FWU_TIMEOUT_STEP;
+            if (timeout_counter >= timeout_threshold)
+            {
+                gsc_error("The firmware failed to report it has finished the update in %u sec timeout\n", timeout_threshold/1000);
+                ret = IGSC_ERROR_TIMEOUT;
+                goto exit;
+            }
+        }
+    }
+
+    /*
+     * In the case that the actual update was completed
+     * between the fwu_end message and the progress
+     * check gsc_fwu_is_in_progress() the progress_f(100)
+     * needs to be called explicitly to announce the completion.
+     */
+    if (percentage != 100)
+    {
+         if (progress_f)
+         {
+             progress_f(100, 100, ctx);
+         }
     }
 
 exit:
