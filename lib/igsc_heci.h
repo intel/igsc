@@ -219,6 +219,8 @@ struct gsc_fw_data_heci_version_resp {
 #define HECI1_CSE_FS_FWUPDATE_STATE_IDLE_BIT    (1<<11)
 /** Firmware status register 1 - FW initialization completed bit */
 #define HECI1_CSE_FS_INITSTATE_COMPLETED_BIT    (1<<9)
+/** Firmware status register 1 - FW background operation needed bit */
+#define HECI1_CSE_FS_BACKGROUND_OPERATION_NEEDED_BIT (1<<13)
 /** Firmware status register 2  value - firmware update state */
 #define HECI1_CSE_GS1_PHASE_FWUPDATE       7
 /** Firmware status register - firmware update phase bits shift */
