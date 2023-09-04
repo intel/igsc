@@ -2042,7 +2042,6 @@ static int gsc_update(IN struct igsc_device_handle *handle,
     struct igsc_lib_ctx *lib_ctx;
     int      ret;
     uint32_t bytes_sent = 0;
-    uint32_t chunk_size = 0;
     uint32_t data_counter = 0;
     uint32_t percentage = 0;
     uint32_t fpt_size = 0;
@@ -2119,7 +2118,6 @@ static int gsc_update(IN struct igsc_device_handle *handle,
 
 retry:
     bytes_sent = 0;
-    chunk_size = 0;
     data_counter = 0;
     percentage = 0;
 
@@ -2143,7 +2141,7 @@ retry:
             }
         }
 
-        chunk_size = gsc_fwu_chunk_size(lib_ctx, fpt_size - bytes_sent);
+        uint32_t chunk_size = gsc_fwu_chunk_size(lib_ctx, fpt_size - bytes_sent);
         ret = gsc_fwu_data(lib_ctx, fpt_data + bytes_sent, chunk_size);
         if (ret != IGSC_SUCCESS)
         {
