@@ -5,10 +5,15 @@ find_package(CMocka CONFIG REQUIRED)
 include(AddCMockaTest)
 enable_testing()
 
+get_target_property(METEE_INCLUDE metee::metee INTERFACE_INCLUDE_DIRECTORIES)
+
+if(NOT CMOCKA_LIBRARIES)
+    get_target_property(CMOCKA_INCLUDE_DIR cmocka::cmocka INTERFACE_INCLUDE_DIRECTORIES)
+    set(CMOCKA_LIBRARIES "cmocka::cmocka")
+endif()
+
 message("cmocka include ${CMOCKA_INCLUDE_DIR}")
 message("cmocka lib  ${CMOCKA_LIBRARIES}")
-
-get_target_property(METEE_INCLUDE metee::metee INTERFACE_INCLUDE_DIRECTORIES)
 
 set(POWER_SOURCES
     igsc_power_stub.c
