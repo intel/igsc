@@ -1,5 +1,5 @@
 rem SPDX-License-Identifier: Apache-2.0
-rem Copyright (C) 2022 Intel Corporation
+rem Copyright (C) 2022-2023 Intel Corporation
 
 SET COMPILE_MODE=%1
 if not defined COMPILE_MODE SET COMPILE_MODE=Release
@@ -27,6 +27,7 @@ if %COMPILE_MODE%==Debug set "PUBLISH_DIR=Bin\Kit\IGSC_FUL_DEBUG"
 REM Clean publish directories
 mkdir "%PUBLISH_DIR%"
 mkdir "%PUBLISH_DIR%\INTERNAL"
+mkdir "%PUBLISH_DIR%\INTERNAL\Public"
 
 setlocal EnableDelayedExpansion
 
@@ -65,10 +66,17 @@ if not "%KW_SCAN%"=="1" (
 )
 
 copy include\igsc_lib.h %PUBLISH_DIR%\
-copy %COMPILE_MODE%\lib\%COMPILE_MODE%\igsc.lib %PUBLISH_DIR%\
+copy %COMPILE_MODE%\lib\%COMPILE_MODE%\igsc.lib %PUBLISH_DIR%
 copy %COMPILE_MODE%\lib\%COMPILE_MODE%\igsc.dll %PUBLISH_DIR%
+copy %COMPILE_MODE%\lib\%COMPILE_MODE%\igsc.pdb %PUBLISH_DIR%\INTERNAL
 copy %COMPILE_MODE%\lib\%COMPILE_MODE%\igsc.dll %PUBLISH_DIR%\INTERNAL
 copy %COMPILE_MODE%\src\%COMPILE_MODE%\igsc.exe %PUBLISH_DIR%\INTERNAL
+
+if not "%KW_SCAN%"=="1" (
+	REM *** extract private pdb ***
+	echo Extract private pdb
+	"%EWDK_DIR%\Program Files\Windows Kits\10\Debuggers\x86\pdbcopy" %PUBLISH_DIR%\INTERNAL\igsc.pdb %PUBLISH_DIR%\INTERNAL\Public\igsc.pdb -p
+)
 
 :FINISH
 IF %ERROR_FLAG% == 0 GOTO NO_ERROR
