@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright (C) 2019-2022 Intel Corporation
+# Copyright (C) 2019-2023 Intel Corporation
 cmake_minimum_required(VERSION 3.10)
 project(igsc C)
 set(LICENSE Apache)
@@ -68,11 +68,12 @@ set(COMPILE_OPTIONS_WIN
     /GS
     /sdl
     "$<$<BOOL:${ENABLE_WERROR}>:/WX>"
+    "$<$<CONFIG:Release>:/Zi>"
 )
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(LINK_OPTIONS_NX "-z noexecstack -z relro -z now")
 set(LINK_EXE_OPTIONS_NX "-pie")
-set(LINK_OPTIONS_WIN "/NXCompat /DynamicBase /GUARD:CF")
+set(LINK_OPTIONS_WIN "/NXCompat /DynamicBase /GUARD:CF /INCREMENTAL:NO /DEBUG:FULL /OPT:REF /OPT:ICF")
 
 if(CMAKE_C_COMPILER_ID MATCHES Clang OR
    CMAKE_C_COMPILER_ID MATCHES AppleClang)
