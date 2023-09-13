@@ -20,7 +20,10 @@
 #include "msvc/config.h"
 
 #include "igsc_lib.h"
-#include "../lib/utils.h"
+#ifdef __linux__
+#define _countof(a) (sizeof(a)/sizeof(*(a)))
+#endif /* __linux__ */
+
 
 static bool verbose = false;
 static bool quiet = false;
