@@ -22,9 +22,9 @@
 #include "igsc_lib.h"
 #include "../lib/utils.h"
 
-bool verbose = false;
-bool quiet = false;
-bool use_progress_bar = false;
+static bool verbose = false;
+static bool quiet = false;
+static bool use_progress_bar = false;
 
 #define fwupd_verbose(fmt, ...) do {          \
     if (verbose && !quiet)                    \
@@ -2070,7 +2070,7 @@ exit:
     return ret;
 }
 
-const char *type_table[] = {
+static const char * const type_table[] = {
     [IGSC_IMAGE_TYPE_UNKNOWN] = "Unknown",
     [IGSC_IMAGE_TYPE_GFX_FW] = "GFX FW Update image",
     [IGSC_IMAGE_TYPE_OPROM] = "Oprom Code and Data Update image",
