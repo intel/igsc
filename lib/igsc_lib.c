@@ -266,6 +266,19 @@ exit:
     return status;
 }
 
+#ifdef _DEBUG
+static void gsc_suppress_errors(struct igsc_lib_ctx *lib_ctx)
+{
+    (void)lib_ctx;
+    return;
+}
+
+static void gsc_unsuppress_errors(struct igsc_lib_ctx *lib_ctx)
+{
+    (void)lib_ctx;
+    return;
+}
+#else
 static void gsc_suppress_errors(struct igsc_lib_ctx *lib_ctx)
 {
     lib_ctx->suppress_errors = true;
@@ -280,6 +293,7 @@ static void gsc_unsuppress_errors(struct igsc_lib_ctx *lib_ctx)
 
     TeeSetLogLevel(&lib_ctx->driver_handle, lib_ctx->tee_prev_log_level);
 }
+#endif
 
 static bool gsc_errors_suppressed(struct igsc_lib_ctx *lib_ctx)
 {
