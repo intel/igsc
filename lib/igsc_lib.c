@@ -2273,6 +2273,10 @@ retry:
                 goto exit;
             }
         }
+        if (cp_mode)
+        {
+            get_version_loop(lib_ctx);
+        }
     }
 
     /*
