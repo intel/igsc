@@ -3,6 +3,7 @@
  * Copyright (C) 2023 Intel Corporation
  */
 
+#include <time.h>
 #include "msvc/config.h"
 #include "gcc/config.h"
 #include "igsc_lib.h"
@@ -39,3 +40,19 @@ igsc_log_func_t igsc_get_log_callback_func(void)
 {
     return igsc_log_func;
 }
+
+const char *gsc_time(char *buffer, size_t buff_len)
+{
+    time_t curtime;
+    struct tm timeinfo = {0};
+    size_t ret;
+
+    if (!buffer)
+       return NULL;
+    curtime = time(NULL);
+    gsc_localtime(&curtime, &timeinfo);
+    ret = strftime(buffer, buff_len, "%c", &timeinfo);
+    buffer[ret] = 0;
+    return buffer;
+}
+

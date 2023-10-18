@@ -19,6 +19,12 @@
 #define  mockable
 #endif
 
+#include <time.h>
+static inline void gsc_localtime(const time_t* timer, struct tm* buf )
+{
+    localtime_r(timer, buf);
+}
+
 #endif /* defined(__clang__) || defined(__GNUC__) */
 
 #endif /* !__IGSC_GCC_CONFIG_H__ */
