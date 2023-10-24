@@ -1,5 +1,14 @@
 # IGSC FUL
 
+## [v0.8.15] - 2023-10-24
+
+### Changed
+1. conan: use metee 3.2.4
+
+### Fixed
+1. lib: wait for reset at the end of the update
+2. lib: wait for background operation to finish
+
 ## [v0.8.14] - 2023-09-20
 
 ### Fixed
