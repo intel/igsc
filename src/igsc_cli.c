@@ -22,6 +22,15 @@
 #include "igsc_lib.h"
 #ifdef __linux__
 #define _countof(a) (sizeof(a)/sizeof(*(a)))
+static inline void gsc_msleep(uint32_t msecs)
+{
+    usleep(msecs * 1000);
+}
+#elif WIN32
+static inline void gsc_msleep(uint32_t msecs)
+{
+    Sleep(msecs);
+}
 #endif /* __linux__ */
 
 
@@ -796,6 +805,9 @@ int firmware_update(const char *device_path,
         fwupd_error("Update process failed\n");
         print_device_fw_status(&handle);
     }
+    /* delay between the update and version retrieve */
+#define GSC_DELAY_AFTER_FW_UPDATE_MSEC 2000
+    gsc_msleep(GSC_DELAY_AFTER_FW_UPDATE_MSEC);
 
     ret = igsc_device_fw_version(&handle, &device_fw_version);
     if (ret != IGSC_SUCCESS)
