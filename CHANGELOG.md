@@ -1,5 +1,10 @@
 # IGSC FUL
 
+## [v0.8.16] - 2023-10-31
+
+### Added
+1. cli: add delay between the update and get firmware version
+
 ## [v0.8.15] - 2023-10-24
 
 ### Changed
