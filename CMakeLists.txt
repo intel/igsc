@@ -20,6 +20,7 @@ option(ENABLE_DOCS "Enable docs build" OFF)
 option(ENABLE_TESTS "Perform unit tests after build" OFF)
 option(ENABLE_WERROR "Enable treat warnings as error" ON)
 option(ENABLE_CLI "Enable command line tool build" ON)
+option(ENABLE_TEST_GENERIC_GFSP_API "Enable test generic GFSP API" ON)
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 option (BUILD_USE_CONAN "Use Conan for dependencies download" NO)
 

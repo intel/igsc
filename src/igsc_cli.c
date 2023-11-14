@@ -333,6 +333,83 @@ static const char *translate_health_indicator(uint8_t health_indicator)
     }
 }
 
+#ifdef ENABLE_TEST_GENERIC_GFSP_API
+/**
+ *  This code can be used as an example of generic gfsp igsc library routine
+ *  (igsc_gfsp_heci_cmd) API usage
+ */
+#define GFSP_MAX_TILES 4
+/**
+ * @brief data of the response to the get memory error mitigation status request
+ *
+ * @param boot_time_memory_correction_pending 0 - No pending boot time memory correction,
+ *                                            1 - Pending boot time memory correction
+ * @param bank_sparing_applied Bank Sparing status 0 - not applied, 1 - applied, 2 – exhausted
+ * @param health_indicator contains enum gfsp_health_indicators
+ * @param reserved reserved field
+ * @param max_num_of_tiles max number of tiles on the card
+ * @param error_mitigation_status A per tile error mitigation status
+ * @param error_mitigation_status A per tile health mitigation status
+ *
+ */
+struct gfsp_get_mem_err_mitigation_status {
+    uint8_t  boot_time_memory_correction_pending;
+    uint8_t  bank_sparing_applied;
+    uint8_t  health_indicator; /**< enum gfsp_health_indicators */
+    uint8_t  reserved;
+    uint32_t max_num_of_tiles;
+    uint8_t  error_mitigation_status[GFSP_MAX_TILES];
+    uint8_t  health_mitigation_status[GFSP_MAX_TILES];
+};
+enum gfsp_cmd {
+    GFSP_CORR_MEM_STAT_CMD = 1,      /**< Get memory correction status */
+    GFSP_MEM_ERR_MITIG_STAT_CMD = 2, /**< Get memory error mitigation status */
+    GFSP_MUN_MEM_ERR_CMD = 3,        /**< Get number of memory errors */
+    GFSP_MEM_PRP_STAT_CMD = 4,       /**< Get memory PPR status */
+    GFSP_MEM_ID_CMD = 5,             /**< Get memory ID */
+    GFSP_SET_ECC_CFG_CMD = 8,        /**< Set ECC Configuration */
+    GFSP_GET_ECC_CFG_CMD = 9,        /**< Get ECC Configuration */
+};
+#define MAX_MEM_ERR_MITIGATION_STATUS_RESPONSE_SIZE 256
+
+mockable_static
+int get_health_indicator(struct igsc_device_handle *handle)
+{
+    int ret;
+    uint8_t buffer[MAX_MEM_ERR_MITIGATION_STATUS_RESPONSE_SIZE] = {0};
+    struct gfsp_get_mem_err_mitigation_status *resp = (struct gfsp_get_mem_err_mitigation_status *)buffer;
+    size_t actual_response_size;
+
+    if (!handle)
+    {
+        fwupd_error("Illegal parameter\n");
+        return EXIT_FAILURE;
+    }
+
+    /* call the generic gfsp igsc library routine to get memory health indicator */
+    ret = igsc_gfsp_heci_cmd(handle, GFSP_MEM_ERR_MITIG_STAT_CMD, NULL, 0, buffer,
+                             sizeof(buffer), &actual_response_size);
+
+    if (ret)
+    {
+        fwupd_error("Failed to get memory health indicator, library return code %d\n", ret);
+        return EXIT_FAILURE;
+    }
+    if (actual_response_size < sizeof(*resp))
+    {
+        fwupd_error("Failed to receive memory health indicator, expected %zu bytes, got %zu byte\n",
+                    sizeof(*resp), actual_response_size);
+        return EXIT_FAILURE;
+    }
+
+    printf("received %zu bytes, number of tiles: %u\n", actual_response_size, resp->max_num_of_tiles);
+    printf("memory health indicator: 0x%x (%s)\n", resp->health_indicator,
+           translate_health_indicator(resp->health_indicator));
+
+    return ret;
+}
+
+#else /* ENABLE_TEST_GENERIC_GFSP_API */
 mockable_static
 int get_health_indicator(struct igsc_device_handle *handle)
 {
@@ -358,6 +435,8 @@ int get_health_indicator(struct igsc_device_handle *handle)
 
     return ret;
 }
+
+#endif /* ENABLE_TEST_GENERIC_GFSP_API */
 
 mockable_static
 int get_first_device_info(struct igsc_device_info *dev_info)
