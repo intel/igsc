@@ -191,7 +191,7 @@ struct igsc_fwdata_version {
  * Structure to store OPROM version data
  */
 struct igsc_oprom_version {
-    char version[IGSC_OPROM_VER_SIZE]; /**< OPROM Version string */
+    uint8_t version[IGSC_OPROM_VER_SIZE]; /**< OPROM Version string */
 };
 
 /**
