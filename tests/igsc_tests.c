@@ -694,6 +694,88 @@ static void igsc_gfsp_heci_cmd_bad_actual_response_size(void **state)
                                         &buffer, 1, NULL), IGSC_ERROR_INVALID_PARAMETER);
 }
 
+
+static void igsc_device_update_late_binding_config_bad_handle(void **state)
+{
+    uint8_t buffer;
+    uint32_t flags = 0;
+    uint32_t status;
+    uint32_t type = CSC_LATE_BINDING_TYPE_FAN_TABLE;
+
+    assert_int_equal(igsc_device_update_late_binding_config(NULL, type, flags, &buffer, 1, &status),
+                     IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_device_update_late_binding_config_bad_type1(void **state)
+{
+    struct igsc_device_handle *handle = *state;
+    uint8_t buffer;
+    uint32_t flags = 0;
+    uint32_t status;
+    uint32_t type = CSC_LATE_BINDING_TYPE_INVALID;
+
+    assert_int_equal(igsc_device_update_late_binding_config(handle, type, flags, &buffer, 1, &status),
+                     IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_device_update_late_binding_config_bad_type2(void **state)
+{
+    struct igsc_device_handle *handle = *state;
+    uint8_t buffer;
+    uint32_t flags = 0;
+    uint32_t status;
+    uint32_t type = CSC_LATE_BINDING_TYPE_FAN_TABLE + 5;
+
+    assert_int_equal(igsc_device_update_late_binding_config(handle, type, flags, &buffer, 1, &status),
+                     IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_device_update_late_binding_config_bad_flags(void **state)
+{
+    struct igsc_device_handle *handle = *state;
+    uint8_t buffer;
+    uint32_t flags = 2;
+    uint32_t status;
+    uint32_t type = CSC_LATE_BINDING_TYPE_FAN_TABLE;
+
+    assert_int_equal(igsc_device_update_late_binding_config(handle, type, flags, &buffer, 1, &status),
+                     IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_device_update_late_binding_config_bad_buffer(void **state)
+{
+    struct igsc_device_handle *handle = *state;
+    uint32_t flags = 1;
+    uint32_t status;
+    uint32_t type = CSC_LATE_BINDING_TYPE_FAN_TABLE;
+
+    assert_int_equal(igsc_device_update_late_binding_config(handle, type, flags, NULL, 100, &status),
+                     IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_device_update_late_binding_config_bad_buffer_size(void **state)
+{
+    struct igsc_device_handle *handle = *state;
+    uint8_t buffer;
+    uint32_t flags = 0;
+    uint32_t status;
+    uint32_t type = CSC_LATE_BINDING_TYPE_FAN_TABLE;
+
+    assert_int_equal(igsc_device_update_late_binding_config(handle, type, flags, &buffer, 0, &status),
+                     IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_device_update_late_binding_config_bad_status(void **state)
+{
+    struct igsc_device_handle *handle = *state;
+    uint8_t buffer;
+    uint32_t flags = 0;
+    uint32_t type = CSC_LATE_BINDING_TYPE_FAN_TABLE;
+
+    assert_int_equal(igsc_device_update_late_binding_config(handle, type, flags, &buffer, 0, NULL),
+                     IGSC_ERROR_INVALID_PARAMETER);
+}
+
 int main(void)
 {
     const struct CMUnitTest device_image_tests[] = {
@@ -760,12 +842,22 @@ int main(void)
         cmocka_unit_test(igsc_gfsp_heci_cmd_bad_actual_response_size),
     };
 
+    const struct CMUnitTest late_binding_tests[] = {
+        cmocka_unit_test(igsc_device_update_late_binding_config_bad_handle),
+        cmocka_unit_test(igsc_device_update_late_binding_config_bad_type1),
+        cmocka_unit_test(igsc_device_update_late_binding_config_bad_type2),
+        cmocka_unit_test(igsc_device_update_late_binding_config_bad_flags),
+        cmocka_unit_test(igsc_device_update_late_binding_config_bad_buffer),
+        cmocka_unit_test(igsc_device_update_late_binding_config_bad_buffer_size),
+        cmocka_unit_test(igsc_device_update_late_binding_config_bad_status),
+    };
 
     int status = cmocka_run_group_tests(device_image_tests, group_setup, NULL);
     status += cmocka_run_group_tests(version_cmp_tests, group_setup, NULL);
     status += cmocka_run_group_tests(get_type_tests, group_setup, NULL);
     status += cmocka_run_group_tests(get_version_tests, group_setup, NULL);
     status += cmocka_run_group_tests(gfsp_get_health_indicator_tests, group_setup, NULL);
+    status += cmocka_run_group_tests(late_binding_tests, group_setup, NULL);
 
     return status;
 }

@@ -552,6 +552,34 @@ static bool arg_is_image(const char *arg)
            arg_is_token(arg, "--image");
 }
 
+static bool arg_is_payload(const char *arg)
+{
+    return arg_is_token(arg, "-p") ||
+           arg_is_token(arg, "--payload");
+}
+
+static bool arg_is_flags(const char *arg)
+{
+    return arg_is_token(arg, "-f") ||
+           arg_is_token(arg, "--flags");
+}
+
+static bool arg_is_type(const char *arg)
+{
+    return arg_is_token(arg, "-t") ||
+           arg_is_token(arg, "--type");
+}
+
+static bool arg_is_vr_config(const char *arg)
+{
+    return arg_is_token(arg, "vr-config");
+}
+
+static bool arg_is_fan_table(const char *arg)
+{
+    return arg_is_token(arg, "fan-table");
+}
+
 static bool arg_is_device(const char *arg)
 {
     return arg_is_token(arg, "-d") ||
@@ -4236,6 +4264,181 @@ out:
     igsc_device_close(&handle);
     return ret;
 }
+
+void parse_late_binding_status(uint32_t status)
+{
+    printf("Late binding command returned 0x%x ", status);
+    switch (status)
+    {
+    case CSC_LATE_BINDING_STATUS_SUCCESS:
+        printf("(Success)\n");
+        break;
+    case CSC_LATE_BINDING_STATUS_4ID_MISMATCH:
+        printf("(4Id Mismatch)\n");
+        break;
+    case CSC_LATE_BINDING_STATUS_ARB_FAILURE:
+        printf("(ARB Failure)\n");
+        break;
+    case CSC_LATE_BINDING_STATUS_GENERAL_ERROR:
+        printf("(General Error)\n");
+        break;
+    case CSC_LATE_BINDING_STATUS_INVALID_PARAMS:
+        printf("(Invalid Params)\n");
+        break;
+    case CSC_LATE_BINDING_STATUS_INVALID_SIGNATURE:
+        printf("(Invelid Signature)\n");
+        break;
+    case CSC_LATE_BINDING_STATUS_INVALID_PAYLOAD:
+        printf("(Invalid Payload)\n");
+        break;
+    case CSC_LATE_BINDING_STATUS_TIMEOUT:
+        printf("(Timeout)\n");
+        break;
+    default:
+        printf("(Unknown error)\n");
+        break;
+    }
+}
+
+#define MAX_PAYLOAD_SIZE (1024 * 4)
+
+mockable_static
+int late_binding(const char *device_path, const char *payload_path, uint32_t type, uint32_t flags)
+{
+    struct igsc_device_handle handle;
+    char *device_path_found = NULL;
+    int ret;
+    size_t payload_size = 0;
+    uint8_t payload[MAX_PAYLOAD_SIZE];
+    uint32_t status;
+
+    memset(&handle, 0, sizeof(handle));
+
+    if (!device_path)
+    {
+        if (get_first_device(&device_path_found) != IGSC_SUCCESS ||
+            device_path_found == NULL)
+        {
+            fwupd_error("No device to update\n");
+            return EXIT_FAILURE;
+        }
+        device_path = device_path_found;
+    }
+
+    if (read_from_file_to_buf(payload_path, payload, sizeof(payload), &payload_size) != 0)
+    {
+        fwupd_error("Failed to read file : %s\n", payload_path);
+        ret = EXIT_FAILURE;
+        goto exit;
+    }
+
+    ret = igsc_device_init_by_device(&handle, device_path);
+    if (ret)
+    {
+        fwupd_error("Cannot initialize device: %s\n", device_path);
+        goto exit;
+    }
+
+    ret = igsc_device_update_late_binding_config(&handle, type, flags,
+                                                 payload, payload_size, &status);
+    if (ret)
+    {
+        fwupd_error("Failed to send late binding command: %d\n", ret);
+        goto exit;
+    }
+    parse_late_binding_status(status);
+
+exit:
+    (void)igsc_device_close(&handle);
+
+    free(device_path_found);
+    return ret;
+
+}
+
+static int do_late_binding(int argc, char *argv[])
+{
+    const char *device_path = NULL;
+    const char *payload_path = NULL;
+    uint32_t flags = 0;
+    bool flags_set = false;
+    uint32_t type = 0;
+    bool type_set = false;
+
+    if (argc <= 0)
+    {
+        fwupd_error("No arguments provided\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    do
+    {
+        if (arg_is_device(argv[0]))
+        {
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No device to send the command to\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            device_path = argv[0];
+        }
+        else if (arg_is_payload(argv[0]))
+        {
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No payload file to send\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            payload_path = argv[0];
+        }
+        else if (arg_is_flags(argv[0]))
+        {
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No flags argument provided\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            flags = (uint32_t)strtol(argv[0], NULL, 16);
+            flags_set = true;
+        }
+        else if (arg_is_type(argv[0]))
+        {
+            if (!arg_next(&argc, &argv))
+            {
+                fwupd_error("No payload type argument provided\n");
+                return ERROR_BAD_ARGUMENT;
+            }
+            if (arg_is_vr_config(argv[0]))
+            {
+                type = CSC_LATE_BINDING_TYPE_VR_CONFIG;
+            }
+            else if (arg_is_fan_table(argv[0]))
+            {
+                type = CSC_LATE_BINDING_TYPE_FAN_TABLE;
+            }
+            else
+            {
+                fwupd_error("Bad payload type argument %s\n", argv[0]);
+                return ERROR_BAD_ARGUMENT;
+            }
+            type_set = true;
+        }
+        else
+        {
+            fwupd_error("Wrong argument %s\n", argv[0]);
+            return ERROR_BAD_ARGUMENT;
+        }
+    } while(arg_next(&argc, &argv));
+
+    if (payload_path && flags_set && type_set)
+    {
+        return late_binding(device_path, payload_path, type, flags);
+    }
+
+    fwupd_error("No payload file or payload type or flags provided\n");
+    return ERROR_BAD_ARGUMENT;
+}
+
 static int do_gfsp(int argc, char *argv[])
 {
     const char *sub_command = NULL;
@@ -4529,6 +4732,23 @@ static const struct gsc_op g_ops[] = {
                  "            device to communicate with\n"
                  "    -e | --ecc-config <[0|1]>\n"
                  "           0 - Disable 1 - Enable \n"
+    },
+    {
+        .name  = "late-binding",
+        .op    = do_late_binding,
+        .usage = {"--payload <payload-file> --type <[fan-table|vr-config]> "
+                                "--flags <flags-hex-value> [--device <dev>]",
+                   NULL},
+        .help  = "Sends late binding command\n"
+                 "\nOPTIONS:\n\n"
+                 "    -d | --device <device>\n"
+                 "            device to be updated\n"
+                 "    -p | --payload <payload-file>\n"
+                 "            path to file containing the payload fdata to be send\n"
+                 "    -t | --type <[fan-table|vr-config]>\n"
+                 "            payload type\n"
+                 "    -f | --flags <flags-hex-value>\n"
+                 "            flags to be sent\n"
     },
     {
         .name  = "oem",

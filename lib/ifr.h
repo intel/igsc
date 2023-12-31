@@ -45,6 +45,7 @@ enum mkhi_group_id {
 };
 
 #define GFX_SRV_MKHI_GET_IP_VERSION_CMD 0x02
+#define GFX_SRV_MKHI_LATE_BINDING_CMD 0x12
 #define GFX_SRV_MKHI_RUN_IFR_TEST_CMD   0x30
 #define GFX_SRV_MKHI_GET_IFR_STATUS_CMD 0x31
 #define GFX_SRV_MKHI_GET_IFR_GENERAL_INFO_CMD 0x32
@@ -359,6 +360,49 @@ struct gsc_heci_version_resp {
     uint8_t                  version[];
 };
 
+/** @} */
+
+/**
+ * @defgroup csc_fw_api CSC Firmware send Late Binding Command
+ * @ingroup  csc-fw-api
+ * @{
+ */
+
+/**
+ * @brief late binding request
+ *
+ * @param header @ref mkhi_msg_header
+ * @param type type of the late binding payload
+ * @param flags flags to be passed to the firmware
+ * @param reserved[] reserved field
+ * @param payload_size size of the payload data
+ * @param payload data to be sent to the firmware
+ */
+struct csc_heci_late_binding_req
+{
+   struct mkhi_msg_hdr header;
+   uint32_t            type;
+   uint32_t            flags;
+   uint32_t            reserved[2];
+   uint32_t            payload_size; // In bytes
+   uint8_t             payload[];
+};
+
+/**
+ * @brief late binding request
+ *
+ * @param header @ref mkhi_msg_header
+ * @param type type of the late binding payload
+ * @param reserved[] reserved field
+ * @param status status of the late binding command execution by firmware
+ */
+struct csc_heci_late_binding_resp
+{
+   struct mkhi_msg_hdr header;
+   uint32_t            type;
+   uint32_t            reserved[2];
+   uint32_t            status;
+};
 /** @} */
 
 #pragma pack()

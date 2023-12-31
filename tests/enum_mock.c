@@ -134,3 +134,9 @@ int run_ifr_test(struct igsc_device_handle *handle, uint8_t test_type,
     fprintf(stderr, "mock %s\n", __func__);
     return EXIT_SUCCESS;
 }
+
+int late_binding(const char *device_path, const char *payload_path, uint32_t type, uint32_t flags)
+{
+    fprintf(stderr, "mock %s\n", __func__);
+    return EXIT_SUCCESS;
+}
