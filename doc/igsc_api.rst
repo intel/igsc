@@ -1016,6 +1016,53 @@ which holds paring state of the OPROM image information.
                              uint8_t* out_buffer, size_t out_buffer_size,
                              size_t *actual_response_size);
 
+   k. Send Late Binding payload command
+
+     /**
+       * Late Binding flags
+       */
+      enum csc_late_binding_flags {
+          CSC_LATE_BINDING_FLAGS_IS_PERSISTENT_MASK = 0x1,
+      };
+
+      /**
+       * Late Binding payload type
+       */
+      enum csc_late_binding_type {
+          CSC_LATE_BINDING_TYPE_INVALID = 0,
+          CSC_LATE_BINDING_TYPE_FAN_TABLE,
+          CSC_LATE_BINDING_TYPE_VR_CONFIG
+      };
+
+      /**
+       * Late Binding payload status
+       */
+      enum csc_late_binding_status {
+          CSC_LATE_BINDING_STATUS_SUCCESS           = 0,
+          CSC_LATE_BINDING_STATUS_4ID_MISMATCH      = 1,
+          CSC_LATE_BINDING_STATUS_ARB_FAILURE       = 2,
+          CSC_LATE_BINDING_STATUS_GENERAL_ERROR     = 3,
+          CSC_LATE_BINDING_STATUS_INVALID_PARAMS    = 4,
+          CSC_LATE_BINDING_STATUS_INVALID_SIGNATURE = 5,
+          CSC_LATE_BINDING_STATUS_INVALID_PAYLOAD   = 6,
+          CSC_LATE_BINDING_STATUS_TIMEOUT           = 7,
+      };
+
+      Provides API for sending a Late Binding HECI command, with
+      Late Binding payload type,
+      Late Binding flags to be sent to the firmware and
+      Late Binding data to be sent to the firmware with the size of the payload data
+      as IN parameters and with Late Binding payload status as OUT parameter
+      Returns IGSC_SUCCESS if successful, otherwise error code.
+
+      int igsc_device_update_late_binding_config(IN struct  igsc_device_handle *handle,
+                                                 IN uint32_t type, /* enum csc_late_binding_type */
+                                                 IN uint32_t flags, /* enum csc_late_binding_flags */
+                                                 IN uint8_t *payload, IN size_t payload_size,
+                                                 OUT uint32_t *status); /* enum csc_late_binding_status */
+
+
+
 2.8 Device Enumeration API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
