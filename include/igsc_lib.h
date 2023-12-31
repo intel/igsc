@@ -1532,6 +1532,55 @@ int igsc_gfsp_heci_cmd(struct igsc_device_handle *handle, uint32_t gfsp_cmd,
                        size_t *actual_out_buffer_size);
 
 /**
+ * Late Binding flags
+ */
+enum csc_late_binding_flags {
+    CSC_LATE_BINDING_FLAGS_IS_PERSISTENT_MASK = 0x1,
+};
+
+/**
+ * Late Binding payload type
+ */
+enum csc_late_binding_type {
+    CSC_LATE_BINDING_TYPE_INVALID = 0,
+    CSC_LATE_BINDING_TYPE_FAN_TABLE,
+    CSC_LATE_BINDING_TYPE_VR_CONFIG
+};
+
+/**
+ * Late Binding payload status
+ */
+enum csc_late_binding_status {
+    CSC_LATE_BINDING_STATUS_SUCCESS           = 0,
+    CSC_LATE_BINDING_STATUS_4ID_MISMATCH      = 1,
+    CSC_LATE_BINDING_STATUS_ARB_FAILURE       = 2,
+    CSC_LATE_BINDING_STATUS_GENERAL_ERROR     = 3,
+    CSC_LATE_BINDING_STATUS_INVALID_PARAMS    = 4,
+    CSC_LATE_BINDING_STATUS_INVALID_SIGNATURE = 5,
+    CSC_LATE_BINDING_STATUS_INVALID_PAYLOAD   = 6,
+    CSC_LATE_BINDING_STATUS_TIMEOUT           = 7,
+};
+
+/**
+ *  @brief Sends Late Binding HECI command
+ *
+ *  @param handle       A handle to the device.
+ *  @param type         Late Binding payload type @enum csc_late_binding_type
+ *  @param flags        Late Binding flags to be sent to the firmware enum csc_late_binding_flags
+ *  @param payload      Late Binding data to be sent to the firmware
+ *  @param payload_size Size of the payload data
+ *  @param status       Late Binding payload status @enum csc_late_binding_status
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_device_update_late_binding_config(IN struct  igsc_device_handle *handle,
+                                           IN uint32_t type, /* enum csc_late_binding_type */
+                                           IN uint32_t flags, /* enum csc_late_binding_flags */
+                                           IN uint8_t *payload, IN size_t payload_size,
+                                           OUT uint32_t *status); /* enum csc_late_binding_status */
+
+/**
  * @}
  */
 
