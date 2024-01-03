@@ -1,5 +1,19 @@
 # IGSC FUL
 
+## [v0.8.17] - 2024-1-03
+
+### Added
+1. implement igsc_device_update_late_binding_config api
+2. add testing compilation explanation to README
+3. add general gfsp heci command api
+
+### Fixed
+1. lib: make oem version an array of uint_8 instead of char
+2. ut: fix handle initialization
+
+### Changed
+1. cli: print firmware status as hexa
+
 ## [v0.8.16] - 2023-10-31
 
 ### Added
