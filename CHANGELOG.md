@@ -1,5 +1,27 @@
 # IGSC FUL
 
+## [v0.8.17] - 2024-1-03
+
+### Added
+
+1. docs: add igsc_device_update_late_binding_config
+2. ut: add test for igsc_device_update_late_binding_config
+3. cli: add late-binding command line option
+4. lib: implement igsc_device_update_late_binding_config api
+3. lib: add general gfsp heci command api
+4. cli: add gfsp generic command to cli
+5. ut: add tests for general gfsp heci cmd library api
+6. doc: add generic gfsp heci message api documentation
+7. README: add testing compilation explanation
+
+### Fixed
+1. lib: make OEM version an array of uint_8 instead of char
+2. ut: fix handle initialization
+
+### Changed
+1. cli: print firmware status as hex form
+
+
 ## [v0.8.16] - 2023-10-31
 
 ### Added
