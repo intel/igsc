@@ -3044,6 +3044,240 @@ exit:
     return status;
 }
 
+int igsc_device_commit_arb_svn(IN struct igsc_device_handle *handle, OUT uint8_t *fw_error)
+{
+    int status;
+    struct igsc_lib_ctx *lib_ctx;
+    struct mchi_arbh_svn_commit_req *req;
+    struct mchi_arbh_svn_commit_resp *resp;
+    size_t request_len;
+    size_t response_len;
+    size_t received_len = 0;
+    size_t buf_len;
+
+    if (!handle || !handle->ctx)
+    {
+        gsc_error("Bad parameters\n");
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    lib_ctx = handle->ctx;
+
+    gsc_debug("in commit arb svn, initializing driver\n");
+
+    status = gsc_driver_init(lib_ctx, &GUID_METEE_MCHI);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("MCHI is not supported on this device, status %d\n", status);
+        return status;
+    }
+
+    req = (struct mchi_arbh_svn_commit_req *)lib_ctx->working_buffer;
+    request_len = sizeof(*req);
+
+    resp = (struct mchi_arbh_svn_commit_resp *)lib_ctx->working_buffer;
+    response_len = sizeof(*resp);
+    buf_len = lib_ctx->working_buffer_length;
+
+    gsc_debug("validating buffer\n");
+
+    status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Internal error - failed to validate buffer %d\n", status);
+        goto exit;
+    }
+
+    memset(req, 0, request_len);
+    req->header.group_id = MCHI_GROUP_ID_MCA;
+    req->header.command = MCA_ARBH_SVN_COMMIT;
+    req->usage_id = CSE_RBE_USAGE;
+    req->reserved0 = 0;
+    req->reserved1 = 0;
+
+    gsc_debug("sending command\n");
+
+    status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        goto exit;
+    }
+
+    if (received_len < sizeof(resp->header))
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    gsc_debug("result = %u\n", resp->header.result);
+    if (fw_error)
+    {
+        *fw_error = resp->header.result;
+    }
+
+    status = mchi_heci_validate_response_header(lib_ctx, &resp->header, MCA_ARBH_SVN_COMMIT);
+    if (status != IGSC_SUCCESS)
+    {
+        goto exit;
+    }
+
+    if (resp->header.result != 0)
+    {
+        gsc_error("ARB SVN commit command failed with error %u\n", resp->header.result);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    status = IGSC_SUCCESS;
+    gsc_debug("ARB SVN commit success\n");
+
+
+exit:
+    gsc_driver_deinit(lib_ctx);
+
+    gsc_debug("status = %d\n", status);
+
+    return status;
+}
+
+int igsc_device_get_min_allowed_arb_svn(struct igsc_device_handle *handle,
+                                        uint8_t *min_allowed_svn)
+{
+    int status;
+    struct igsc_lib_ctx *lib_ctx;
+    struct mchi_arbh_svn_get_info_req *req;
+    struct mchi_arbh_svn_get_info_resp *resp;
+    size_t request_len;
+    size_t response_len;
+    size_t received_len = 0;
+    size_t buf_len;
+    unsigned int i;
+    bool found = false;
+
+    if (!handle || !handle->ctx || !min_allowed_svn)
+    {
+        gsc_error("Bad parameters\n");
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    lib_ctx = handle->ctx;
+
+    gsc_debug("in get min allowed arb svn, initializing driver\n");
+
+    status = gsc_driver_init(lib_ctx, &GUID_METEE_MCHI);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("MCHI is not supported on this device, status %d\n", status);
+        return status;
+    }
+
+    req = (struct mchi_arbh_svn_get_info_req *)lib_ctx->working_buffer;
+    request_len = sizeof(*req);
+
+    resp = (struct mchi_arbh_svn_get_info_resp *)lib_ctx->working_buffer;
+    response_len = sizeof(*resp);
+    buf_len = lib_ctx->working_buffer_length;
+
+    gsc_debug("validating buffer\n");
+
+    status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Internal error - failed to validate buffer %d\n", status);
+        goto exit;
+    }
+
+    memset(req, 0, request_len);
+    req->header.group_id = MCHI_GROUP_ID_MCA;
+    req->header.command = MCA_ARBH_SVN_GET_INFO;
+
+    gsc_debug("sending command\n");
+
+    status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response %d\n", status);
+        goto exit;
+    }
+
+    if (received_len < sizeof(resp->header))
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    gsc_debug("result = %u\n", resp->header.result);
+
+    status = mchi_heci_validate_response_header(lib_ctx, &resp->header, MCA_ARBH_SVN_GET_INFO);
+    if (status != IGSC_SUCCESS)
+    {
+        goto exit;
+    }
+
+    if (resp->header.result != 0)
+    {
+        gsc_error("Get ARB SVN Info command failed with error %u\n", resp->header.result);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (received_len < response_len)
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp->num_entries > (lib_ctx->working_buffer_length - response_len) /
+                            sizeof(struct mchi_arbh_svn_info_entry))
+    {
+        gsc_error("Too many entries in HECI response %u\n", resp->num_entries);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (received_len < response_len + resp->num_entries * sizeof(struct mchi_arbh_svn_info_entry))
+    {
+        gsc_error("Error in HECI read - bad size %zu, num of entries %u, expected size %zu\n",
+                  received_len, resp->num_entries,
+                  received_len + resp->num_entries * sizeof(struct mchi_arbh_svn_info_entry));
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    for (i = 0; i < resp->num_entries; i++)
+    {
+        gsc_debug("entry[%u] usage_id %u min_svn %u\n", i, resp->entries[i].usage_id,
+                  resp->entries[i].min_allowed_svn);
+        if (resp->entries[i].usage_id == CSE_RBE_USAGE)
+        {
+            *min_allowed_svn = resp->entries[i].min_allowed_svn;
+            found = true;
+            break;
+        }
+    }
+
+    if (!found)
+    {
+        gsc_error("Did not found entry with usage_id %u\n", CSE_RBE_USAGE);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    status = IGSC_SUCCESS;
+    gsc_debug("Get ARB SVN Info success\n");
+
+exit:
+    gsc_driver_deinit(lib_ctx);
+
+    gsc_debug("status = %d\n", status);
+
+    return status;
+}
+
 #define MCHI_READ_FILE_DOES_NOT_EXIST 3
 
 static int mchi_read_chunk(IN  struct igsc_lib_ctx *lib_ctx,

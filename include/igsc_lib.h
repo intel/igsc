@@ -1574,11 +1574,33 @@ enum csc_late_binding_status {
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_device_update_late_binding_config(IN struct  igsc_device_handle *handle,
+int igsc_device_update_late_binding_config(IN struct igsc_device_handle *handle,
                                            IN uint32_t type, /* enum csc_late_binding_type */
                                            IN uint32_t flags, /* enum csc_late_binding_flags */
                                            IN uint8_t *payload, IN size_t payload_size,
                                            OUT uint32_t *status); /* enum csc_late_binding_status */
+/**
+ *  @brief Sends ARB SVN Commit HECI command
+ *
+ *  @param handle   A handle to the device.
+ *  @param fw_error An error returned by firmware in case of failure, can be NULL if not needed
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_device_commit_arb_svn(IN struct  igsc_device_handle *handle, uint8_t *fw_error);
+
+/**
+ *  @brief Retrieves Minimal allowed ARB SVN
+ *
+ *  @param handle          A handle to the device.
+ *  @param min_allowed_svn buffer for minimal allowed ARB SVN value
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_device_get_min_allowed_arb_svn(IN struct igsc_device_handle *handle,
+                                        OUT uint8_t *min_allowed_svn);
 
 /**
  * @}

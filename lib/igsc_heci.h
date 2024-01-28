@@ -250,6 +250,11 @@ enum gsc_fwu_heci_metadata_version {
 
 #define FILE_ID_MCA_OEM_VERSION 0x1001f000
 
+#define MCA_ARBH_SVN_COMMIT   0x1b
+#define MCA_ARBH_SVN_GET_INFO 0x1c
+
+#define CSE_RBE_USAGE 3
+
 /**
  * @struct gsc_fwu_heci_image_metadata
  *
@@ -463,6 +468,77 @@ struct mchi_read_file_ex_res {
     struct mkhi_msg_hdr header;
     uint32_t data_size;
     uint8_t data[];
+};
+
+/**
+ * @brief request to commit arbh svn
+ *
+ * @param header @ref mkhi_msg_hdr, (MCHI header is the same as MKHI one),
+ *               MCHI_GROUP_ID_MCA and MCA_ARBH_SVN_COMMIT for MCHI group_id and command
+ * @param usage_id usage id of the manifest to commit, MFT_KEY_USAGE_INDEX_CSE_RBE_MANIFEST
+ * @param reserved0 reserved field
+ * @param reserved1 reserved field
+ */
+struct mchi_arbh_svn_commit_req
+{
+    struct mkhi_msg_hdr header;
+    uint8_t usage_id;
+    uint8_t reserved0;
+    uint16_t reserved1;
+};
+
+/**
+ * @brief response to the request to commit arbh svn
+ *
+ * @param header @ref mkhi_msg_hdr, (MCHI header is the same as MKHI one),
+ *               MCHI_GROUP_ID_MCA and MCA_ARBH_SVN_COMMIT for MCHI group_id and command
+ */
+struct mchi_arbh_svn_commit_resp
+{
+    struct mkhi_msg_hdr header;
+};
+
+/**
+ * @brief arbh svn info entry
+ *
+ * @param usage_id usage id of the info entry, MFT_KEY_USAGE_INDEX_CSE_RBE_MANIFEST
+ * @param flags, not relevant
+ * @param executing_svn currently executing svn
+ * @param min_allowed_svn minimal allowed svn
+ */
+struct mchi_arbh_svn_info_entry
+{
+     uint8_t usage_id;
+     uint8_t flags;
+     uint8_t executing_svn;
+     uint8_t min_allowed_svn;
+};
+
+/**
+ * @brief request to get arbh svn info
+ *
+ * @param header @ref mkhi_msg_hdr, (MCHI header is the same as MKHI one),
+ *               MCHI_GROUP_ID_MCA and MCA_ARBH_SVN_GET_INFO for MCHI group_id and command
+ * @param reserved reserved field
+ */
+struct mchi_arbh_svn_get_info_req
+{
+    struct mkhi_msg_hdr header;
+};
+
+/**
+ * @brief response to the request to get arbh svn info
+ *
+ * @param header @ref mkhi_msg_hdr, (MCHI header is the same as MKHI one),
+ *               MCHI_GROUP_ID_MCA and MCA_ARBH_SVN_GET_INFO for MCHI group_id and command
+ * @param num_entries number of arbh svn info entries
+ * @param entries array of arbh svn info entries
+ */
+struct mchi_arbh_svn_get_info_resp
+{
+    struct mkhi_msg_hdr header;
+    uint32_t num_entries;
+    struct mchi_arbh_svn_info_entry entries[];
 };
 
 /** @} */
