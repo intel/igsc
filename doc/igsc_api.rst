@@ -358,12 +358,11 @@ The structure represents the device firmware version.
       char version[8];
     };
 
-  .. note::
 
-**Version comparison logic is**
+    **Version comparison logic is**
 
 
-.. code-block:: c
+  .. code-block:: c
 
     if ((Image major version != Device major version) &&
         (Device Major version != 0)):
@@ -511,6 +510,7 @@ which holds paring state of the OPROM image information.
                                  IN  struct igsc_oprom_image *img,
                                  IN  igsc_progress_func_t progress_f,
                                  IN  void *ctx);
+
   *Example 1:*
 
     .. code-block:: c
@@ -580,7 +580,7 @@ which holds paring state of the OPROM image information.
    .. code-block:: c
 
      uint8_t igsc_oprom_version_compare(const struct igsc_oprom_version *image_ver,
-                                      const struct igsc_oprom_version *device_ver);
+                                        const struct igsc_oprom_version *device_ver);
 
 2.7 IFR (In-Field Repair) functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1005,11 +1005,13 @@ which holds paring state of the OPROM image information.
 
   j. Send generic GFSP command and receive response
 
-     Provides API for sending a generic GFSP command cmd with
-     data taken from the in_buffer of size in_buffer_size.
-     The data received in the GFSP reply is stored in the
-     out_buffer of size out_buffer_size. The actual received data
-     size is stored in *actual_response_size
+    Provides API for sending a generic GFSP command cmd with
+    data taken from the in_buffer of size in_buffer_size.
+    The data received in the GFSP reply is stored in the
+    out_buffer of size out_buffer_size. The actual received data
+    size is stored in *actual_response_size.
+
+    .. code-block:: c
 
       int igsc_gfsp_heci_cmd(struct igsc_device_handle *handle, uint32_t gfsp_cmd,
                              uint8_t* in_buffer, size_t in_buffer_size,
@@ -1018,8 +1020,11 @@ which holds paring state of the OPROM image information.
 
    k. Send Late Binding payload command
 
+    .. code-block:: c
+
      /**
        * Late Binding flags
+       *
        */
       enum csc_late_binding_flags {
           CSC_LATE_BINDING_FLAGS_IS_PERSISTENT_MASK = 0x1,
@@ -1123,7 +1128,6 @@ done via SetupDi interface.
    const char *igsc_translate_firmware_status(IN uint32_t firmware_status);
 
 2.10 Signed in-field firmware data update API
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Support SKU specific signed in-field data update.  It allows OEMs to perform
 secure in-field update of the configuration data.
@@ -1140,7 +1144,6 @@ The structure represents the device firmware data version.
         uint16_t major_vcn;              /**< GSC in-field data firmware major VCN */
      };
 
-  .. note::
 
 **Version comparison logic is**
 
@@ -1297,7 +1300,7 @@ The structure represents the device firmware data version.
                                    IN  void *ctx);
 
 2.11 IAF Update API
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 Intel Accelerator Fabric Platform Specific Configuration (PSC) update is
 done as a blob, without parsing the image and with zero metadata.
 
@@ -1316,7 +1319,7 @@ done as a blob, without parsing the image and with zero metadata.
 
 
 2.12 Retrieving versions of different firmware components
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 All firmware partitions (including IFR and PSC partitions) are identified by version,
 as these versions can be changed by a customer or internal teams.
 The following APIs retrieve versions of the relevant firmware components.

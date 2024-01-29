@@ -12,10 +12,10 @@ To leave the environment user python venv deactivate
 
 ## Compilation
 
-To docs are not created on default to enable building docs from cmake set
-BUILD_DOCS to ON
+The docs are not created on default, to enable building docs from cmake set
+ENABLE_DOCS to ON
 
-`$cmake -DBUILD_DOCS:BOOL=ON`
+`$cmake -DENABLE_DOCS:BOOL=ON`
 
 ## Standalone build
 
