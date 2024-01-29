@@ -4721,7 +4721,7 @@ static const struct gsc_op g_ops[] = {
         .help  = "Retrieve OEM version from the devices\n"
                  "\nOPTIONS:\n\n"
                  "    -d | --device <device>\n"
-                 "            device to be updated\n"
+                 "            device to retrieve OEM version from\n"
     },
 
     {
