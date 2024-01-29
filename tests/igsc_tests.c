@@ -595,6 +595,27 @@ static void igsc_device_subsystem_ids_bad_ids(void **state)
     assert_int_equal(igsc_device_subsystem_ids(handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
 }
 
+static void igsc_device_commit_arb_svn_bad_handle(void **state)
+{
+    uint8_t fw_error;
+
+    assert_int_equal(igsc_device_commit_arb_svn(NULL, &fw_error), IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_device_get_min_allowed_arb_svn_bad_handle(void **state)
+{
+    uint8_t min_allowed_svn;
+
+    assert_int_equal(igsc_device_get_min_allowed_arb_svn(NULL, &min_allowed_svn), IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_device_get_min_allowed_arb_svn_bad_svn(void **state)
+{
+    struct igsc_device_handle *handle = *state;
+
+    assert_int_equal(igsc_device_get_min_allowed_arb_svn(handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
+}
+
 static void igsc_device_oem_version_bad_handle(void **state)
 {
     struct igsc_oem_version version;
@@ -825,6 +846,12 @@ int main(void)
         cmocka_unit_test(igsc_device_ifr_bin_version_bad_version),
     };
 
+    const struct CMUnitTest arbsvn_tests[] = {
+        cmocka_unit_test(igsc_device_commit_arb_svn_bad_handle),
+        cmocka_unit_test(igsc_device_get_min_allowed_arb_svn_bad_handle),
+        cmocka_unit_test(igsc_device_get_min_allowed_arb_svn_bad_svn),
+    };
+
     const struct CMUnitTest gfsp_get_health_indicator_tests[] = {
         cmocka_unit_test(igsc_gfsp_get_health_indicator_bad_handle),
         cmocka_unit_test(igsc_gfsp_get_health_indicator_bad_indicator),
@@ -853,6 +880,7 @@ int main(void)
     status += cmocka_run_group_tests(get_version_tests, group_setup, NULL);
     status += cmocka_run_group_tests(gfsp_get_health_indicator_tests, group_setup, NULL);
     status += cmocka_run_group_tests(late_binding_tests, group_setup, NULL);
+    status += cmocka_run_group_tests(arbsvn_tests, group_setup, NULL);
 
     return status;
 }
