@@ -995,6 +995,43 @@ exit:
 }
 
 mockable_static
+int arbsvn_commit(struct igsc_device_handle *handle)
+{
+    int ret;
+    uint8_t fw_error = 0;
+
+    ret = igsc_device_commit_arb_svn(handle, &fw_error);
+    if (ret == IGSC_SUCCESS)
+    {
+       printf("ARB SVN Commit succeeded\n");
+    }
+    else
+    {
+       fwupd_error("ARB SVN Commit failed with return value %d, firmware error is %u\n",
+                   ret, fw_error);
+    }
+    return ret;
+}
+
+mockable_static
+int arbsvn_get_min_allowed_svn(struct igsc_device_handle *handle)
+{
+    int ret;
+    uint8_t min_allowed_svn;
+
+    ret = igsc_device_get_min_allowed_arb_svn(handle, &min_allowed_svn);
+    if (ret == IGSC_SUCCESS)
+    {
+       printf("Minimal allowed ARB SVN is %u\n", min_allowed_svn);
+    }
+    else
+    {
+       fwupd_error("Failed to retrieve Minimal allowed ARB SVN, return value is %d\n", ret);
+    }
+    return ret;
+}
+
+mockable_static
 int oem_version(struct igsc_device_handle *handle)
 {
     struct igsc_oem_version version;
@@ -3398,6 +3435,16 @@ out:
     return ret;
 }
 
+static int do_arbsvn_commit(int argc, char *argv[])
+{
+    return do_no_special_args_func(argc, argv, arbsvn_commit);
+}
+
+static int do_arbsvn_get_min_allowed_svn(int argc, char *argv[])
+{
+    return do_no_special_args_func(argc, argv, arbsvn_get_min_allowed_svn);
+}
+
 static int do_oem_version(int argc, char *argv[])
 {
     return do_no_special_args_func(argc, argv, oem_version);
@@ -3840,6 +3887,34 @@ static int do_oem(int argc, char *argv[])
     if (arg_is_token(sub_command, "version"))
     {
         return do_oem_version(argc, argv);
+    }
+
+    fwupd_error("Wrong argument %s\n", sub_command);
+    return ERROR_BAD_ARGUMENT;
+}
+
+static int do_arbsvn(int argc, char *argv[])
+{
+    const char *sub_command = NULL;
+
+    if (argc <= 0)
+    {
+        fwupd_error("Missing arguments\n");
+        return ERROR_BAD_ARGUMENT;
+    }
+
+    sub_command = argv[0];
+
+    arg_next(&argc, &argv);
+
+    if (arg_is_token(sub_command, "commit"))
+    {
+        return do_arbsvn_commit(argc, argv);
+    }
+
+    if (arg_is_token(sub_command, "get-min-allowed-svn"))
+    {
+        return do_arbsvn_get_min_allowed_svn(argc, argv);
     }
 
     fwupd_error("Wrong argument %s\n", sub_command);
@@ -4722,6 +4797,18 @@ static const struct gsc_op g_ops[] = {
                  "\nOPTIONS:\n\n"
                  "    -d | --device <device>\n"
                  "            device to retrieve OEM version from\n"
+    },
+    {
+        .name  = "arbsvn",
+        .op    = do_arbsvn,
+        .usage = {"commit [--device <dev>]",
+                  "get-min-allowed-svn [--device <dev>]",
+                   NULL},
+        .help  = "Commit ARB SVN\n"
+                 "Retrieves minimal allowed ARB SVN\n"
+                 "\nOPTIONS:\n\n"
+                 "    -d | --device <device>\n"
+                 "            device to communicate with\n"
     },
 
     {
