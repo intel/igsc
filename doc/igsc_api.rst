@@ -1066,6 +1066,21 @@ which holds paring state of the OPROM image information.
                                                  IN uint8_t *payload, IN size_t payload_size,
                                                  OUT uint32_t *status); /* enum csc_late_binding_status */
 
+   l. Send ARB SVN commit command
+
+      Provides API for sending an ARB SVN commit command to the firmware.
+      Second parameter return firmware error in case of failure
+
+    .. code-block:: c
+
+      int igsc_device_commit_arb_svn(IN struct  igsc_device_handle *handle, uint8_t *fw_error);
+
+   m. Retrieve minimal allowed ARB SVN
+
+    .. code-block:: c
+
+      int igsc_device_get_min_allowed_arb_svn(IN struct  igsc_device_handle *handle,
+                                              OUT uint8_t *min_allowed_svn);
 
 
 2.8 Device Enumeration API
