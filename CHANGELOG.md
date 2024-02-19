@@ -1,6 +1,19 @@
 # IGSC FUL
 
-## [v0.8.17] - 2024-1-03
+## [v0.8.18] - 2024-02-20
+
+### Added
+1. doc: add documentation for arb svn library api
+2. ut: add tests for arb svn API
+3. cli: implement arb svn commands in cli
+4. lib: implement arb svn library API
+
+### Fixed
+1. cli: fix description of the device in oem version command
+2. doc: fix doc generation errors and warnings
+3. CHANGELOG: fix item numbering
+
+## [v0.8.17] - 2024-01-03
 
 ### Added
 
