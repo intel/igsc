@@ -4,22 +4,18 @@
       {
       "name": "base",
       "displayName": "Windows x86-64 base",
-      "description": "Build x86-64 Release, VS2019, Conan",
+      "description": "Build x86-64 Release, VS2019",
       "hidden": true,
       "generator": "Visual Studio 16 2019",
       "architecture": {
         "value": "x64",
         "strategy": "set"
-      },
-      "cacheVariables": {
-        "BUILD_USE_CONAN": "True",
-        "CMAKE_SYSTEM_VERSION": "10.0"
       }
     },
     {
       "name": "Debug",
       "displayName": "Windows x86-64 Debug",
-      "description": "Build x86-64 Debug, VS2019, Conan",
+      "description": "Build x86-64 Debug, VS2019",
       "inherits": "base",
       "binaryDir": "${sourceDir}/Debug",
       "cacheVariables": {
@@ -29,7 +25,7 @@
     {
       "name": "Release",
       "displayName": "Windows x86-64 Release",
-      "description": "Build x86-64 Release, VS2019, Conan",
+      "description": "Build x86-64 Release, VS2019",
       "inherits": "base",
       "binaryDir": "${sourceDir}/Release",
       "cacheVariables": {
