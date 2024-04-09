@@ -201,9 +201,9 @@ struct gsc_fw_data_heci_version_resp {
     uint32_t                     oem_manuf_data_version_fitb;
     uint16_t                     major_version;
     uint16_t                     major_vcn;
-    uint32_t                     oem_manuf_data_version_fitb_valid;
-    uint32_t                     flags;
-    uint32_t                     reserved[7];
+    uint32_t                     oem_manuf_data_version_fitb_valid : 1;
+    uint32_t                     flags                             : 31;
+    uint32_t                     reserved[8];
 };
 
 
