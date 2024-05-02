@@ -203,7 +203,17 @@ int gsc_driver_init(struct igsc_lib_ctx *lib_ctx, IN const GUID *guid)
     {
         TeeDisconnect(&lib_ctx->driver_handle);
         gsc_error("Error in HECI connect (%d)\n", tee_status);
-        status = status_tee2fu(tee_status);
+        /**
+         * Special case for connect - igsc library should propagate the
+         * TEE_BUSY error (in Linux) and TEE_UNABLE_TO_COMPLETE_OPERATION (in Win)
+         * as IGSC_ERROR_BUSY to the caller , only for the Connect failures,
+         * because in other operations those errors mean something else,
+         * not that someone has taken the client's handle
+         **/
+        if (tee_status == TEE_BUSY || tee_status == TEE_UNABLE_TO_COMPLETE_OPERATION)
+            status = IGSC_ERROR_BUSY;
+        else
+            status = status_tee2fu(tee_status);
         goto exit;
     }
 

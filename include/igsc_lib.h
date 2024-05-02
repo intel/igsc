@@ -294,6 +294,7 @@ struct igsc_device_info {
 #define IGSC_ERROR_INCOMPATIBLE      (IGSC_ERROR_BASE + 10) /**< Incompatible request */
 #define IGSC_ERROR_TIMEOUT           (IGSC_ERROR_BASE + 11) /**< The operation has timed out */
 #define IGSC_ERROR_PERMISSION_DENIED (IGSC_ERROR_BASE + 12) /**< The process doesn't have access rights */
+#define IGSC_ERROR_BUSY              (IGSC_ERROR_BASE + 13) /**< Device is currently busy, try again later */
 /**
  * @}
  */
