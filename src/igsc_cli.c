@@ -54,6 +54,8 @@ static bool use_progress_bar = false;
 } while (0)
 
 #define MAX_UPDATE_IMAGE_SIZE (8*1024*1024)
+#define MAX_CONNECT_RETRIES 3
+#define CONNECT_RETRIES_SLEEP_MSEC 2000 /* 2 sec */
 
 struct img {
     uint32_t size;
@@ -415,6 +417,7 @@ int get_health_indicator(struct igsc_device_handle *handle)
 {
     int ret;
     uint8_t health_indicator;
+    unsigned int retries = 0;
 
     if (!handle)
     {
@@ -423,7 +426,12 @@ int get_health_indicator(struct igsc_device_handle *handle)
     }
 
     /* call the igsc library routine to get memory health indicator */
-    ret = igsc_gfsp_get_health_indicator(handle, &health_indicator);
+    while ((ret = igsc_gfsp_get_health_indicator(handle, &health_indicator)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret)
     {
         fwupd_error("Failed to get memory health indicator, library return code %d\n", ret);
@@ -762,11 +770,17 @@ int firmware_check_hw_config(struct igsc_device_handle *handle, const struct img
     struct igsc_hw_config device_hw_config;
     struct igsc_hw_config image_hw_config;
     int ret;
+    unsigned int retries = 0;
 
     memset(&device_hw_config, 0, sizeof(device_hw_config));
     memset(&image_hw_config, 0, sizeof(image_hw_config));
 
-    ret = igsc_device_hw_config(handle, &device_hw_config);
+    while ((ret = igsc_device_hw_config(handle, &device_hw_config)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret == IGSC_ERROR_NOT_SUPPORTED)
     {
         /* if firmware does not support hw_config command - don't check hw config matching */
@@ -803,6 +817,7 @@ int firmware_update(const char *device_path,
     int ret;
     uint8_t cmp;
     struct igsc_fw_update_flags flags = {0};
+    unsigned int retries;
 
     memset(&handle, 0, sizeof(handle));
 
@@ -842,8 +857,14 @@ int firmware_update(const char *device_path,
         goto exit;
     }
 
+    retries = 0;
     memset(&device_fw_version, 0, sizeof(device_fw_version));
-    ret = igsc_device_fw_version(&handle, &device_fw_version);
+    while ((ret = igsc_device_fw_version(&handle, &device_fw_version)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret != IGSC_SUCCESS)
     {
         if (ret == IGSC_ERROR_PERMISSION_DENIED)
@@ -931,7 +952,13 @@ int firmware_update(const char *device_path,
 #define GSC_DELAY_AFTER_FW_UPDATE_MSEC 2000
     gsc_msleep(GSC_DELAY_AFTER_FW_UPDATE_MSEC);
 
-    ret = igsc_device_fw_version(&handle, &device_fw_version);
+    retries = 0;
+    while ((ret = igsc_device_fw_version(&handle, &device_fw_version)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret != IGSC_SUCCESS)
     {
         fwupd_error("Cannot retrieve firmware version from device: %s\n", device_path);
@@ -962,6 +989,7 @@ int firmware_version(const char *device_path)
     struct igsc_device_handle handle;
     struct igsc_fw_version fw_version;
     int ret;
+    unsigned int retries = 0;
 
     memset(&handle, 0, sizeof(handle));
     ret = igsc_device_init_by_device(&handle, device_path);
@@ -972,7 +1000,12 @@ int firmware_version(const char *device_path)
     }
 
     memset(&fw_version, 0, sizeof(fw_version));
-    ret = igsc_device_fw_version(&handle, &fw_version);
+    while ((ret = igsc_device_fw_version(&handle, &fw_version)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret != IGSC_SUCCESS)
     {
         if (ret == IGSC_ERROR_PERMISSION_DENIED)
@@ -999,8 +1032,15 @@ int arbsvn_commit(struct igsc_device_handle *handle)
 {
     int ret;
     uint8_t fw_error = 0;
+    unsigned int retries = 0;
 
-    ret = igsc_device_commit_arb_svn(handle, &fw_error);
+    while ((ret = igsc_device_commit_arb_svn(handle, &fw_error)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
+
     if (ret == IGSC_SUCCESS)
     {
        printf("ARB SVN Commit succeeded\n");
@@ -1018,8 +1058,14 @@ int arbsvn_get_min_allowed_svn(struct igsc_device_handle *handle)
 {
     int ret;
     uint8_t min_allowed_svn;
+    unsigned int retries = 0;
 
-    ret = igsc_device_get_min_allowed_arb_svn(handle, &min_allowed_svn);
+    while ((ret = igsc_device_get_min_allowed_arb_svn(handle, &min_allowed_svn)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret == IGSC_SUCCESS)
     {
        printf("Minimal allowed ARB SVN is %u\n", min_allowed_svn);
@@ -1036,9 +1082,15 @@ int oem_version(struct igsc_device_handle *handle)
 {
     struct igsc_oem_version version;
     int ret;
+    unsigned int retries = 0;
 
     memset(&version, 0, sizeof(version));
-    ret = igsc_device_oem_version(handle, &version);
+    while ((ret = igsc_device_oem_version(handle, &version)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret != IGSC_SUCCESS)
     {
         if (ret == IGSC_ERROR_PERMISSION_DENIED)
@@ -1062,9 +1114,15 @@ int iaf_psc_version(struct igsc_device_handle *handle)
 {
     struct igsc_psc_version version;
     int ret;
+    unsigned int retries = 0;
 
     memset(&version, 0, sizeof(version));
-    ret = igsc_device_psc_version(handle, &version);
+    while ((ret = igsc_device_psc_version(handle, &version)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret != IGSC_SUCCESS)
     {
         if (ret == IGSC_ERROR_PERMISSION_DENIED)
@@ -1178,6 +1236,7 @@ static int firmware_hw_config(const char *device_path, struct igsc_hw_config *hw
 {
     struct igsc_device_handle handle;
     int ret;
+    unsigned int retries = 0;
 
     memset(&handle, 0, sizeof(handle));
     ret = igsc_device_init_by_device(&handle, device_path);
@@ -1187,7 +1246,12 @@ static int firmware_hw_config(const char *device_path, struct igsc_hw_config *hw
         goto exit;
     }
 
-    ret = igsc_device_hw_config(&handle, hw_config);
+    while ((ret = igsc_device_hw_config(&handle, hw_config)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret == IGSC_ERROR_NOT_SUPPORTED)
     {
         fwupd_error("config option is not available\n");
@@ -1513,6 +1577,7 @@ int oprom_device_version(const char *device_path,
     struct igsc_oprom_version oprom_version;
     struct igsc_device_handle handle;
     int ret;
+    unsigned int retries = 0;
 
     memset(&handle, 0, sizeof(handle));
     ret = igsc_device_init_by_device(&handle, device_path);
@@ -1523,7 +1588,12 @@ int oprom_device_version(const char *device_path,
     }
 
     memset(&oprom_version, 0, sizeof(oprom_version));
-    ret = igsc_device_oprom_version(&handle, igsc_oprom_type, &oprom_version);
+    while ((ret = igsc_device_oprom_version(&handle, igsc_oprom_type, &oprom_version)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret != IGSC_SUCCESS)
     {
         if (ret == IGSC_ERROR_PERMISSION_DENIED)
@@ -1986,10 +2056,17 @@ int oprom_check_devid_enforcement(struct igsc_device_handle *handle,
     int ret;
     uint32_t count;
     bool devid_enforced;
+    unsigned int retries = 0;
 
     memset(&device_hw_config, 0, sizeof(device_hw_config));
 
-    ret = igsc_device_hw_config(handle, &device_hw_config);
+    while ((ret = igsc_device_hw_config(handle, &device_hw_config)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
+
     if (ret == IGSC_ERROR_NOT_SUPPORTED)
     {
         /* if firmware does not support hw_config command - don't check enforcement */
@@ -2048,6 +2125,7 @@ int oprom_update(const char *image_path,
     uint8_t cmp;
     bool update = false;
     int ret;
+    unsigned int retries;
 
     img = image_read_from_file(image_path);
     if (img == NULL)
@@ -2097,7 +2175,14 @@ int oprom_update(const char *image_path,
     }
     print_oprom_version(type, &img_version);
 
-    ret = igsc_device_oprom_version(handle, type, &dev_version);
+    retries = 0;
+    while ((ret = igsc_device_oprom_version(handle, type, &dev_version)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
+
     if (ret != IGSC_SUCCESS)
     {
         if (ret == IGSC_ERROR_PERMISSION_DENIED)
@@ -2602,6 +2687,7 @@ int fwdata_device_version(const char *device_path)
     struct igsc_fwdata_version fwdata_version;
     struct igsc_device_handle handle;
     int ret;
+    unsigned int retries = 0;
 
     memset(&handle, 0, sizeof(handle));
     ret = igsc_device_init_by_device(&handle, device_path);
@@ -2612,7 +2698,12 @@ int fwdata_device_version(const char *device_path)
     }
 
     memset(&fwdata_version, 0, sizeof(fwdata_version));
-    ret = igsc_device_fwdata_version(&handle, &fwdata_version);
+    while ((ret = igsc_device_fwdata_version(&handle, &fwdata_version)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret != IGSC_SUCCESS)
     {
         if (ret == IGSC_ERROR_PERMISSION_DENIED)
@@ -2646,6 +2737,7 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
     uint8_t cmp;
     bool update = false;
     int ret;
+    unsigned int retries;
 
     img = image_read_from_file(image_path);
     if (img == NULL)
@@ -2765,7 +2857,13 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
         print_device_fw_status(handle);
     }
 
-    ret = igsc_device_fwdata_version(handle, &dev_version);
+    retries = 0;
+    while ((ret = igsc_device_fwdata_version(handle, &dev_version)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret != IGSC_SUCCESS)
     {
         fwupd_error("Failed to get firmware version after update\n");
@@ -2996,12 +3094,19 @@ int get_mem_err(struct igsc_device_handle *handle)
     uint32_t i, tiles_num;
     uint8_t buf[sizeof(struct igsc_gfsp_mem_err) + MAX_TILES_NUM * sizeof(struct igsc_gfsp_tile_mem_err)];
     struct igsc_gfsp_mem_err *tiles = (struct igsc_gfsp_mem_err *) buf;
+    unsigned int retries;
 
     /* set the number of tiles in the structure that will be passed as a buffer */
     tiles->num_of_tiles = MAX_TILES_NUM;
 
+    retries = 0;
     /* call the igsc library routine to get number of tiles */
-    ret = igsc_gfsp_count_tiles(handle, &tiles_num);
+    while ((ret = igsc_gfsp_count_tiles(handle, &tiles_num)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret)
     {
         fwupd_error("Failed to get number of tiles, returned %d\n", ret);
@@ -3014,8 +3119,14 @@ int get_mem_err(struct igsc_device_handle *handle)
                    tiles_num, MAX_TILES_NUM);
     }
 
+    retries = 0;
     /* call the igsc library routine to get memory errors */
-    ret = igsc_gfsp_memory_errors(handle, tiles);
+    while ((ret = igsc_gfsp_memory_errors(handle, tiles)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret)
     {
         fwupd_error("Failed to get memory errors number, returned %d\n", ret);
@@ -3085,9 +3196,16 @@ int get_mem_ppr_status(struct igsc_device_handle *handle)
     int      ret;
     uint32_t device_num = 0;
     struct igsc_ppr_status *ppr_status;
+    unsigned int retries;
 
+    retries = 0;
     /* call the igsc library routine to get number of memory ppr devices */
-    ret = igsc_memory_ppr_devices(handle, &device_num);
+    while ((ret = igsc_memory_ppr_devices(handle, &device_num)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret)
     {
         fwupd_error("Failed to retrieve memory ppr devices number, return code %d\n", ret);
@@ -3108,8 +3226,15 @@ int get_mem_ppr_status(struct igsc_device_handle *handle)
     /* set number of devices in the buffer structure that will be passed as parameter */
     ppr_status->num_devices = device_num;
 
+    retries = 0;
     /* call the igsc library routine to get ppr status */
-    ret = igsc_memory_ppr_status(handle, ppr_status);
+    while ((ret = igsc_memory_ppr_status(handle, ppr_status)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
+
     if (ret)
     {
         fwupd_error("Failed to retrieve ppr status, return code %d\n", ret);
@@ -3133,10 +3258,17 @@ int get_status_ext(struct igsc_device_handle *handle)
     uint32_t ifr_applied;
     uint32_t prev_errors;
     uint32_t pending_reset;
+    unsigned int retries = 0;
 
     /* call the igsc library routine to get the ifr status (extended) */
-    ret = igsc_ifr_get_status_ext(handle, &supported_tests, &hw_capabilities,
-                                  &ifr_applied, &prev_errors, &pending_reset);
+    while ((ret = igsc_ifr_get_status_ext(handle, &supported_tests, &hw_capabilities,
+                                          &ifr_applied, &prev_errors, &pending_reset)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
+
     if (ret)
     {
         fwupd_error("Failed to get ifr status, library return code %d\n", ret);
@@ -3200,9 +3332,15 @@ int get_status(struct igsc_device_handle *handle)
     uint32_t ifr_applied = 0;
     uint8_t  tiles_num = 0;
     uint8_t  result = 0;
+    unsigned int retries = 0;
 
     /* call the igsc library routine to get the ifr status */
-    ret = igsc_ifr_get_status(handle, &result, &supported_tests, &ifr_applied, &tiles_num);
+    while ((ret = igsc_ifr_get_status(handle, &result, &supported_tests, &ifr_applied, &tiles_num)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret || result)
     {
         fwupd_error("Failed to get ifr status, library return code %d, command result %u\n",
@@ -3246,9 +3384,15 @@ int array_scan_test(struct igsc_device_handle *handle)
     uint32_t extended_status;
     uint32_t pending_reset;
     uint32_t error_code;
+    unsigned int retries = 0;
 
     /* call the igsc library routine to run array&scan tests */
-    ret = igsc_ifr_run_array_scan_test(handle, &status, &extended_status, &pending_reset, &error_code);
+    while ((ret = igsc_ifr_run_array_scan_test(handle, &status, &extended_status, &pending_reset, &error_code)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret)
     {
         fwupd_error("Failed to run array and scan ifr test, library return code %d\n",
@@ -3285,9 +3429,15 @@ int mem_ppr_test(struct igsc_device_handle *handle)
     uint32_t status;
     uint32_t pending_reset;
     uint32_t error_code;
+    unsigned int retries = 0;
 
     /* call the igsc library routine to run memory ppr test */
-    ret = igsc_ifr_run_mem_ppr_test(handle, &status, &pending_reset, &error_code);
+    while ((ret = igsc_ifr_run_mem_ppr_test(handle, &status, &pending_reset, &error_code)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret)
     {
         fwupd_error("Failed to run ppr test, library return code %d\n", ret);
@@ -3309,10 +3459,16 @@ mockable_static
 int ifr_count_tiles(struct igsc_device_handle *handle)
 {
     int ret;
-    uint16_t supported_tiles = 0;
+    uint16_t supported_tiles;
+    unsigned int retries = 0;
 
     /* call the igsc library routine to run ifr count tiles */
-    ret = igsc_ifr_count_tiles(handle, &supported_tiles);
+    while ((ret = igsc_ifr_count_tiles(handle, &supported_tiles)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret)
     {
         fwupd_error("Failed to run ifr count tiles, library return code %d\n", ret);
@@ -3330,10 +3486,16 @@ int ifr_version(struct igsc_device_handle *handle)
 {
     int ret;
     struct igsc_ifr_bin_version version;
+    unsigned int retries = 0;
 
     memset(&version, 0, sizeof(version));
 
-    ret = igsc_device_ifr_bin_version(handle, &version);
+    while ((ret = igsc_device_ifr_bin_version(handle, &version)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret != IGSC_SUCCESS)
     {
         if (ret == IGSC_ERROR_PERMISSION_DENIED)
@@ -3358,8 +3520,14 @@ int ecc_config_get(struct igsc_device_handle *handle)
     int     ret;
     uint8_t cur_ecc_state = 0xFF;
     uint8_t pen_ecc_state = 0xFF;
+    unsigned int retries = 0;
 
-    ret = igsc_ecc_config_get(handle, &cur_ecc_state, &pen_ecc_state);
+    while ((ret = igsc_ecc_config_get(handle, &cur_ecc_state, &pen_ecc_state)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret)
     {
         fwupd_error("Failed to get ECC config, return code %d\n", ret);
@@ -3557,6 +3725,7 @@ int run_ifr_test(struct igsc_device_handle *handle, uint8_t test_type, uint8_t t
     uint8_t run_status = 0;
     uint32_t error_code = 0;
     uint8_t result = 0;
+    unsigned int retries = 0;
 
     printf("requesting to run test %u (%s) for tiles: (%u,%u)\n",
            test_type,
@@ -3565,7 +3734,12 @@ int run_ifr_test(struct igsc_device_handle *handle, uint8_t test_type, uint8_t t
            !!(tiles_mask & IGSC_IFR_TILE_1));
 
     /* call the igsc library routine to run the ifr test */
-    ret = igsc_ifr_run_test(handle, test_type, tiles_mask, &result, &run_status, &error_code);
+    while ((ret = igsc_ifr_run_test(handle, test_type, tiles_mask, &result, &run_status, &error_code)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret || result)
     {
         fwupd_error("Failed to run test, library return code %d Heci result %u\n",
@@ -3589,6 +3763,7 @@ static int do_ifr_get_repair_info(int argc, char *argv[])
     uint16_t available_array_repair_entries; /**< Number of available array repair entries */
     uint16_t failed_dss; /**< Number of failed DSS */
     int ret;
+    unsigned int retries = 0;
 
     if (argc <= 0)
     {
@@ -3668,10 +3843,16 @@ static int do_ifr_get_repair_info(int argc, char *argv[])
     printf("requesting ifr repair info for tile %u\n", tile_idx);
 
     /* call the igsc library routine to run the ifr test */
-    ret = igsc_ifr_get_tile_repair_info(&handle, tile_idx,
-                                        &used_array_repair_entries,
-                                        &available_array_repair_entries,
-                                        &failed_dss);
+    while ((ret = igsc_ifr_get_tile_repair_info(&handle, tile_idx,
+                                                &used_array_repair_entries,
+                                                &available_array_repair_entries,
+                                                &failed_dss)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
+
     if (ret)
     {
        fwupd_error("Failed to run test, library return code %d\n",
@@ -3931,6 +4112,7 @@ int do_gfsp_ecc_config_set(int argc, char *argv[])
     uint8_t cur_ecc_state = 0xFF;
     uint8_t pen_ecc_state = 0xFF;
     int ret;
+    unsigned int retries = 0;
 
     if (argc <= 0)
     {
@@ -4013,7 +4195,12 @@ int do_gfsp_ecc_config_set(int argc, char *argv[])
         }
     }
 
-    ret = igsc_ecc_config_set(&handle, (uint8_t)req_ecc_state, &cur_ecc_state, &pen_ecc_state);
+    while ((ret = igsc_ecc_config_set(&handle, (uint8_t)req_ecc_state, &cur_ecc_state, &pen_ecc_state)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
     if (ret)
     {
         fwupd_error("Failed to set ECC config, return code %d\n", ret);
@@ -4156,6 +4343,7 @@ int do_gfsp_generic_cmd(int argc, char *argv[])
     size_t in_buf_size = 0;
     int ret;
     size_t actual_received_size = 0;
+    unsigned int retries = 0;
 
     if (argc <= 0)
     {
@@ -4267,13 +4455,25 @@ int do_gfsp_generic_cmd(int argc, char *argv[])
     printf("Sending %zu bytes of input data by gfsp generic api\n", in_buf_size);
     if (in_buf_size)
     {
-        ret = igsc_gfsp_heci_cmd(&handle, cmd, in_buf, in_buf_size,
-                                 out_buf, sizeof(out_buf), &actual_received_size);
+        while ((ret = igsc_gfsp_heci_cmd(&handle, cmd, in_buf, in_buf_size,
+                                         out_buf, sizeof(out_buf),
+                                         &actual_received_size)) == IGSC_ERROR_BUSY)
+        {
+            gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+            if (++retries >= MAX_CONNECT_RETRIES)
+                break;
+        }
     }
     else
     {
-        ret = igsc_gfsp_heci_cmd(&handle, cmd, NULL, 0,
-                                 out_buf, sizeof(out_buf), &actual_received_size);
+        while ((ret = igsc_gfsp_heci_cmd(&handle, cmd, NULL, 0,
+                                         out_buf, sizeof(out_buf),
+                                         &actual_received_size)) == IGSC_ERROR_BUSY)
+        {
+            gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+            if (++retries >= MAX_CONNECT_RETRIES)
+                break;
+        }
     }
     printf("Received %zu bytes of data\n", actual_received_size);
     if (ret)
@@ -4348,6 +4548,7 @@ int late_binding(const char *device_path, const char *payload_path, uint32_t typ
     size_t payload_size = 0;
     uint8_t payload[MAX_PAYLOAD_SIZE];
     uint32_t status;
+    unsigned int retries = 0;
 
     memset(&handle, 0, sizeof(handle));
 
@@ -4376,8 +4577,15 @@ int late_binding(const char *device_path, const char *payload_path, uint32_t typ
         goto exit;
     }
 
-    ret = igsc_device_update_late_binding_config(&handle, type, flags,
-                                                 payload, payload_size, &status);
+    while ((ret = igsc_device_update_late_binding_config(&handle, type, flags,
+                                                         payload, payload_size,
+                                                         &status)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
+
     if (ret)
     {
         fwupd_error("Failed to send late binding command: %d\n", ret);
@@ -4529,6 +4737,7 @@ static int do_list_devices(int argc, char *argv[])
     struct igsc_oprom_version oprom_version;
     bool do_info = false;
     unsigned int ndevices = 0;
+    unsigned int retries;
 
     memset(&handle, 0, sizeof(handle));
     memset(&fw_version, 0, sizeof(fw_version));
@@ -4586,17 +4795,35 @@ static int do_list_devices(int argc, char *argv[])
 
         if (do_info)
         {
-            ret = igsc_device_fw_version(&handle, &fw_version);
+            retries = 0;
+            while ((ret = igsc_device_fw_version(&handle, &fw_version)) == IGSC_ERROR_BUSY)
+            {
+               gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+               if (++retries >= MAX_CONNECT_RETRIES)
+                  break;
+            }
             if (ret == IGSC_SUCCESS)
             {
                 print_fw_version("", &fw_version);
             }
-            ret = igsc_device_oprom_version(&handle, IGSC_OPROM_CODE, &oprom_version);
+            retries = 0;
+            while ((ret = igsc_device_oprom_version(&handle, IGSC_OPROM_CODE, &oprom_version)) == IGSC_ERROR_BUSY)
+            {
+               gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+               if (++retries >= MAX_CONNECT_RETRIES)
+                  break;
+            }
             if (ret == IGSC_SUCCESS)
             {
                 print_oprom_code_version(&oprom_version);
             }
-            ret = igsc_device_oprom_version(&handle, IGSC_OPROM_DATA, &oprom_version);
+            retries = 0;
+            while ((ret = igsc_device_oprom_version(&handle, IGSC_OPROM_DATA, &oprom_version))  == IGSC_ERROR_BUSY)
+            {
+               gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+               if (++retries >= MAX_CONNECT_RETRIES)
+                  break;
+            }
             if (ret == IGSC_SUCCESS)
             {
                 print_oprom_data_version(&oprom_version);
