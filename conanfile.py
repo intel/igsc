@@ -8,4 +8,4 @@ class IgscConan(ConanFile):
     generators = "cmake", "cmake_find_package", "visual_studio"
 
     def requirements(self):
-        self.requires("metee/3.2.4@mesw/stable")
+        self.requires("metee/4.1.0@mesw/stable")
