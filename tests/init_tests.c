@@ -95,6 +95,11 @@ uint32_t TEEAPI TeeSetLogLevel(IN PTEEHANDLE handle, IN uint32_t log_level)
     return 0;
 }
 
+TEESTATUS TEEAPI TeeSetLogCallback(IN const PTEEHANDLE handle, TeeLogCallback log_callback)
+{
+    return 0;
+}
+
 static int group_setup(void **state)
 {
     struct igsc_device_handle *handle;

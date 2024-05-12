@@ -131,6 +131,11 @@ uint32_t TEEAPI TeeSetLogLevel(IN PTEEHANDLE handle, IN uint32_t log_level)
     return 0;
 }
 
+TEESTATUS TEEAPI TeeSetLogCallback(IN const PTEEHANDLE handle, TeeLogCallback log_callback)
+{
+    return 0;
+}
+
 int driver_working_buffer_alloc(struct igsc_lib_ctx *lib_ctx);
 void driver_working_buffer_free(struct igsc_lib_ctx *lib_ctx);
 

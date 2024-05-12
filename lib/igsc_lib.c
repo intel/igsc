@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "msvc/config.h"
 #include "gcc/config.h"
@@ -162,6 +163,18 @@ void gsc_driver_deinit(struct igsc_lib_ctx *lib_ctx)
     lib_ctx->driver_init_called = false;
 }
 
+void gsc_metee_log(bool is_error, const char* fmt, ...)
+{
+    UNUSED_VAR(is_error);
+#define DEBUG_MSG_LEN 1024
+    char msg[DEBUG_MSG_LEN];
+    va_list varl;
+    va_start(varl, fmt);
+    vsnprintf(msg, DEBUG_MSG_LEN, fmt, varl);
+    va_end(varl);
+    printf("%s\n", msg);
+}
+
 #define INIT_ITERATIONS  3
 #define INIT_TIMEOUT 1000
 
@@ -172,6 +185,8 @@ int gsc_driver_init(struct igsc_lib_ctx *lib_ctx, IN const GUID *guid)
     int status;
     uint8_t power_control;
     uint32_t counter = 0;
+    unsigned int igsc_log_level;
+    unsigned int tee_log_level = TEE_LOG_LEVEL_ERROR;
 
     for (counter = 0; counter < INIT_ITERATIONS; counter++)
     {
@@ -197,6 +212,14 @@ int gsc_driver_init(struct igsc_lib_ctx *lib_ctx, IN const GUID *guid)
         status = status_tee2fu(tee_status);
         goto exit;
     }
+
+    igsc_log_level = igsc_get_log_level();
+    if (igsc_log_level >= IGSC_LOG_LEVEL_DEBUG)
+    {
+        tee_log_level = TEE_LOG_LEVEL_VERBOSE;
+    }
+    TeeSetLogLevel(&lib_ctx->driver_handle, tee_log_level);
+    TeeSetLogCallback(&lib_ctx->driver_handle, gsc_metee_log);
 
     tee_status = TeeConnect(&lib_ctx->driver_handle);
     if (!TEE_IS_SUCCESS(tee_status))
