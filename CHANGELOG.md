@@ -1,5 +1,17 @@
 # IGSC FUL
 
+## [v0.8.19] - 2024-05-17
+
+### Added
+1. cli: implement retry mechanism when device is busy
+2. lib: return busy indication on special connect failures
+
+### Fixed
+1. lib: fix fwdata heci response struct
+
+### Removed
+1. Doxygen: drop HTML timestamp
+
 ## [v0.8.18] - 2024-02-20
 
 ### Added
