@@ -1,5 +1,10 @@
 # IGSC FUL
 
+## [v0.8.20] - 2024-05-22
+
+### Fixed
+1. lib: ignore return value of write on fwu_end command
+
 ## [v0.8.19] - 2024-05-17
 
 ### Added
