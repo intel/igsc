@@ -1033,14 +1033,20 @@ static int gsc_fwu_end(struct igsc_lib_ctx *lib_ctx)
     tee_status = TeeWrite(&lib_ctx->driver_handle, req, request_len, NULL, TEE_WRITE_TIMEOUT);
     if (!TEE_IS_SUCCESS(tee_status))
     {
-        gsc_error("Error in HECI write (%d)\n", tee_status);
-        status = status_tee2fu(tee_status);
-        goto exit;
+        /* There is a possible race condition in the heci driver between the ack for the write of
+           fwu_end message and the firmware reset that happens in the firmware immediately after that.
+           If the driver is slow it may cause a situation when the write ack interrupt and the reset
+           interrupt are being processed together by the driver (in the same interrupt handler call)
+           and so the driver would first look at the reset and decide that the write failed.
+           So when sending fwu_end command, which as we know causes firmware reset by design, we do
+           not check the return value of the write because it may be a failure as a result of this
+           race condition described above.
+         */
+        gsc_debug("Error in HECI write (%d) on writing fwu_end message\n", tee_status);
     }
 
     status = IGSC_SUCCESS;
 
-exit:
     return status;
 }
 
