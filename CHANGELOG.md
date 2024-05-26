@@ -1,5 +1,11 @@
 # IGSC FUL
 
+## [v0.8.21] - 2024-05-26
+
+### Changed
+1. lib: pop the metee library version to 4.1.0 in conan
+2. lib: set verbose metee mode
+
 ## [v0.8.20] - 2024-05-22
 
 ### Fixed
