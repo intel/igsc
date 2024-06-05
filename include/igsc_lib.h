@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  */
 
 /**
@@ -167,10 +167,12 @@ enum igsc_version_compare_result {
  */
 enum igsc_fwdata_version_compare_result {
     IGSC_FWDATA_VERSION_REJECT_VCN = 0,                    /**< VCN version is bigger than device VCN */
-    IGSC_FWDATA_VERSION_REJECT_OEM_MANUF_DATA_VERSION = 1, /**< OEM manufacturing data version is not bigger than device OEM version */
+    IGSC_FWDATA_VERSION_REJECT_OEM_MANUF_DATA_VERSION = 1, /**< OEM manufacturing data version is not bigger than device OEM version or equal in ver2 comparison */
     IGSC_FWDATA_VERSION_REJECT_DIFFERENT_PROJECT = 2,      /**< major version is different from device major version */
     IGSC_FWDATA_VERSION_ACCEPT = 3,                        /**< update image VCN version is equal than the one on the device, and OEM is bigger */
-    IGSC_FWDATA_VERSION_OLDER_VCN = 4,                     /**< update image VCN version is smaller to the one on the device */
+    IGSC_FWDATA_VERSION_OLDER_VCN = 4,                     /**< update image VCN version is smaller than the one on the device */
+    IGSC_FWDATA_VERSION_REJECT_WRONG_FORMAT = 5,           /**< the version format is the wrong one or incompatible */
+    IGSC_FWDATA_VERSION_REJECT_ARB_SVN = 6,                /**< update image SVN version is smaller than the one on the device */
 };
 
 /**
@@ -181,6 +183,26 @@ struct igsc_fwdata_version {
     uint32_t oem_manuf_data_version; /**< GSC in-field data firmware OEM manufacturing data version */
     uint16_t major_version;           /**< GSC in-field data firmware major version */
     uint16_t major_vcn;              /**< GSC in-field data firmware major VCN */
+};
+
+#define IGSC_FWDATA_FORMAT_VERSION_1 0x1
+#define IGSC_FWDATA_FORMAT_VERSION_2 0x2
+
+#define IGSC_FWDATA_FITB_VALID_MASK 0x1
+
+/**
+ * Structure to store versions
+ * for GSC in-field data firmware update image (version 2)
+ */
+struct igsc_fwdata_version2 {
+    uint32_t format_version;         /**< GSC in-field data firmware version format */
+    uint32_t oem_manuf_data_version; /**< GSC in-field data firmware OEM manufacturing data version */
+    uint32_t oem_manuf_data_version_fitb; /**< GSC in-field data firmware OEM manufacturing data version from FITB */
+    uint16_t major_version;          /**< GSC in-field data firmware major version */
+    uint16_t major_vcn;              /**< GSC in-field data firmware major VCN */
+    uint32_t flags;                  /**< GSC in-field data firmware flags */
+    uint32_t data_arb_svn;           /**< GSC in-field data firmware SVN */
+    uint32_t data_arb_svn_fitb;      /**< GSC in-field data firmware SVN from FITB */
 };
 
 /**
@@ -704,6 +726,19 @@ int igsc_device_fwdata_version(IN  struct igsc_device_handle *handle,
                                OUT struct igsc_fwdata_version *version);
 
 /**
+ *  @brief Retrieves the GSC in-field data Firmware Version from the device
+ *         With ability to return FW Data version in second version format.
+ *
+ *  @param handle A handle to the device.
+ *  @param version The memory to store obtained firmware version.
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_device_fwdata_version2(IN  struct igsc_device_handle* handle,
+    OUT struct igsc_fwdata_version2* version);
+
+/**
  *  @brief Retrieves the GSC in-field data Firmware version from the supplied GSC in-field data Firmware update image.
  *
  *  @param img GSC in-field data Firmware image handle
@@ -716,7 +751,21 @@ int igsc_image_fwdata_version(IN struct igsc_fwdata_image *img,
                               OUT struct igsc_fwdata_version *version);
 
 /**
+ *  @brief Retrieves the GSC in-field data Firmware version from the supplied GSC in-field data Firmware update image.
+ *         With ability to return FW Data version in second version format.
+ *
+ *  @param img GSC in-field data Firmware image handle
+ *  @param version The memory to store the obtained GSC in-field data Firmware version.
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_image_fwdata_version2(IN struct igsc_fwdata_image* img,
+    OUT struct igsc_fwdata_version2* version);
+
+/**
  *  @brief Compares input GSC in-field data firmware update version to the flash one
+ *         With ability to compare FW Data version in second version format.
  *
  *  @param image_ver pointer to the GSC in-field data firmware update image version
  *  @param device_ver pointer to the device GSC data firmware version
@@ -731,6 +780,25 @@ int igsc_image_fwdata_version(IN struct igsc_fwdata_image *img,
 IGSC_EXPORT
 uint8_t igsc_fwdata_version_compare(IN struct igsc_fwdata_version *image_ver,
                                     IN struct igsc_fwdata_version *device_ver);
+
+/**
+ *  @brief Compares input GSC in-field data firmware update version to the flash one
+ *
+ *  @param image_ver pointer to the GSC in-field data firmware update image version
+ *  @param device_ver pointer to the device GSC data firmware version
+ *
+ *  @return
+ *  * IGSC_FWDATA_VERSION_REJECT_VCN                    if image VCN version is bigger than device VCN
+ *  * IGSC_FWDATA_VERSION_REJECT_OEM_MANUF_DATA_VERSION if OEM manufacturing data version is not bigger than device OEM version or equal in ver2 comparison
+ *  * IGSC_FWDATA_VERSION_REJECT_DIFFERENT_PROJECT      if major version is different from device major version
+ *  * IGSC_FWDATA_VERSION_ACCEPT                        if VCN version is equal to the device's one, and OEM is bigger
+ *  * IGSC_FWDATA_VERSION_OLDER_VCN                     if VCN version is smaller than the one on the device
+ *  * IGSC_FWDATA_VERSION_REJECT_WRONG_FORMAT           if version format is the wrong one or incompatible
+ *  * IGSC_FWDATA_VERSION_REJECT_ARB_SVN                if update image SVN version is smaller than the one on the device
+ */
+IGSC_EXPORT
+uint8_t igsc_fwdata_version_compare2(IN struct igsc_fwdata_version2* image_ver,
+                                     IN struct igsc_fwdata_version2* device_ver);
 
 /**
  *  @brief Retrieves a count of of different devices supported

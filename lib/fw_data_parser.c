@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  */
 
 #include <stdint.h>
@@ -37,6 +37,12 @@ enum igsc_cpd_enrites_indices {
 
 #define CPD_HEADER_MARKER 0x44504324
 
+enum FWU_GSC_HECI_METADATA_VERSION
+{
+    FWU_GSC_HECI_METADATA_DATA_UPDATE_VERSION_1 = 0x0401,
+    FWU_GSC_HECI_METADATA_DATA_UPDATE_VERSION_2 = 0x0402,
+};
+
 int image_fwdata_get_version(struct igsc_fwdata_image *img,
                              struct igsc_fwdata_version *version)
 {
@@ -44,6 +50,36 @@ int image_fwdata_get_version(struct igsc_fwdata_image *img,
     struct igsc_fwdata_metadata *meta = (struct igsc_fwdata_metadata *)&metadata->metadata;
 
     version->oem_manuf_data_version = meta->oem_manuf_data_version;
+    version->major_vcn = meta->major_vcn;
+    version->major_version = meta->major_fw_version;
+
+    return IGSC_SUCCESS;
+}
+
+int image_fwdata_get_version2(struct igsc_fwdata_image* img,
+                              struct igsc_fwdata_version2* version)
+{
+    struct gsc_fwu_heci_image_metadata* metadata = (struct gsc_fwu_heci_image_metadata*)img->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].content;
+    struct igsc_fwdata_metadata* meta = (struct igsc_fwdata_metadata*)&metadata->metadata;
+
+    switch (metadata->metadata_format_version)
+    {
+    case FWU_GSC_HECI_METADATA_DATA_UPDATE_VERSION_1:
+        version->data_arb_svn = 0;
+        version->format_version = IGSC_FWDATA_FORMAT_VERSION_1;
+        break;
+    case FWU_GSC_HECI_METADATA_DATA_UPDATE_VERSION_2:
+        version->data_arb_svn = meta->data_arb_svn;
+        version->format_version = IGSC_FWDATA_FORMAT_VERSION_2;
+        break;
+    default:
+        gsc_error("Bad version format %u\n", metadata->metadata_format_version);
+        return IGSC_ERROR_BAD_IMAGE;
+    }
+    version->flags = 0;
+    version->data_arb_svn_fitb = 0;
+    version->oem_manuf_data_version = meta->oem_manuf_data_version;
+    version->oem_manuf_data_version_fitb = 0;
     version->major_vcn = meta->major_vcn;
     version->major_version = meta->major_fw_version;
 
@@ -299,7 +335,7 @@ int image_fwdata_get_next(struct igsc_fwdata_image *img,
     return IGSC_SUCCESS;
 }
 
-void image_fwdata_iterator_reset(IN struct igsc_fwdata_image *img)
+void image_fwdata_iterator_reset(struct igsc_fwdata_image *img)
 {
     img->cur_device_pos = 0;
 }

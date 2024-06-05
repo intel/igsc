@@ -303,9 +303,8 @@ static void create_response_fwu_data_info(const struct gsc_fw_data_heci_version_
     resp->oem_manuf_data_version_fitb = 0;
     resp->major_version = 0;
     resp->major_vcn = 0;
-    resp->oem_manuf_data_version_fitb_valid = 0;
     resp->flags = 0;
-    for (unsigned int i = 0; i < 7; i++)
+    for (unsigned int i = 0; i < 6; i++)
     {
         resp->reserved[i] = 0;
     }

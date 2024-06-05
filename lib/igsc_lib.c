@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  */
 
 #include <stdint.h>
@@ -2739,6 +2739,94 @@ exit:
     return status;
 }
 
+static int gsc_fwdata_get_version2(struct igsc_lib_ctx* lib_ctx, struct igsc_fwdata_version2* version)
+{
+    int status;
+    size_t request_len;
+    size_t response_len;
+    size_t received_len = 0;
+    size_t buf_len;
+
+    struct gsc_fw_data_heci_version_resp* resp;
+    struct gsc_fw_data_heci_version_req* req;
+    uint8_t command_id = GSC_FWU_HECI_COMMAND_ID_GET_GFX_DATA_UPDATE_INFO;
+
+    if (version == NULL)
+    {
+        return IGSC_ERROR_INTERNAL;
+    }
+
+    req = (struct gsc_fw_data_heci_version_req*)lib_ctx->working_buffer;
+    request_len = sizeof(*req);
+
+    resp = (struct gsc_fw_data_heci_version_resp*)lib_ctx->working_buffer;
+    response_len = sizeof(*resp);
+    buf_len = lib_ctx->working_buffer_length;
+
+    status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
+    if (status != IGSC_SUCCESS)
+    {
+        return status;
+    }
+
+    memset(req, 0, request_len);
+    req->header.command_id = command_id;
+    status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response (%d)\n", status);
+        goto exit;
+    }
+
+    if (received_len < sizeof(resp->response))
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    status = gsc_fwu_heci_validate_response_header(lib_ctx, &resp->response, command_id);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response (%d)\n", status);
+        goto exit;
+    }
+
+    if (received_len != response_len)
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    switch (resp->format_version)
+    {
+    case IGSC_FWDATA_FORMAT_VERSION_1:
+        version->data_arb_svn = 0;
+        version->data_arb_svn_fitb = 0;
+        break;
+    case IGSC_FWDATA_FORMAT_VERSION_2:
+        version->data_arb_svn = resp->data_arb_svn_nvm;
+        version->data_arb_svn_fitb = resp->data_arb_svn_fitb;
+        break;
+    default:
+        gsc_error("Bad version format %u\n", resp->format_version);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    version->flags = resp->flags;
+    version->format_version = resp->format_version;
+    version->major_vcn = resp->major_vcn;
+    version->major_version = resp->major_version;
+    version->oem_manuf_data_version = resp->oem_manuf_data_version_nvm;
+    version->oem_manuf_data_version_fitb = resp->oem_manuf_data_version_fitb;
+
+    status = IGSC_SUCCESS;
+
+exit:
+    return status;
+}
 
 static bool fwdata_match_device(struct igsc_device_info *device,
                                 struct igsc_fwdata_device_info *fwdata_device)
@@ -2758,8 +2846,8 @@ int igsc_device_fwdata_update(IN  struct igsc_device_handle *handle,
 {
     struct igsc_fwdata_image *img;
     int ret;
-    struct igsc_fwdata_version orig_ver;
-    struct igsc_fwdata_version new_ver;
+    struct igsc_fwdata_version2 orig_ver;
+    struct igsc_fwdata_version2 new_ver;
 
     if (handle == NULL || handle->ctx == NULL || buffer == NULL || buffer_len == 0)
     {
@@ -2774,7 +2862,7 @@ int igsc_device_fwdata_update(IN  struct igsc_device_handle *handle,
         gsc_error("Failed to parse fwdata image: %d\n", ret);
         return ret;
     }
-    ret = image_fwdata_get_version(img, &orig_ver);
+    ret = image_fwdata_get_version2(img, &orig_ver);
     if (ret != IGSC_SUCCESS)
     {
         gsc_error("Failed to get fwdata version: %d\n", ret);
@@ -2791,7 +2879,7 @@ int igsc_device_fwdata_update(IN  struct igsc_device_handle *handle,
         return ret;
     }
 
-    ret = igsc_device_fwdata_version(handle, &new_ver);
+    ret = igsc_device_fwdata_version2(handle, &new_ver);
     if (ret != IGSC_SUCCESS)
     {
        gsc_error("failed to receive fwdata version after the update\n");
@@ -2899,6 +2987,33 @@ int igsc_device_fwdata_version(IN  struct igsc_device_handle *handle,
     return ret;
 }
 
+int igsc_device_fwdata_version2(IN  struct igsc_device_handle* handle,
+                                OUT struct igsc_fwdata_version2* version)
+{
+    struct igsc_lib_ctx* lib_ctx;
+    int ret;
+
+    if (handle == NULL || handle->ctx == NULL || version == NULL)
+    {
+        gsc_error("Bad parameters\n");
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    lib_ctx = handle->ctx;
+    ret = gsc_driver_init(lib_ctx, &GUID_METEE_FWU);
+    if (ret != IGSC_SUCCESS)
+    {
+        gsc_error("Failed to init HECI driver\n");
+        return ret;
+    }
+
+    ret = gsc_fwdata_get_version2(lib_ctx, version);
+
+    gsc_driver_deinit(lib_ctx);
+
+    return ret;
+}
+
 int igsc_image_fwdata_version(IN struct igsc_fwdata_image *img,
                               OUT struct igsc_fwdata_version *version)
 {
@@ -2908,6 +3023,17 @@ int igsc_image_fwdata_version(IN struct igsc_fwdata_image *img,
     }
 
     return image_fwdata_get_version(img, version);
+}
+
+int igsc_image_fwdata_version2(IN struct igsc_fwdata_image* img,
+                               OUT struct igsc_fwdata_version2* version)
+{
+    if (img == NULL || version == NULL)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    return image_fwdata_get_version2(img, version);
 }
 
 uint8_t igsc_fwdata_version_compare(IN struct igsc_fwdata_version *image_ver,
@@ -2933,6 +3059,94 @@ uint8_t igsc_fwdata_version_compare(IN struct igsc_fwdata_version *image_ver,
     if (image_ver->major_vcn < device_ver->major_vcn)
     {
         return IGSC_FWDATA_VERSION_OLDER_VCN;
+    }
+
+    return IGSC_FWDATA_VERSION_ACCEPT;
+}
+
+/* Compares input GSC in-field data firmware update version to the flash one and determine ability to update
+ *
+ * Rules:
+ *  The current FW's CSC FW Major version needs to be equal to the update image's CSC FW major version
+ *  The current FW's OEM manufacturing data version needs to be smaller or higher than the update image's OEM manufacturing data version
+ *  The current FW's data ARB SVN needs to be smaller or equal to the update image's data ARB SVN
+ *  The current FW OEM manufacturing date version / data ARB SVN are determined by the fitb valid indication:
+ *      In case fitb is not valid (data update context does not exist), the values should be taken from NVM
+ *      In case fitb is valid (data update context exist), the values should be taken from fitb.
+ */
+uint8_t igsc_fwdata_version_compare2(IN struct igsc_fwdata_version2* image_ver,
+                                     IN struct igsc_fwdata_version2* device_ver)
+{
+    uint32_t oem_manuf_data_version_device;
+    uint32_t data_arb_svn;
+
+    if (image_ver == NULL || device_ver == NULL)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    if (image_ver->format_version < IGSC_FWDATA_FORMAT_VERSION_1 ||
+        image_ver->format_version > IGSC_FWDATA_FORMAT_VERSION_2)
+    {
+        return IGSC_FWDATA_VERSION_REJECT_WRONG_FORMAT;
+    }
+    if (device_ver->format_version < IGSC_FWDATA_FORMAT_VERSION_1 ||
+        device_ver->format_version > IGSC_FWDATA_FORMAT_VERSION_2)
+    {
+        return IGSC_FWDATA_VERSION_REJECT_WRONG_FORMAT;
+    }
+    if (image_ver->format_version != device_ver->format_version)
+    {
+        return IGSC_FWDATA_VERSION_REJECT_WRONG_FORMAT;
+    }
+
+    oem_manuf_data_version_device = (device_ver->flags & IGSC_FWDATA_FITB_VALID_MASK) ?
+        device_ver->oem_manuf_data_version_fitb : device_ver->oem_manuf_data_version;
+    data_arb_svn = (device_ver->flags & IGSC_FWDATA_FITB_VALID_MASK) ?
+        device_ver->data_arb_svn_fitb : device_ver->data_arb_svn;
+
+    if (image_ver->major_version != device_ver->major_version)
+    {
+        return IGSC_FWDATA_VERSION_REJECT_DIFFERENT_PROJECT;
+    }
+    if (image_ver->major_vcn > device_ver->major_vcn)
+    {
+        return IGSC_FWDATA_VERSION_REJECT_VCN;
+    }
+
+    if (image_ver->format_version == IGSC_FWDATA_FORMAT_VERSION_1)
+    {
+        if (image_ver->oem_manuf_data_version <= oem_manuf_data_version_device)
+        {
+            return IGSC_FWDATA_VERSION_REJECT_OEM_MANUF_DATA_VERSION;
+        }
+    }
+    else
+    {
+        if (image_ver->oem_manuf_data_version == oem_manuf_data_version_device)
+        {
+            return IGSC_FWDATA_VERSION_REJECT_OEM_MANUF_DATA_VERSION;
+        }
+    }
+
+    if (image_ver->major_vcn < device_ver->major_vcn)
+    {
+        return IGSC_FWDATA_VERSION_OLDER_VCN;
+    }
+
+    if (image_ver->format_version == IGSC_FWDATA_FORMAT_VERSION_1)
+    {
+        if (image_ver->data_arb_svn != 0 || data_arb_svn != 0)
+        {
+            return IGSC_FWDATA_VERSION_REJECT_WRONG_FORMAT;
+        }
+    }
+    else
+    {
+        if (image_ver->data_arb_svn < data_arb_svn)
+        {
+            return IGSC_FWDATA_VERSION_REJECT_ARB_SVN;
+        }
     }
 
     return IGSC_FWDATA_VERSION_ACCEPT;

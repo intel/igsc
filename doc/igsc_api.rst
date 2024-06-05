@@ -1150,6 +1150,7 @@ secure in-field update of the configuration data.
 1. Firmware Data Version
 
 The structure represents the device firmware data version.
+Version 2 adds ARB SVN and other fields.
 
   .. code-block:: c
 
@@ -1159,6 +1160,16 @@ The structure represents the device firmware data version.
         uint16_t major_vcn;              /**< GSC in-field data firmware major VCN */
      };
 
+    struct igsc_fwdata_version2 {
+        uint32_t format_version;         /**< GSC in-field data firmware version format */
+        uint32_t oem_manuf_data_version; /**< GSC in-field data firmware OEM manufacturing data version */
+        uint32_t oem_manuf_data_version_fitb; /**< GSC in-field data firmware OEM manufacturing data version from FITB */
+        uint16_t major_version;          /**< GSC in-field data firmware major version */
+        uint16_t major_vcn;              /**< GSC in-field data firmware major VCN */
+        uint32_t flags;                  /**< GSC in-field data firmware flags */
+        uint32_t data_arb_svn;           /**< GSC in-field data firmware SVN */
+        uint32_t data_arb_svn_fitb;      /**< GSC in-field data firmware SVN from FITB */
+    };
 
 **Version comparison logic is**
 
@@ -1205,10 +1216,12 @@ The structure represents the device firmware data version.
 
      enum igsc_fwdata_version_compare_result {
          IGSC_FWDATA_VERSION_REJECT_VCN = 0,                    /**< VCN version is bigger than device VCN */
-         IGSC_FWDATA_VERSION_REJECT_OEM_MANUF_DATA_VERSION = 1, /**< OEM manufacturing data version is not bigger than device OEM version */
+         IGSC_FWDATA_VERSION_REJECT_OEM_MANUF_DATA_VERSION = 1, /**< OEM manufacturing data version is not bigger than device OEM version or equal in ver2 comparison */
          IGSC_FWDATA_VERSION_REJECT_DIFFERENT_PROJECT = 2,      /**< major version is different from device major version */
          IGSC_FWDATA_VERSION_ACCEPT = 3,                        /**< update image VCN version is equal than the one on the device, and OEM is bigger */
-        IGSC_FWDATA_VERSION_OLDER_VCN = 4,                     /**< update image VCN version is smaller to the one on the device */
+         IGSC_FWDATA_VERSION_OLDER_VCN = 4,                     /**< update image VCN version is smaller than the one on the device */
+         IGSC_FWDATA_VERSION_REJECT_WRONG_FORMAT = 5,           /**< the version format is the wrong one or incompatible */
+         IGSC_FWDATA_VERSION_REJECT_ARB_SVN = 6,                /**< update image SVN version is smaller than the one on the device */
      };
 
 5. Retrieve device firmware data version
@@ -1218,6 +1231,8 @@ The structure represents the device firmware data version.
 
      int igsc_device_fwdata_version(IN  struct igsc_device_handle *handle,
                                     OUT struct igsc_fwdata_version *version);
+     int igsc_device_fwdata_version2(IN  struct igsc_device_handle *handle,
+                                     OUT struct igsc_fwdata_version2 *version);
 
 6. Firmware data image information retrieval:
 
@@ -1231,13 +1246,16 @@ The structure represents the device firmware data version.
                                   IN const uint8_t *buffer,
                                   IN uint32_t buffer_len);
 
-  b. The function retrieve firmware data version from the firmware data image
+  b. The functions retrieve firmware data version from the firmware data image
      associated with the image handle `img`.
 
     .. code-block:: c
 
        int igsc_image_fwdata_version(IN struct igsc_fwdata_image *img,
                                      OUT struct igsc_fwdata_version *version);
+
+       int igsc_image_fwdata_version2(IN struct igsc_fwdata_image *img,
+                                      OUT struct igsc_fwdata_version2 *version);
 
   c. The function provides number of supported devices by the image
 

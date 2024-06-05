@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  */
 
 #ifndef __IGSC_FWDATA_PARSER_H__
@@ -53,7 +53,9 @@ struct igsc_fwdata_metadata {
     uint16_t major_fw_version;
     uint16_t major_vcn;
     uint8_t  key_index;
-    uint8_t  reserved[23];
+    uint8_t  reserved1[3];
+    uint32_t data_arb_svn;
+    uint8_t  reserved2[16];
 };
 
 int image_fwdata_alloc_handle(struct igsc_fwdata_image **img,
@@ -64,6 +66,8 @@ int image_fwdata_parse(struct igsc_fwdata_image *img);
 
 int image_fwdata_get_version(struct igsc_fwdata_image *img,
                              struct igsc_fwdata_version *version);
+int image_fwdata_get_version2(struct igsc_fwdata_image* img,
+                              struct igsc_fwdata_version2* version);
 
 uint32_t image_fwdata_count_devices(struct igsc_fwdata_image *img);
 

@@ -1,7 +1,7 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
  *
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  */
 
 /**
@@ -190,8 +190,10 @@ struct gsc_fw_data_heci_version_req {
  * @param oem_manuf_data_version_nvm oem version in nvm
  * @param oem_manuf_data_version_fitb oem version in fitb
  * @param major_version project major version
- * @param oem_manuf_data_version_fitb_valid
+ * @param major_vcn project major vcn
  * @param flags fwdata get version flags
+ * @param data_arb_svn_nvm arb svn in nvm
+ * @param data_arb_svn_fitb arb svn in firb
  * @param reserved
  */
 struct gsc_fw_data_heci_version_resp {
@@ -201,9 +203,10 @@ struct gsc_fw_data_heci_version_resp {
     uint32_t                     oem_manuf_data_version_fitb;
     uint16_t                     major_version;
     uint16_t                     major_vcn;
-    uint32_t                     oem_manuf_data_version_fitb_valid : 1;
-    uint32_t                     flags                             : 31;
-    uint32_t                     reserved[8];
+    uint32_t                     flags;
+    uint32_t                     data_arb_svn_nvm;
+    uint32_t                     data_arb_svn_fitb;
+    uint32_t                     reserved[6];
 };
 
 
