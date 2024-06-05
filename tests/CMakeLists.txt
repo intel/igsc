@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright (C) 2019-2023 Intel Corporation
+# Copyright (C) 2019-2024 Intel Corporation
 
 find_package(CMocka CONFIG REQUIRED)
 include(AddCMockaTest)
@@ -101,4 +101,11 @@ add_cmocka_test(fwdata_parser_tests
                 INCLUDE_DIRECTORIES ${IGCS_INCLUDE_DIRS} ${CMOCKA_INCLUDE_DIR}
                 COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS} -DUNIT_TESTING=1)
 add_cmocka_test_environment(fwdata_parser_tests)
+
+add_cmocka_test(dataversion_tests
+                SOURCES ../lib/igsc_lib.c ../lib/oprom.c ../lib/oprom_parser.c dataversion_tests.c ../lib/fw_data_parser.c ../lib/igsc_log.c ${POWER_SOURCES}
+                LINK_LIBRARIES ${CMOCKA_LIBRARIES} metee::metee
+                INCLUDE_DIRECTORIES ${IGCS_INCLUDE_DIRS} ${CMOCKA_INCLUDE_DIR}
+                COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS} -g -Digsc_strdup=test_strdup -DUNIT_TESTING=1)
+add_cmocka_test_environment(dataversion_tests)
 

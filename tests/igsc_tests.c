@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  */
 #include <stdarg.h>
 #include <stddef.h>
@@ -792,6 +792,375 @@ static void igsc_device_update_late_binding_config_bad_status(void **state)
                      IGSC_ERROR_INVALID_PARAMETER);
 }
 
+/*
+ * igsc_fwdata_version_compare2
+ */
+
+static void test_fwdata_version_compare1_diff_project(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    image_ver.format_version = device_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_1;
+    image_ver.major_version = 18;
+    device_ver.major_version = 19;
+    image_ver.oem_manuf_data_version = 2;
+    device_ver.oem_manuf_data_version = 1;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_REJECT_DIFFERENT_PROJECT);
+}
+
+static void test_fwdata_version_compare1_same_vcn(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    image_ver.format_version = device_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_1;
+    image_ver.major_version = device_ver.major_version = 19;
+    image_ver.oem_manuf_data_version = 2;
+    device_ver.oem_manuf_data_version = 1;
+    image_ver.major_vcn = device_ver.major_vcn = 1;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_ACCEPT);
+}
+
+static void test_fwdata_version_compare1_older_vcn(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    image_ver.format_version = device_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_1;
+    image_ver.major_version = device_ver.major_version = 19;
+    image_ver.oem_manuf_data_version = 2;
+    device_ver.oem_manuf_data_version = 1;
+    image_ver.major_vcn = 1;
+    device_ver.major_vcn = 2;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_OLDER_VCN);
+}
+
+static void test_fwdata_version_compare1_newer_vcn(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    image_ver.format_version = device_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_1;
+    image_ver.major_version = device_ver.major_version = 19;
+    image_ver.oem_manuf_data_version = 2;
+    device_ver.oem_manuf_data_version = 1;
+    image_ver.major_vcn = 2;
+    device_ver.major_vcn = 1;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_REJECT_VCN);
+}
+
+static void test_fwdata_version_compare1_same_manuf_ver(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    image_ver.format_version = device_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_1;
+    image_ver.major_version = device_ver.major_version = 19;
+    image_ver.oem_manuf_data_version = 1;
+    device_ver.oem_manuf_data_version = 1;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_REJECT_OEM_MANUF_DATA_VERSION);
+}
+
+static void test_fwdata_version_compare1_older_manuf_ver(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    image_ver.format_version = device_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_1;
+    image_ver.major_version = device_ver.major_version = 19;
+    image_ver.oem_manuf_data_version = 1;
+    device_ver.oem_manuf_data_version = 2;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_REJECT_OEM_MANUF_DATA_VERSION);
+}
+
+static void test_fwdata_version_compare1_newer_manuf_ver(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    image_ver.format_version = device_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_1;
+    image_ver.major_version = device_ver.major_version = 19;
+    image_ver.oem_manuf_data_version = 2;
+    device_ver.oem_manuf_data_version = 1;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_ACCEPT);
+}
+
+static void test_fwdata_version_compare1_with_arb_svn(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    image_ver.format_version = device_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_1;
+    image_ver.major_version = device_ver.major_version = 19;
+    image_ver.oem_manuf_data_version = 2;
+    device_ver.oem_manuf_data_version = 1;
+    device_ver.data_arb_svn = 1;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_REJECT_WRONG_FORMAT);
+}
+
+static void test_fwdata_version_compare2_diff_project(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    image_ver.format_version = device_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_2;
+    image_ver.major_version = 18;
+    device_ver.major_version = 19;
+    image_ver.oem_manuf_data_version = 2;
+    device_ver.oem_manuf_data_version = 1;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_REJECT_DIFFERENT_PROJECT);
+}
+
+static void test_fwdata_version_compare2_same_vcn(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    image_ver.format_version = device_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_2;
+    image_ver.major_version = device_ver.major_version = 19;
+    image_ver.oem_manuf_data_version = 2;
+    device_ver.oem_manuf_data_version = 1;
+    image_ver.major_vcn = device_ver.major_vcn = 1;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_ACCEPT);
+}
+
+static void test_fwdata_version_compare2_older_vcn(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    image_ver.format_version = device_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_2;
+    image_ver.major_version = device_ver.major_version = 19;
+    image_ver.oem_manuf_data_version = 2;
+    device_ver.oem_manuf_data_version = 1;
+    image_ver.major_vcn = 1;
+    device_ver.major_vcn = 2;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_OLDER_VCN);
+}
+
+static void test_fwdata_version_compare2_newer_vcn(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    image_ver.format_version = device_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_2;
+    image_ver.major_version = device_ver.major_version = 19;
+    image_ver.oem_manuf_data_version = 2;
+    device_ver.oem_manuf_data_version = 1;
+    image_ver.major_vcn = 2;
+    device_ver.major_vcn = 1;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_REJECT_VCN);
+}
+
+static void test_fwdata_version_compare2_same_manuf_ver(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    image_ver.format_version = device_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_2;
+    image_ver.major_version = device_ver.major_version = 19;
+    image_ver.oem_manuf_data_version = 1;
+    device_ver.oem_manuf_data_version = 1;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_REJECT_OEM_MANUF_DATA_VERSION);
+}
+
+static void test_fwdata_version_compare2_older_manuf_ver(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    image_ver.format_version = device_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_2;
+    image_ver.major_version = device_ver.major_version = 19;
+    image_ver.oem_manuf_data_version = 1;
+    device_ver.oem_manuf_data_version = 2;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_ACCEPT);
+}
+
+static void test_fwdata_version_compare2_newer_manuf_ver(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    image_ver.format_version = device_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_2;
+    image_ver.major_version = device_ver.major_version = 19;
+    image_ver.oem_manuf_data_version = 2;
+    device_ver.oem_manuf_data_version = 1;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_ACCEPT);
+}
+
+static void test_fwdata_version_compare2_same_svn(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    image_ver.format_version = device_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_2;
+    image_ver.major_version = device_ver.major_version = 19;
+    image_ver.oem_manuf_data_version = 2;
+    device_ver.oem_manuf_data_version = 1;
+    image_ver.data_arb_svn = device_ver.data_arb_svn = 1;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_ACCEPT);
+}
+
+static void test_fwdata_version_compare2_older_svn(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    image_ver.format_version = device_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_2;
+    image_ver.major_version = device_ver.major_version = 19;
+    image_ver.oem_manuf_data_version = 2;
+    device_ver.oem_manuf_data_version = 1;
+    image_ver.data_arb_svn = 1;
+    device_ver.data_arb_svn = 2;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_REJECT_ARB_SVN);
+}
+
+static void test_fwdata_version_compare2_newer_svn(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    image_ver.format_version = device_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_2;
+    image_ver.major_version = device_ver.major_version = 19;
+    image_ver.oem_manuf_data_version = 2;
+    device_ver.oem_manuf_data_version = 1;
+    image_ver.data_arb_svn = 2;
+    device_ver.data_arb_svn = 1;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_ACCEPT);
+}
+
+static void test_fwdata_version_compare_diff_format_ver(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    image_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_1;
+    device_ver.format_version = IGSC_FWDATA_FORMAT_VERSION_2;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_REJECT_WRONG_FORMAT);
+}
+
+static void test_fwdata_version_compare_wrong_format_ver(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_REJECT_WRONG_FORMAT);
+}
+
+static void test_fwdata_version_compare_wrong_format_ver_big(void** state)
+{
+    struct igsc_fwdata_version2 image_ver;
+    struct igsc_fwdata_version2 device_ver;
+
+    memset(&image_ver, 0, sizeof(image_ver));
+    memset(&device_ver, 0, sizeof(device_ver));
+    image_ver.format_version = 3;
+    device_ver.format_version = 3;
+
+    assert_int_equal(igsc_fwdata_version_compare2(&image_ver, &device_ver),
+                     IGSC_FWDATA_VERSION_REJECT_WRONG_FORMAT);
+}
+
 int main(void)
 {
     const struct CMUnitTest device_image_tests[] = {
@@ -874,6 +1243,30 @@ int main(void)
         cmocka_unit_test(igsc_device_update_late_binding_config_bad_status),
     };
 
+    const struct CMUnitTest fwdata_tests[] = {
+        cmocka_unit_test(test_fwdata_version_compare1_diff_project),
+        cmocka_unit_test(test_fwdata_version_compare1_same_vcn),
+        cmocka_unit_test(test_fwdata_version_compare1_older_vcn),
+        cmocka_unit_test(test_fwdata_version_compare1_newer_vcn),
+        cmocka_unit_test(test_fwdata_version_compare1_same_manuf_ver),
+        cmocka_unit_test(test_fwdata_version_compare1_older_manuf_ver),
+        cmocka_unit_test(test_fwdata_version_compare1_newer_manuf_ver),
+        cmocka_unit_test(test_fwdata_version_compare1_with_arb_svn),
+        cmocka_unit_test(test_fwdata_version_compare2_diff_project),
+        cmocka_unit_test(test_fwdata_version_compare2_same_vcn),
+        cmocka_unit_test(test_fwdata_version_compare2_older_vcn),
+        cmocka_unit_test(test_fwdata_version_compare2_newer_vcn),
+        cmocka_unit_test(test_fwdata_version_compare2_same_manuf_ver),
+        cmocka_unit_test(test_fwdata_version_compare2_older_manuf_ver),
+        cmocka_unit_test(test_fwdata_version_compare2_newer_manuf_ver),
+        cmocka_unit_test(test_fwdata_version_compare2_same_svn),
+        cmocka_unit_test(test_fwdata_version_compare2_older_svn),
+        cmocka_unit_test(test_fwdata_version_compare2_newer_svn),
+        cmocka_unit_test(test_fwdata_version_compare_diff_format_ver),
+        cmocka_unit_test(test_fwdata_version_compare_wrong_format_ver),
+        cmocka_unit_test(test_fwdata_version_compare_wrong_format_ver_big),
+    };
+
     int status = cmocka_run_group_tests(device_image_tests, group_setup, NULL);
     status += cmocka_run_group_tests(version_cmp_tests, group_setup, NULL);
     status += cmocka_run_group_tests(get_type_tests, group_setup, NULL);
@@ -881,6 +1274,7 @@ int main(void)
     status += cmocka_run_group_tests(gfsp_get_health_indicator_tests, group_setup, NULL);
     status += cmocka_run_group_tests(late_binding_tests, group_setup, NULL);
     status += cmocka_run_group_tests(arbsvn_tests, group_setup, NULL);
+    status += cmocka_run_group_tests(fwdata_tests, group_setup, NULL);
 
     return status;
 }

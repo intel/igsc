@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  */
 #include <stdarg.h>
 #include <stddef.h>
@@ -16,25 +16,39 @@
 
 static int group_setup(void **state)
 {
-    struct igsc_fwdata_image *img;
-    struct code_partition_directory_header *header;
+    struct igsc_fwdata_image *img = NULL;
+    struct code_partition_directory_header *header = NULL;
+    struct gsc_fwu_heci_image_metadata* metadata = NULL;
+    const size_t metadata_size = sizeof(struct igsc_fwdata_metadata) + sizeof(struct gsc_fwu_heci_image_metadata);
 
-    *state = malloc(sizeof(*img));
-    if (*state == NULL)
+    img = malloc(sizeof(*img));
+    if (img == NULL)
     {
         return -1;
     }
 
-    header = (struct code_partition_directory_header *) malloc(IMAGE_SIZE);
+    header = malloc(IMAGE_SIZE);
     if (header == NULL)
     {
-        free(*state);
-        return -1;
+        goto fail;
     }
 
-    img = *state;
+    metadata = malloc(metadata_size);
+    if (metadata == NULL)
+    {
+        goto fail;
+    }
+
     img->layout.table[FWU_FPT_ENTRY_FW_DATA_IMAGE].content = (uint8_t *)header;
+    img->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].content = (uint8_t *)metadata;
+    *state = img;
     return 0;
+
+fail:
+    free(header);
+    free(metadata);
+    free(img);
+    return -1;
 }
 
 static int test_setup(void **state)
@@ -42,6 +56,8 @@ static int test_setup(void **state)
     struct igsc_fwdata_image *img = *state;
     struct mft_header *manifest_header;
     struct code_partition_directory_header *dir_header = (struct code_partition_directory_header *)img->layout.table[FWU_FPT_ENTRY_FW_DATA_IMAGE].content;
+    struct gsc_fwu_heci_image_metadata* metadata = (struct gsc_fwu_heci_image_metadata*)img->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].content;
+    const size_t metadata_size = sizeof(struct igsc_fwdata_metadata) + sizeof(struct gsc_fwu_heci_image_metadata);
 
     memset((void *)dir_header, 0, IMAGE_SIZE);
     img->layout.table[FWU_FPT_ENTRY_FW_DATA_IMAGE].size = IMAGE_SIZE;
@@ -74,6 +90,10 @@ static int test_setup(void **state)
     mft_ext->extension_type = MFT_EXT_TYPE_FWDATA_UPDATE;
     mft_ext->extension_length = sizeof(struct mft_fwdata_update_ext);
 
+    img->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].size = metadata_size;
+    memset((void *)metadata, 0, img->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].size);
+
+    metadata->metadata_format_version = FWU_GSC_HECI_METADATA_DATA_UPDATE_VERSION_1;
     return 0;
 }
 
@@ -82,9 +102,60 @@ static int group_teardown(void **state)
     struct igsc_fwdata_image *img = *state;
 
     free((void *)img->layout.table[FWU_FPT_ENTRY_FW_DATA_IMAGE].content);
+    free((void *)img->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].content);
     free(*state);
 
     return 0;
+}
+
+static void test_fwdata_get_version2_good_img(void **state)
+{
+    struct igsc_fwdata_image *img = *state;
+    struct gsc_fwu_heci_image_metadata* metadata = (struct gsc_fwu_heci_image_metadata*)img->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].content;
+    struct igsc_fwdata_metadata* meta = (struct igsc_fwdata_metadata*)&metadata->metadata;
+
+    struct igsc_fwdata_version2 orig_ver;
+    int ret;
+
+    meta->data_arb_svn = 1;
+
+    ret = image_fwdata_get_version2(img, &orig_ver);
+
+    assert_true(ret == IGSC_SUCCESS);
+    assert_true(orig_ver.data_arb_svn == 0);
+}
+
+static void test_fwdata_get_version2_good_img2(void **state)
+{
+    struct igsc_fwdata_image *img = *state;
+    struct gsc_fwu_heci_image_metadata* metadata = (struct gsc_fwu_heci_image_metadata*)img->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].content;
+    struct igsc_fwdata_metadata* meta = (struct igsc_fwdata_metadata*)&metadata->metadata;
+
+    struct igsc_fwdata_version2 orig_ver;
+    int ret;
+
+    metadata->metadata_format_version = FWU_GSC_HECI_METADATA_DATA_UPDATE_VERSION_2;
+    meta->data_arb_svn = 1;
+
+    ret = image_fwdata_get_version2(img, &orig_ver);
+
+    assert_true(ret == IGSC_SUCCESS);
+    assert_true(orig_ver.data_arb_svn == meta->data_arb_svn);
+}
+
+static void test_fwdata_get_version2_bad_format_version(void **state)
+{
+    struct igsc_fwdata_image *img = *state;
+    struct gsc_fwu_heci_image_metadata* metadata = (struct gsc_fwu_heci_image_metadata*)img->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].content;
+
+    struct igsc_fwdata_version2 orig_ver;
+    int ret;
+
+    metadata->metadata_format_version = 3;
+
+    ret = image_fwdata_get_version2(img, &orig_ver);
+
+    assert_true(ret == IGSC_ERROR_BAD_IMAGE);
 }
 
 static void test_fwdata_parse_good_img(void **state)
@@ -395,7 +466,9 @@ int main(void)
         cmocka_unit_test_setup(test_fwdata_parse_manifest_ext_length_overflow, test_setup),
         cmocka_unit_test_setup(test_fwdata_parse_bad_manifest_device_ext_length, test_setup),
         cmocka_unit_test_setup(test_fwdata_parse_bad_manifest_ext_length, test_setup),
-        cmocka_unit_test_setup(test_fwdata_parse_good_img, test_setup),
+        cmocka_unit_test_setup(test_fwdata_get_version2_good_img, test_setup),
+        cmocka_unit_test_setup(test_fwdata_get_version2_good_img2, test_setup),
+        cmocka_unit_test_setup(test_fwdata_get_version2_bad_format_version, test_setup),
     };
 
     return cmocka_run_group_tests(tests, group_setup, group_teardown);
