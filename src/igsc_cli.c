@@ -1,7 +1,8 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  */
+#include <limits.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -164,21 +165,32 @@ static void print_fwdata_device_info(struct igsc_fwdata_device_info *info)
            info->subsys_vendor_id, info->subsys_device_id);
 }
 
-static void print_fwdata_version(const char *prefix, const struct igsc_fwdata_version *fwdata_version)
+static void print_fwdata_version(const char *prefix,
+                                 const struct igsc_fwdata_version2 *fwdata_version)
 {
-    printf("%sFw Data Version: Major Version: %d, OEM Manufacturing Data Version: %d, Major VCN: %d\n",
+    printf("%sFw Data Version: Format %u, Major Version: %u, OEM Manufacturing Data Version: %u, Major VCN: %u\n \
+   OEM Manufacturing Data Version FITB: %u, Flags: 0X%08x, ARB SVN: %u, ARB SVN FITB: %u\n",
            prefix,
+           fwdata_version->format_version,
            fwdata_version->major_version,
            fwdata_version->oem_manuf_data_version,
-           fwdata_version->major_vcn);
+           fwdata_version->major_vcn,
+           (fwdata_version->flags & IGSC_FWDATA_FITB_VALID_MASK) ?
+               fwdata_version->oem_manuf_data_version_fitb : 999999,
+           fwdata_version->flags,
+           (fwdata_version->format_version > IGSC_FWDATA_FORMAT_VERSION_1) ?
+               fwdata_version->data_arb_svn : 999999,
+           ((fwdata_version->format_version > IGSC_FWDATA_FORMAT_VERSION_1) &&
+	    (fwdata_version->flags & IGSC_FWDATA_FITB_VALID_MASK)) ?
+               fwdata_version->data_arb_svn_fitb : 999999);
 }
 
-static inline void print_dev_fwdata_version(const struct igsc_fwdata_version *fwdata_version)
+static inline void print_dev_fwdata_version(const struct igsc_fwdata_version2 *fwdata_version)
 {
     print_fwdata_version("Device: ", fwdata_version);
 }
 
-static inline void print_img_fwdata_version(const struct igsc_fwdata_version *fwdata_version)
+static inline void print_img_fwdata_version(const struct igsc_fwdata_version2 *fwdata_version)
 {
     print_fwdata_version("Image:  ", fwdata_version);
 }
@@ -2638,7 +2650,7 @@ int fwdata_image_version(const char *image_path)
 {
     struct img *img = NULL;
     struct igsc_fwdata_image *oimg = NULL;
-    struct igsc_fwdata_version fwdata_version;
+    struct igsc_fwdata_version2 fwdata_version;
     int ret;
 
     img = image_read_from_file(image_path);
@@ -2663,7 +2675,7 @@ int fwdata_image_version(const char *image_path)
         goto out;
     }
 
-    ret = igsc_image_fwdata_version(oimg, &fwdata_version);
+    ret = igsc_image_fwdata_version2(oimg, &fwdata_version);
     if (ret == IGSC_SUCCESS)
     {
         print_img_fwdata_version(&fwdata_version);
@@ -2684,7 +2696,7 @@ out:
 mockable_static
 int fwdata_device_version(const char *device_path)
 {
-    struct igsc_fwdata_version fwdata_version;
+    struct igsc_fwdata_version2 fwdata_version;
     struct igsc_device_handle handle;
     int ret;
     unsigned int retries = 0;
@@ -2698,7 +2710,7 @@ int fwdata_device_version(const char *device_path)
     }
 
     memset(&fwdata_version, 0, sizeof(fwdata_version));
-    while ((ret = igsc_device_fwdata_version(&handle, &fwdata_version)) == IGSC_ERROR_BUSY)
+    while ((ret = igsc_device_fwdata_version2(&handle, &fwdata_version)) == IGSC_ERROR_BUSY)
     {
         gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
         if (++retries >= MAX_CONNECT_RETRIES)
@@ -2731,8 +2743,8 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
 {
     struct img *img = NULL;
     struct igsc_fwdata_image *oimg = NULL;
-    struct igsc_fwdata_version dev_version;
-    struct igsc_fwdata_version img_version;
+    struct igsc_fwdata_version2 dev_version;
+    struct igsc_fwdata_version2 img_version;
     igsc_progress_func_t progress_func = NULL;
     uint8_t cmp;
     bool update = false;
@@ -2762,7 +2774,7 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
         goto exit;
     }
 
-    ret = igsc_image_fwdata_version(oimg, &img_version);
+    ret = igsc_image_fwdata_version2(oimg, &img_version);
     if (ret != IGSC_SUCCESS)
     {
         fwupd_error("Failed to get firmware data version from image: %s\n", image_path);
@@ -2770,7 +2782,7 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
     }
     print_img_fwdata_version(&img_version);
 
-    ret = igsc_device_fwdata_version(handle, &dev_version);
+    ret = igsc_device_fwdata_version2(handle, &dev_version);
     if (ret != IGSC_SUCCESS)
     {
         if (ret == IGSC_ERROR_PERMISSION_DENIED)
@@ -2798,7 +2810,7 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
         goto exit;
     }
 
-    cmp = igsc_fwdata_version_compare(&img_version, &dev_version);
+    cmp = igsc_fwdata_version_compare2(&img_version, &dev_version);
     switch (cmp)
     {
     case IGSC_FWDATA_VERSION_ACCEPT:
@@ -2820,8 +2832,16 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
         fwupd_error("firmware data version is not compatible with the installed one (OEM version)\n");
         ret = EXIT_FAILURE;
         goto exit;
+    case IGSC_FWDATA_VERSION_REJECT_WRONG_FORMAT:
+        fwupd_error("the version format is the wrong or incompatible\n");
+        ret = EXIT_FAILURE;
+        goto exit;
+    case IGSC_FWDATA_VERSION_REJECT_ARB_SVN:
+        fwupd_error("update image SVN version is smaller then the one on the device\n");
+        ret = EXIT_FAILURE;
+    goto exit;
     default:
-        fwupd_error("firmware data version error in comparison\n");
+        fwupd_error("firmware data version error in comparison %u\n", (uint32_t)cmp);
         ret = EXIT_FAILURE;
         goto exit;
     }
@@ -2858,7 +2878,7 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
     }
 
     retries = 0;
-    while ((ret = igsc_device_fwdata_version(handle, &dev_version)) == IGSC_ERROR_BUSY)
+    while ((ret = igsc_device_fwdata_version2(handle, &dev_version)) == IGSC_ERROR_BUSY)
     {
         gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
         if (++retries >= MAX_CONNECT_RETRIES)
