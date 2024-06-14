@@ -97,7 +97,7 @@ void igsc_set_log_level(unsigned int log_level);
 /**
  *  @brief Retrieves current log level
  *
- *  @return current log lelel
+ *  @return current log level
  */
 IGSC_EXPORT
 unsigned int igsc_get_log_level(void);
@@ -364,11 +364,37 @@ uint32_t igsc_get_last_firmware_status(IN struct igsc_device_handle *handle);
 IGSC_EXPORT
 const char *igsc_translate_firmware_status(IN uint32_t firmware_status);
 
+
+ /**
+  *  @brief Callback function template for printing igsc log messages.
+  *
+  *  @param log_level log level of the error message.
+  *  @param fmt log message format
+  *  @param ... variadic parameters
+  */
+typedef void (*igsc_log_func_t)(enum igsc_log_level_type log_level, const char* fmt, ...);
+
 /**
- * @}
+ *  @brief Sets log callback function.
+ *          This interface is not thread-aware,
+ *          Changes here may lead to crashes in multi-thread app
+ *          when the thread setting callback exists without setting this
+ *          call-back function to NULL while other thread from same app continues to run.
+ *
+ *  @param igsc_log_func_t pointer to the callback function for igsc library log messages.
+ *          passing NULL to this will disable logging callback function.
+ *  @return void.
  */
+IGSC_EXPORT
+void igsc_set_log_callback_func(IN igsc_log_func_t log_callback_f);
 
-
+/**
+ *  @brief Retrieves log callback function pointer
+ *
+ *  @return log callback function pointer
+ */
+IGSC_EXPORT
+igsc_log_func_t igsc_get_log_callback_func(void);
 
 /**
  *  @brief Initializes a GSC Firmware Update device.

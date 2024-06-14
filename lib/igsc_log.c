@@ -14,6 +14,8 @@ IGSC_LOG_LEVEL_DEBUG;
 IGSC_LOG_LEVEL_ERROR;
 #endif
 
+static igsc_log_func_t igsc_log_func = NULL;
+
 void igsc_set_log_level(unsigned int log_level)
 {
     if (log_level >= IGSC_LOG_LEVEL_MAX)
@@ -28,3 +30,12 @@ unsigned int igsc_get_log_level(void)
     return igsc_log_level;
 }
 
+void igsc_set_log_callback_func(igsc_log_func_t log_f)
+{
+    igsc_log_func = log_f;
+}
+
+igsc_log_func_t igsc_get_log_callback_func()
+{
+    return igsc_log_func;
+}
