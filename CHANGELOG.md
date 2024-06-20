@@ -1,5 +1,17 @@
 # IGSC FUL
 
+## [v0.9.0] - 2024-06-20
+
+### Added
+1. lib: adding support to print IGSC debug logs via callback function
+2. lib: add dedicated arb svn support
+3. cli: add dedicated arb svn support
+4. tests: add dedicated arb svn support
+
+### Fixed
+1. lib: drop version check from igsc_device_fwdata_update
+2. cli: fix fw data update check
+
 ## [v0.8.21] - 2024-05-26
 
 ### Changed
