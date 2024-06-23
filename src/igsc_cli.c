@@ -2892,8 +2892,17 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
     }
     print_dev_fwdata_version(&dev_version);
 
-    /* check the new version */
-    if (memcmp(&img_version, &dev_version, sizeof(struct igsc_fwdata_version)))
+    /* check the new version
+     * If there is IGSC_FWDATA_FITB_VALID_MASK bit set in flags the update is failed.
+     * Image always have zero there.
+     * No need to compare FITB fields.
+     */
+    if (img_version.format_version != dev_version.format_version ||
+        img_version.oem_manuf_data_version != dev_version.oem_manuf_data_version ||
+        img_version.major_version != dev_version.major_version ||
+        img_version.major_vcn != dev_version.major_vcn ||
+        img_version.flags != dev_version.flags ||
+        img_version.data_arb_svn != dev_version.data_arb_svn)
     {
         fwupd_error("After the update fwdata version wasn't updated on the device\n");
         ret = EXIT_FAILURE;
