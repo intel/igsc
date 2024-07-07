@@ -1736,7 +1736,7 @@ int igsc_device_update_late_binding_config(IN struct  igsc_device_handle *handle
         goto exit;
     }
 
-    if (received_len < sizeof(resp))
+    if (received_len < sizeof(*resp))
     {
         gsc_error("Error in HECI read - bad size %zu\n", received_len);
         status = IGSC_ERROR_PROTOCOL;
@@ -1827,7 +1827,7 @@ static int gsc_get_version(struct igsc_lib_ctx *lib_ctx,
         goto exit;
     }
 
-    if (received_len < sizeof(resp))
+    if (received_len < sizeof(*resp))
     {
         gsc_error("Error in HECI read - bad size %zu\n", received_len);
         status = IGSC_ERROR_PROTOCOL;
