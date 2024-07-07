@@ -84,6 +84,11 @@ static inline int fopen_s(FILE **fp, const char *pathname, const char *mode)
 
 static void fwupd_strerror(int errnum, char *buf, size_t buflen)
 {
+    if (buflen == 0)
+    {
+        return;
+    }
+
     if (strerror_r(errnum, buf, buflen) != 0)
     {
          strncpy(buf, "Unknown error", buflen - 1);
@@ -96,6 +101,11 @@ static void fwupd_strerror(int errnum, char *buf, size_t buflen)
 #endif /* igsc_strdup */
 static void fwupd_strerror(int errnum, char *buf, size_t buflen)
 {
+    if (buflen == 0)
+    {
+        return;
+    }
+
     if (strerror_s(buf, buflen, errnum) != 0)
     {
          strncpy_s(buf, buflen, "Unknown error", buflen - 1);
