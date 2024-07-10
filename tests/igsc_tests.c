@@ -1272,6 +1272,7 @@ int main(void)
     status += cmocka_run_group_tests(get_type_tests, group_setup, NULL);
     status += cmocka_run_group_tests(get_version_tests, group_setup, NULL);
     status += cmocka_run_group_tests(gfsp_get_health_indicator_tests, group_setup, NULL);
+    status += cmocka_run_group_tests(gfsp_heci_cmd_tests, group_setup, NULL);
     status += cmocka_run_group_tests(late_binding_tests, group_setup, NULL);
     status += cmocka_run_group_tests(arbsvn_tests, group_setup, NULL);
     status += cmocka_run_group_tests(fwdata_tests, group_setup, NULL);
