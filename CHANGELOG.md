@@ -1,5 +1,18 @@
 # IGSC FUL
 
+## [v0.9.1] - 2024-07-11
+
+### Added
+1. cli: add a retry on igsc_device_fwdata_version2
+
+### Fixed
+1. ut: fix gfsc heci generic command test
+2. lib: fix response size check
+3. cli: fix possible memory leak in fwupd_strerror
+
+### Changed
+1. lib: expand firmware update errors handling
+
 ## [v0.9.0] - 2024-06-20
 
 ### Added
