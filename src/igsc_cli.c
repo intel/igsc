@@ -2792,7 +2792,14 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
     }
     print_img_fwdata_version(&img_version);
 
-    ret = igsc_device_fwdata_version2(handle, &dev_version);
+    retries = 0;
+    while ((ret = igsc_device_fwdata_version2(handle, &dev_version)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
+
     if (ret != IGSC_SUCCESS)
     {
         if (ret == IGSC_ERROR_PERMISSION_DENIED)
