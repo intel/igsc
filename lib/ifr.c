@@ -369,7 +369,7 @@ int igsc_gfsp_heci_cmd(struct igsc_device_handle *handle, uint32_t gfsp_cmd,
     struct gfsp_generic_req *req;
     struct gfsp_generic_res *resp;
 
-    if (!handle || !handle->ctx ||
+    if (!handle || !handle->ctx || !actual_out_buffer_size ||
         (!in_buffer && in_buffer_size) || (!out_buffer && out_buffer_size))
     {
         return IGSC_ERROR_INVALID_PARAMETER;
