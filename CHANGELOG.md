@@ -1,5 +1,10 @@
 # IGSC FUL
 
+## [v0.9.2] - 2024-07-15
+
+### Fixed
+1. lib: fix parameter check in igsc_gfsp_heci_cmd
+
 ## [v0.9.1] - 2024-07-11
 
 ### Added
