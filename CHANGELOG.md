@@ -8,11 +8,11 @@
 2. ut: add test for igsc_device_update_late_binding_config
 3. cli: add late-binding command line option
 4. lib: implement igsc_device_update_late_binding_config api
-3. lib: add general gfsp heci command api
-4. cli: add gfsp generic command to cli
-5. ut: add tests for general gfsp heci cmd library api
-6. doc: add generic gfsp heci message api documentation
-7. README: add testing compilation explanation
+5. lib: add general gfsp heci command api
+6. cli: add gfsp generic command to cli
+7. ut: add tests for general gfsp heci cmd library api
+8. doc: add generic gfsp heci message api documentation
+9. README: add testing compilation explanation
 
 ### Fixed
 1. lib: make OEM version an array of uint_8 instead of char
@@ -184,7 +184,7 @@
 3. ci: add quckbuild windows build script
 4. cmake: add windows presets
 5. cmake: add option to download dependencies from conan
-6. cmake: enchance metee search
+6. cmake: enhance metee search
 7. add error messages prints for unsupported hw config
 8. src: add check of the versions after update
 9. lib: add check of the versions after update
@@ -373,7 +373,7 @@ Note: non backward compatible change (num_of_tiles to max_num_of_tiles)
 ### Changed
 
 1. ut: remove obsolete definition of read_ifr_file
-2. cmake: enchance metee search
+2. cmake: enhance metee search
 
 ## [v0.6.0] - 2022-02-20
 
