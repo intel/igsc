@@ -114,7 +114,7 @@ macro(_conan_check_language)
         set(LANGUAGE C)
         set(USING_CXX 0)
     else ()
-        message(FATAL_ERROR "Conan: Neither C or C++ was detected as a language for the project. Unabled to detect compiler version.")
+        message(FATAL_ERROR "Conan: Neither C or C++ was detected as a language for the project. Unable to detect compiler version.")
     endif()
 endmacro()
 
