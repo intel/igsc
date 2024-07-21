@@ -34,10 +34,11 @@
 DEFINE_GUID(GUID_METEE_FWU, 0x87d90ca5, 0x3495, 0x4559,
             0x81, 0x05, 0x3f, 0xbf, 0xa3, 0x7b, 0x8b, 0x79);
 
-enum gsc_dg2_sku_id {
-    GSC_DG2_SKUID_SOC1 = 0,
-    GSC_DG2_SKUID_SOC2 = 1,
-    GSC_DG2_SKUID_SOC3 = 2
+enum gsc_sku_id {
+    GSC_SKUID_SOC1 = 0,
+    GSC_SKUID_SOC2 = 1,
+    GSC_SKUID_SOC3 = 2,
+    GSC_SKUID_SOC4 = 3
 };
 
 enum gsc_soc_step_id {
@@ -1524,17 +1525,21 @@ static int gsc_device_hw_config(struct igsc_lib_ctx *lib_ctx,
     hw_config_1->hw_step = resp->hw_step;
 
     /* convert to firmware bit mask for easier comparison */
-    if (resp->hw_sku == GSC_DG2_SKUID_SOC1)
+    if (resp->hw_sku == GSC_SKUID_SOC1)
     {
         hw_config_1->hw_sku = GSC_IFWI_TAG_SOC1_SKU_BIT;
     }
-    else if (resp->hw_sku == GSC_DG2_SKUID_SOC3)
+    else if (resp->hw_sku == GSC_SKUID_SOC3)
     {
         hw_config_1->hw_sku = GSC_IFWI_TAG_SOC3_SKU_BIT;
     }
-    else if (resp->hw_sku == GSC_DG2_SKUID_SOC2)
+    else if (resp->hw_sku == GSC_SKUID_SOC2)
     {
         hw_config_1->hw_sku = GSC_IFWI_TAG_SOC2_SKU_BIT;
+    }
+    else if (resp->hw_sku == GSC_SKUID_SOC4)
+    {
+        hw_config_1->hw_sku = GSC_IFWI_TAG_SOC4_SKU_BIT;
     }
     else
     {
@@ -1648,10 +1653,11 @@ int igsc_hw_config_to_string(IN const struct igsc_hw_config *hw_config,
     }
     else
     {
-        ret = snprintf(buf, length, "hw sku: [ %s%s%s]",
+        ret = snprintf(buf, length, "hw sku: [ %s%s%s%s]",
+                       (GSC_IFWI_TAG_SOC1_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "SOC1 " : "",
                        (GSC_IFWI_TAG_SOC2_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "SOC2 " : "",
                        (GSC_IFWI_TAG_SOC3_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "SOC3 " : "",
-                       (GSC_IFWI_TAG_SOC1_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "SOC1 " : "");
+                       (GSC_IFWI_TAG_SOC4_SKU_BIT & to_hw_config_1(hw_config)->hw_sku) ? "SOC4 " : "");
     }
     if (ret < 0)
     {

@@ -99,6 +99,7 @@ struct gsc_fwu_fpt_img {
 #define  GSC_IFWI_TAG_SOC2_SKU_BIT BIT(0)
 #define  GSC_IFWI_TAG_SOC3_SKU_BIT BIT(1)
 #define  GSC_IFWI_TAG_SOC1_SKU_BIT BIT(2)
+#define  GSC_IFWI_TAG_SOC4_SKU_BIT BIT(3)
 
 /**
  * @brief firmware update image info
