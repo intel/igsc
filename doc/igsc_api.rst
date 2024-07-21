@@ -52,7 +52,7 @@ image.
 
   * *Under Linux:* A file descriptor returned by `int open(2)`
 
-  * *Under Windows:* A file handle returned by `HANLDE CreateFile()`
+  * *Under Windows:* A file handle returned by `HANDLE CreateFile()`
 
 .. code-block:: c
 
@@ -555,7 +555,7 @@ which holds paring state of the OPROM image information.
           uint32_t *buf = NULL;
           size_t buf_len = 0;
           struct igsc_device_info device;
-          struct igsc_device_handle *hadnle;
+          struct igsc_device_handle *handle;
 
           device_path = argv[1];
 
@@ -671,7 +671,7 @@ which holds paring state of the OPROM image information.
 
       int main(int argc, char *argv[])
       {
-          struct igsc_device_handle *hadnle;
+          struct igsc_device_handle *handle;
           uint8_t run_status = 0;
           uint32_t error_code = 0;
           uint8_t result = 0;
@@ -761,7 +761,7 @@ which holds paring state of the OPROM image information.
 
       int main(int argc, char *argv[])
       {
-          struct igsc_device_handle *hadnle;
+          struct igsc_device_handle *handle;
           int ret;
           char *device_path;
           uint32_t device_num = 0;

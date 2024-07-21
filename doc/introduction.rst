@@ -92,7 +92,7 @@ library enables some of those checks to be done prior to writing to device.
    the FW will move to phase 2. There is no response to that message .
 
 5. The start to pools `FWSTS1` on `completion` bit and `fw update state` bit,
-   while firmware perform additional step and reboots. When the `competion` bit
+   while firmware perform additional step and reboots. When the `completion` bit
    is set and `fw udate state` is idle the process has completed.
 6. The library queries for firmware version again and verifies that the new
 7. The library sends `fw no update` message.
