@@ -1,4 +1,4 @@
 [codespell]
-quiet-level=4
-ignore-words=.codespell-allowlist
-skip=./.git,*.svg,*.png,.codespell-whitelist,./codespell/codespell.log
+quiet-level = 38
+skip = .git,*.svg,*.png,*.dat,./codespell.log,**/metee/**
+ignore-words-list = FPT,fpt
