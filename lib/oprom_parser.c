@@ -549,7 +549,7 @@ int image_oprom_parse(struct igsc_oprom_image *img)
     /* the Data and Code sections each followed by unspecified number of other sections. */
     /* Also, we assume that the first PCI header of each has the required code_type */
     /* (Data or Code). The subsequent PCI headers may have different code_type and thus */
-    /* we do not parse them, instead we only add them to the correcponding part */
+    /* we do not parse them, instead we only add them to the corresponding part */
 
     if (img == NULL)
     {

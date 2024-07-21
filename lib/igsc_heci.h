@@ -114,7 +114,7 @@ enum gsc_fwu_heci_payload_type {
     GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW     = 1, /**< graphics firmware                    */
     GSC_FWU_HECI_PAYLOAD_TYPE_OPROM_DATA = 2, /**< oprom data partition                 */
     GSC_FWU_HECI_PAYLOAD_TYPE_OPROM_CODE = 3, /**< oprom code partition                 */
-    GSC_FWU_HECI_PAYLOAD_TYPE_IAF_PSC    = 4, /**< acclerator fabric configuration data */
+    GSC_FWU_HECI_PAYLOAD_TYPE_IAF_PSC    = 4, /**< accelerator fabric configuration data */
     GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA     = 5, /**< firmware data partition              */
 };
 
