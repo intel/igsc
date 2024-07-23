@@ -1,5 +1,18 @@
 # IGSC FUL
 
+## [v0.9.3] - 2024-07-23
+
+### Fixed
+1. conan: fix typo in conan.cmake
+2. lib: fix typos in the library
+3. doc: fix typos in api documentation
+4. ci: fix-up codespell configuration
+5. ut: check for null before strlen in test_strdup
+6. lib: fix igsc_get_log_callback_func prototype
+
+### Added
+1. lib: add soc4 hardware sku
+
 ## [v0.9.2] - 2024-07-15
 
 ### Fixed
