@@ -35,7 +35,7 @@ void igsc_set_log_callback_func(igsc_log_func_t log_f)
     igsc_log_func = log_f;
 }
 
-igsc_log_func_t igsc_get_log_callback_func()
+igsc_log_func_t igsc_get_log_callback_func(void)
 {
     return igsc_log_func;
 }
