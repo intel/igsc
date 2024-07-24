@@ -8,16 +8,7 @@
 #include <string.h>
 #include <cmocka.h>
 
-char *test_strdup(const char *str)
-{
-    char *new_str = malloc(strlen(str) + 1);
-    if (new_str)
-    {
-        strcpy(new_str, str);
-    }
-
-    return new_str;
-}
+#include "test_strdup.h"
 
 #include "igsc_lib.h"
 #include "dev_info_mock.c"
