@@ -58,12 +58,25 @@ int igsc_device_iterator_create(struct igsc_device_iterator **iter)
         goto clean_udev;
     }
 
-    udev_enumerate_add_match_sysattr(it->enumerate, "kind", "gscfi");
-    udev_enumerate_scan_devices(it->enumerate);
+    if ((ret = udev_enumerate_add_match_sysattr(it->enumerate, "kind", "gscfi")) < 0)
+    {
+        gsc_error("Cannot match udev sysattr: %d\n", ret);
+        ret = IGSC_ERROR_INTERNAL;
+        goto clean_enum;
+    }
+
+    if ((ret = udev_enumerate_scan_devices(it->enumerate)) < 0)
+    {
+        gsc_error("Cannot scan udev devices: %d\n", ret);
+        ret = IGSC_ERROR_INTERNAL;
+        goto clean_enum;
+    }
     it->entry = NULL;
     *iter = it;
 
     return IGSC_SUCCESS;
+clean_enum:
+    udev_enumerate_unref(it->enumerate);
 clean_udev:
     udev_unref(it->udev);
 clean_iter:
@@ -88,13 +101,21 @@ static int get_device_info(struct udev_device *dev,
 {
 
     struct udev_device *parent;
+    const char *sysname;
     const char *prop;
     int ret;
 
-    ret = snprintf(info->name, IGSC_INFO_NAME_SIZE, "/dev/%s",
-                   udev_device_get_sysname(dev));
+    sysname = udev_device_get_sysname(dev);
+    if (!sysname)
+    {
+        gsc_error("failed to get udev device sysname");
+        return IGSC_ERROR_INTERNAL;
+    }
+
+    ret = snprintf(info->name, IGSC_INFO_NAME_SIZE, "/dev/%s", sysname);
     if (ret < 0 || ret >= IGSC_INFO_NAME_SIZE)
     {
+        gsc_error("snprintf failed with %d", ret);
         return IGSC_ERROR_INTERNAL;
     }
     info->name[IGSC_INFO_NAME_SIZE - 1] = '\0';
@@ -103,8 +124,7 @@ static int get_device_info(struct udev_device *dev,
     parent = udev_device_get_parent_with_subsystem_devtype(dev, "pci", NULL);
     if (parent == NULL)
     {
-        gsc_error("Can't find device parent for '%s'\n",
-                  udev_device_get_sysname(dev));
+        gsc_error("Can't find device parent for '%s'\n", sysname);
         return IGSC_ERROR_INTERNAL;
     }
 
@@ -113,12 +133,22 @@ static int get_device_info(struct udev_device *dev,
     {
         sscanf(prop, "%hx:%hx", &info->vendor_id, &info->device_id);
     }
+    else
+    {
+        gsc_error("failed get PCI_ID property value for parent of '%s'", sysname);
+        return IGSC_ERROR_INTERNAL;
+    }
     prop = udev_device_get_property_value(parent, "PCI_SUBSYS_ID");
     if (prop)
     {
         sscanf(prop, "%hx:%hx",
                &info->subsys_vendor_id,
                &info->subsys_device_id);
+    }
+    else
+    {
+        gsc_error("failed get PCI_SUBSYS_ID property value for parent of '%s'", sysname);
+        return IGSC_ERROR_INTERNAL;
     }
     prop = udev_device_get_sysname(parent);
     if (prop)
@@ -128,6 +158,11 @@ static int get_device_info(struct udev_device *dev,
                &info->bus,
                &info->dev,
                &info->func);
+    }
+    else
+    {
+        gsc_error("failed to get udev device parent sysname of '%s'", sysname);
+        return IGSC_ERROR_INTERNAL;
     }
     return IGSC_SUCCESS;
 }
