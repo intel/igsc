@@ -4879,11 +4879,16 @@ static int do_list_devices(int argc, char *argv[])
         info.name[0] = '\0';
         (void)igsc_device_close(&handle);
     }
-    igsc_device_iterator_destroy(iter);
     if (ret == IGSC_ERROR_DEVICE_NOT_FOUND)
     {
         ret = EXIT_SUCCESS;
     }
+    else
+    {
+        fwupd_error("Failure in the device iterator: %d\n", ret);
+    }
+    igsc_device_iterator_destroy(iter);
+
     if (ndevices == 0)
     {
         fwupd_msg("No device found\n");
