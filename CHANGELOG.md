@@ -1,5 +1,19 @@
 # IGSC FUL
 
+## [v0.9.4] - 2024-09-19
+
+### Added
+1. lib: add timestamps to logs
+2. cli: implement read firmware status register in cli
+3. lib: implement read firmware status register library API
+4. cli: print error message when device iterator failed
+
+### Changed
+1. lib: don't suppress metee error messages in debug mode
+
+### Fixed
+1. igsc: lib: fix device enumeration in linux
+
 ## [v0.9.3] - 2024-07-23
 
 ### Fixed
