@@ -418,7 +418,7 @@ typedef void (*igsc_log_func_t)(enum igsc_log_level_type log_level, const char* 
  *          when the thread setting callback exists without setting this
  *          call-back function to NULL while other thread from same app continues to run.
  *
- *  @param igsc_log_func_t pointer to the callback function for igsc library log messages.
+ *  @param log_callback_f pointer to the callback function for igsc library log messages.
  *          passing NULL to this will disable logging callback function.
  *  @return void.
  */
@@ -551,7 +551,7 @@ int igsc_device_hw_config(IN  struct igsc_device_handle *handle,
  *  @brief Retrieves the subsystem ids (vid/did) from the device
  *
  *  @param handle A handle to the device.
- *  @param hw_config The memory to store obtained subsystem ids
+ *  @param ssids The memory to store obtained subsystem ids
  *
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  *  @return IGSC_ERROR_NOT_SUPPORTED if feature is not supported
@@ -579,7 +579,7 @@ int igsc_image_hw_config(IN  const uint8_t *buffer,
  *  @brief Check whether image hardware configuration compatible with
  *  device hardware configuration.
  *
- *  @param igsc_hw_config Stores the image hardware configuration.
+ *  @param image_hw_config Stores the image hardware configuration.
  *  @param device_hw_config Stores the device hardware configuration.
  *
  *  @return IGSC_SUCCESS if image hardware configuration compatible with device.
@@ -963,6 +963,7 @@ int igsc_image_oprom_init(IN OUT struct igsc_oprom_image **img,
  *  @brief Retrieves the OPROM version from the supplied OPROM update image.
  *
  *  @param img OPROM image handle
+ *  @param type OPROM image type @see enum igsc_oprom_type
  *  @param version The memory to store the obtained OPROM version.
  *
  *  @return IGSC_SUCCESS if successful, otherwise error code.
@@ -1144,7 +1145,7 @@ int igsc_image_oprom_has_2ids_extension(IN struct igsc_oprom_image *img,
 /**
  *  @brief returns whether the oprom code config has devId enforcement bit set
  *
- *  @param igsc_hw_config device hardware configuration.
+ *  @param hw_config device hardware configuration.
  *  @param devid_enforced true when devId is enforced, false otherwise
  *
  *  @return IGSC_SUCCESS if successful, otherwise error code.
@@ -1366,6 +1367,7 @@ int igsc_gfsp_count_tiles(IN  struct igsc_device_handle *handle,
 IGSC_EXPORT
 int igsc_gfsp_memory_errors(IN struct igsc_device_handle *handle,
                             IN OUT struct igsc_gfsp_mem_err *tiles);
+
 /**
  * IFR pending reset values definition
  */
@@ -1627,6 +1629,7 @@ int igsc_gfsp_get_health_indicator(IN struct igsc_device_handle *handle,
  *  @brief Send generic GFSP command and receive response
  *
  *  @param handle A handle to the device.
+ *  @param gfsp_cmd command id
  *  @param in_buffer pointer to the input buffer
  *  @param in_buffer_size input buffer size
  *  @param out_buffer pointer to the output buffer
