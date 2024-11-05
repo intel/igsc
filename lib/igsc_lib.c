@@ -82,7 +82,7 @@ static int status_tee2fu(TEESTATUS status)
     }
 }
 
-static void gsc_trace_hex_dump(const char *title, const void *buf, size_t len)
+static void __gsc_trace_hex_dump(const char *title, const void *buf, size_t len)
 {
 #define pbufsz (16 * 3)
     char pbuf[pbufsz];
@@ -105,6 +105,12 @@ static void gsc_trace_hex_dump(const char *title, const void *buf, size_t len)
     {
         trace_print("%s\n", pbuf);
     }
+}
+
+static inline void gsc_trace_hex_dump(const char* title, const void* buf, size_t len)
+{
+    if (igsc_get_log_level() >= IGSC_LOG_LEVEL_TRACE)
+        __gsc_trace_hex_dump(title, buf, len);
 }
 
 mockable_static
