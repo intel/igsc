@@ -1,5 +1,12 @@
 # IGSC FUL
 
+## [v0.9.5] - 2024-11-06
+
+### Fixed
+1. enable traffic dump in trace mode only
+2. doc: fix doxygen generation
+3. fix API documentation in header file
+
 ## [v0.9.4] - 2024-09-19
 
 ### Added
@@ -12,7 +19,7 @@
 1. lib: don't suppress metee error messages in debug mode
 
 ### Fixed
-1. igsc: lib: fix device enumeration in linux
+1. lib: fix device enumeration in linux
 
 ## [v0.9.3] - 2024-07-23
 
