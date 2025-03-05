@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright (C) 2019-2023 Intel Corporation
+# Copyright (C) 2019-2025 Intel Corporation
 cmake_minimum_required(VERSION 3.10)
 project(igsc C)
 set(LICENSE Apache)
@@ -22,19 +22,10 @@ option(ENABLE_WERROR "Enable treat warnings as error" ON)
 option(ENABLE_CLI "Enable command line tool build" ON)
 option(ENABLE_TEST_GENERIC_GFSP_API "Enable test generic GFSP API" ON)
 option(BUILD_SHARED_LIBS "Build shared library" ON)
-option (BUILD_USE_CONAN "Use Conan for dependencies download" NO)
 
 include(CMakeDependentOption)
 cmake_dependent_option(TESTS_ENABLED "Perform unit tests after build" ON "ENABLE_CLI;ENABLE_TESTS" OFF)
 
-if(BUILD_USE_CONAN)
-  include(conan)
-  conan_cmake_autodetect(settings)
-  # conan.cmake failed to detect MT, force-replace it
-  string(REPLACE "compiler.runtime=MD" "compiler.runtime=MT" flags "${settings}")
-  conan_cmake_install(PATH_OR_REFERENCE ${CMAKE_CURRENT_SOURCE_DIR} SETTINGS ${flags})
-endif()
-message(${CMAKE_MODULE_PATH})
 include(metee.cmake)
 
 set(COMPILE_OPTIONS_NX
