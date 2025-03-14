@@ -86,7 +86,7 @@ configure_file(cmake/${PROJECT_NAME}Config.cmake
   "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}/${PROJECT_NAME}Config.cmake"
   COPYONLY
 )
-set(ConfigPackageLocation lib/cmake/${PROJECT_NAME})
+set(ConfigPackageLocation ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 install(EXPORT ${PROJECT_NAME}Targets
   FILE ${PROJECT_NAME}Targets.cmake
   NAMESPACE ${PROJECT_NAME}::
