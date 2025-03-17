@@ -81,7 +81,7 @@ min-line-count=1
 # python like regex (https://docs.python.org/2/library/re.html) that the
 # commit author email address should be matched to
 # For example, use the following regex if you only want to allow email addresses from foo.com
-regex=[^@]+@intel.com
+#regex=[^@]+@intel.com
 
 # [ignore-by-title]
 # Ignore certain rules for commits of which the title matches a regex
