@@ -1,4 +1,4 @@
-# Intel(R) Graphics System Controller Firmware Update Library (IGSC FU)
+# Intel(R) Graphics System Controller Firmware Update Library (IGSC FUL)
 --------------------------------------------------------------------------
 
 ## Introduction
@@ -27,7 +27,7 @@
 
   * libudev (libudev-dev package in Debian)
 
-Both cmake and meson build framework are supported.
+Both CMake and meson build framework are supported.
 
 ### CMake
 
