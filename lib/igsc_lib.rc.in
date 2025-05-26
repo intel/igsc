@@ -73,7 +73,7 @@ BEGIN
             VALUE "FileDescription", "IGSC Firmware Update library"
             VALUE "FileVersion", "@GSC_VERSION_STRING@"
             VALUE "InternalName", "igsc_lib"
-            VALUE "LegalCopyright", "Copyright (c) 2020, Intel Corporation."
+            VALUE "LegalCopyright", "Copyright (C) 2020, Intel Corporation."
             VALUE "OriginalFilename", "igsc.dll"
             VALUE "ProductName", "Intel(r) Graphics System Controller Firmware Update library"
             VALUE "ProductVersion", "@GSC_VERSION_STRING@"
