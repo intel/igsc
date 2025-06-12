@@ -58,6 +58,13 @@ int igsc_device_iterator_create(struct igsc_device_iterator **iter)
         goto clean_udev;
     }
 
+    if ((ret = udev_enumerate_add_match_subsystem(it->enumerate, "mei")) < 0)
+    {
+        gsc_error("Failed to add mei subsystem filter: %d\n", ret);
+        ret = IGSC_ERROR_INTERNAL;
+        goto clean_enum;
+    }
+
     if ((ret = udev_enumerate_add_match_sysattr(it->enumerate, "kind", "gscfi")) < 0)
     {
         gsc_error("Cannot match udev sysattr: %d\n", ret);
