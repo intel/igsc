@@ -93,7 +93,7 @@ From the "Developer Command Prompt for VS 2019" with CMake component installed:
 
 `# igsc oprom-data update --image <fw image file>`
 
-### Library and CLI Version
+## Library and CLI Version
 
 The library is versioned according [semantic versioning 2.0.0](https://semver.org/ "semantic versioning")
 
@@ -103,3 +103,6 @@ The library is versioned according [semantic versioning 2.0.0](https://semver.or
  * *MINOR* add functionality in a backwards compatible manner
  * *PATCH* version when you make backwards compatible bug fixes.
  * *Extension Label* git shortened commit hash or other extension.
+
+## Artificial Intelligence
+ These contents may have been developed with support from one or more Intel-operated generative artificial intelligence solutions.
