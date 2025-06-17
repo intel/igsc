@@ -1,5 +1,23 @@
 # IGSC FUL
 
+## [v0.9.6] - 2025-06-17
+
+### Changed
+1. enum: optimize search in udev
+2. gitlint: drop requirement for intel address
+
+### Removed
+1. CMake: drop Conan support
+
+### Fixed
+1. Windows: fix copyright string
+2. CMake: consume four-part version
+3. small README fixes
+4. cmake: Don't hardcode LIBDIR for installed cmake files
+
+### Added
+1. README: add AI disclaimer
+
 ## [v0.9.5] - 2024-11-06
 
 ### Fixed
