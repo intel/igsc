@@ -39,17 +39,17 @@ static bool verbose = false;
 static bool quiet = false;
 static bool use_progress_bar = false;
 
-#define fwupd_verbose(fmt, ...) do {          \
+#define igsc_verbose(fmt, ...) do {          \
     if (verbose && !quiet)                    \
         fprintf(stderr, fmt, ##__VA_ARGS__);  \
 } while (0)
 
-#define fwupd_error(fmt, ...) do {                     \
+#define igsc_error(fmt, ...) do {                     \
     if (!quiet)                                        \
         fprintf(stderr, "Error: " fmt, ##__VA_ARGS__); \
 } while (0)
 
-#define fwupd_msg(fmt, ...) do {               \
+#define igsc_msg(fmt, ...) do {               \
     if (!quiet)                                \
         fprintf(stdout, fmt, ##__VA_ARGS__);   \
 } while (0)
@@ -82,7 +82,7 @@ static inline int fopen_s(FILE **fp, const char *pathname, const char *mode)
     return errno;
 }
 
-static void fwupd_strerror(int errnum, char *buf, size_t buflen)
+static void igsc_strerror(int errnum, char *buf, size_t buflen)
 {
     if (buflen == 0)
     {
@@ -99,7 +99,7 @@ static void fwupd_strerror(int errnum, char *buf, size_t buflen)
 #ifndef igsc_strdup
 #define igsc_strdup _strdup
 #endif /* igsc_strdup */
-static void fwupd_strerror(int errnum, char *buf, size_t buflen)
+static void igsc_strerror(int errnum, char *buf, size_t buflen)
 {
     if (buflen == 0)
     {
@@ -274,14 +274,14 @@ static struct img *image_read_from_file(const char *p_path)
 
     if (fopen_s(&fp, p_path, "rb") != 0 || fp == NULL)
     {
-        fwupd_strerror(errno, err_msg, sizeof(err_msg));
-        fwupd_verbose("Failed to open file %s : %s\n", p_path, err_msg);
+        igsc_strerror(errno, err_msg, sizeof(err_msg));
+        igsc_verbose("Failed to open file %s : %s\n", p_path, err_msg);
         goto exit;
     }
 
     if (fseek(fp, 0L, SEEK_END) != 0)
     {
-        fwupd_verbose("Failed to get file size %s : %s\n",
+        igsc_verbose("Failed to get file size %s : %s\n",
                       p_path, err_msg);
         goto exit;
     }
@@ -289,22 +289,22 @@ static struct img *image_read_from_file(const char *p_path)
     file_size = ftell(fp);
     if (file_size < 0)
     {
-        fwupd_strerror(errno, err_msg, sizeof(err_msg));
-        fwupd_verbose("Failed to get file size %s : %s\n",
+        igsc_strerror(errno, err_msg, sizeof(err_msg));
+        igsc_verbose("Failed to get file size %s : %s\n",
                       p_path, err_msg);
         goto exit;
     }
 
     if (file_size > IGSC_MAX_IMAGE_SIZE)
     {
-        fwupd_verbose("Update image size (%ld) too large\n", file_size);
+        igsc_verbose("Update image size (%ld) too large\n", file_size);
         goto exit;
     }
 
     if (fseek(fp, 0L, SEEK_SET) != 0)
     {
-        fwupd_strerror(errno, err_msg, sizeof(err_msg));
-        fwupd_verbose("Failed to reset file position %s : %s\n",
+        igsc_strerror(errno, err_msg, sizeof(err_msg));
+        igsc_verbose("Failed to reset file position %s : %s\n",
                       p_path, err_msg);
         goto exit;
     }
@@ -312,15 +312,15 @@ static struct img *image_read_from_file(const char *p_path)
     img = (struct img *)malloc((size_t)file_size + sizeof(*img));
     if (img == NULL)
     {
-        fwupd_strerror(errno, err_msg, sizeof(err_msg));
-        fwupd_verbose("Failed to allocate memory %s\n", err_msg);
+        igsc_strerror(errno, err_msg, sizeof(err_msg));
+        igsc_verbose("Failed to allocate memory %s\n", err_msg);
         goto exit;
     }
 
     if (fread(img->blob, 1, (size_t)file_size, fp) != (size_t)file_size)
     {
-        fwupd_strerror(errno, err_msg, sizeof(err_msg));
-        fwupd_verbose("Failed to read file %s : %s\n",
+        igsc_strerror(errno, err_msg, sizeof(err_msg));
+        igsc_verbose("Failed to read file %s : %s\n",
                       p_path, err_msg);
         goto exit;
     }
@@ -406,7 +406,7 @@ int get_health_indicator(struct igsc_device_handle *handle)
 
     if (!handle)
     {
-        fwupd_error("Illegal parameter\n");
+        igsc_error("Illegal parameter\n");
         return EXIT_FAILURE;
     }
 
@@ -416,12 +416,12 @@ int get_health_indicator(struct igsc_device_handle *handle)
 
     if (ret)
     {
-        fwupd_error("Failed to get memory health indicator, library return code %d\n", ret);
+        igsc_error("Failed to get memory health indicator, library return code %d\n", ret);
         return EXIT_FAILURE;
     }
     if (actual_response_size < sizeof(*resp))
     {
-        fwupd_error("Failed to receive memory health indicator, expected %zu bytes, got %zu byte\n",
+        igsc_error("Failed to receive memory health indicator, expected %zu bytes, got %zu byte\n",
                     sizeof(*resp), actual_response_size);
         return EXIT_FAILURE;
     }
@@ -443,7 +443,7 @@ int get_health_indicator(struct igsc_device_handle *handle)
 
     if (!handle)
     {
-        fwupd_error("Illegal parameter\n");
+        igsc_error("Illegal parameter\n");
         return EXIT_FAILURE;
     }
 
@@ -456,7 +456,7 @@ int get_health_indicator(struct igsc_device_handle *handle)
     }
     if (ret)
     {
-        fwupd_error("Failed to get memory health indicator, library return code %d\n", ret);
+        igsc_error("Failed to get memory health indicator, library return code %d\n", ret);
         return EXIT_FAILURE;
     }
 
@@ -477,7 +477,7 @@ int get_first_device_info(struct igsc_device_info *dev_info)
     ret = igsc_device_iterator_create(&iter);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Cannot create device iterator\n");
+        igsc_error("Cannot create device iterator\n");
         return EXIT_FAILURE;
     }
 
@@ -496,7 +496,7 @@ static int get_first_device(char **device_path)
     ret = igsc_device_iterator_create(&iter);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Cannot create device iterator\n");
+        igsc_error("Cannot create device iterator\n");
         return EXIT_FAILURE;
     }
 
@@ -709,7 +709,7 @@ struct gsc_op {
 
 static inline void print_device_fw_status(struct igsc_device_handle *handle)
 {
-    fwupd_msg("Firmware status: %s (0x%x)\n",
+    igsc_msg("Firmware status: %s (0x%x)\n",
               igsc_translate_firmware_status(igsc_get_last_firmware_status(handle)),
               igsc_get_last_firmware_status(handle));
 }
@@ -730,7 +730,7 @@ int iaf_psc_update(const char *device_path, const char *image_path)
         if (get_first_device(&device_path_found) != IGSC_SUCCESS ||
             device_path_found == NULL)
         {
-            fwupd_error("No device to update\n");
+            igsc_error("No device to update\n");
             return EXIT_FAILURE;
         }
         device_path = device_path_found;
@@ -740,14 +740,14 @@ int iaf_psc_update(const char *device_path, const char *image_path)
     if (img == NULL)
     {
         ret = EXIT_FAILURE;
-        fwupd_error("Failed to read :%s\n", image_path);
+        igsc_error("Failed to read :%s\n", image_path);
         goto exit;
     }
 
     ret = igsc_device_init_by_device(&handle, device_path);
     if (ret)
     {
-        fwupd_error("Cannot initialize device: %s\n", device_path);
+        igsc_error("Cannot initialize device: %s\n", device_path);
         goto exit;
     }
 
@@ -773,7 +773,7 @@ int iaf_psc_update(const char *device_path, const char *image_path)
     }
     if (ret)
     {
-        fwupd_error("Update process failed\n");
+        igsc_error("Update process failed\n");
         print_device_fw_status(&handle);
     }
 
@@ -848,7 +848,7 @@ int firmware_update(const char *device_path,
         if (get_first_device(&device_path_found) != IGSC_SUCCESS ||
             device_path_found == NULL)
         {
-            fwupd_error("No device to update\n");
+            igsc_error("No device to update\n");
             return EXIT_FAILURE;
         }
         device_path = device_path_found;
@@ -858,7 +858,7 @@ int firmware_update(const char *device_path,
     if (img == NULL)
     {
         ret = EXIT_FAILURE;
-        fwupd_error("Failed to read :%s\n", image_path);
+        igsc_error("Failed to read :%s\n", image_path);
         goto exit;
     }
 
@@ -866,7 +866,7 @@ int firmware_update(const char *device_path,
     ret = igsc_image_fw_version(img->blob, img->size, &image_fw_version);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Cannot retrieve firmware version from image: %s\n", image_path);
+        igsc_error("Cannot retrieve firmware version from image: %s\n", image_path);
         goto exit;
     }
 
@@ -875,7 +875,7 @@ int firmware_update(const char *device_path,
     ret = igsc_device_init_by_device(&handle, device_path);
     if (ret)
     {
-        fwupd_error("Cannot initialize device: %s\n", device_path);
+        igsc_error("Cannot initialize device: %s\n", device_path);
         goto exit;
     }
 
@@ -891,11 +891,11 @@ int firmware_update(const char *device_path,
     {
         if (ret == IGSC_ERROR_PERMISSION_DENIED)
         {
-            fwupd_error("Permission denied: missing required credentials to access the device: %s\n", device_path);
+            igsc_error("Permission denied: missing required credentials to access the device: %s\n", device_path);
         }
         else
         {
-            fwupd_error("Cannot retrieve firmware version from device: %s\n", device_path);
+            igsc_error("Cannot retrieve firmware version from device: %s\n", device_path);
             print_device_fw_status(&handle);
         }
         goto exit;
@@ -908,7 +908,7 @@ int firmware_update(const char *device_path,
     case IGSC_VERSION_NEWER:
         break;
     case IGSC_VERSION_NOT_COMPATIBLE:
-        fwupd_error("Firmware version is not compatible with the installed one\n");
+        igsc_error("Firmware version is not compatible with the installed one\n");
         ret = EXIT_FAILURE;
         goto exit;
     case IGSC_VERSION_OLDER:
@@ -916,13 +916,13 @@ int firmware_update(const char *device_path,
     case IGSC_VERSION_EQUAL:
         if (!allow_downgrade)
         {
-            fwupd_error("In order to update run with -a | --allow-downgrade\n");
+            igsc_error("In order to update run with -a | --allow-downgrade\n");
             ret = IGSC_ERROR_BAD_IMAGE;
             goto exit;
         }
         break;
     default:
-        fwupd_error("Firmware version error in comparison\n");
+        igsc_error("Firmware version error in comparison\n");
         ret = EXIT_FAILURE;
         goto exit;
     }
@@ -942,7 +942,7 @@ int firmware_update(const char *device_path,
     ret = firmware_check_hw_config(&handle, img);
     if (ret == IGSC_ERROR_INCOMPATIBLE)
     {
-        fwupd_error("The firmware image in %s is incompatible with the device %s\n",
+        igsc_error("The firmware image in %s is incompatible with the device %s\n",
                     image_path, device_path);
         ret = EXIT_FAILURE;
         goto exit;
@@ -967,7 +967,7 @@ int firmware_update(const char *device_path,
     }
     if (ret)
     {
-        fwupd_error("Update process failed\n");
+        igsc_error("Update process failed\n");
         print_device_fw_status(&handle);
     }
     /* delay between the update and version retrieve */
@@ -983,7 +983,7 @@ int firmware_update(const char *device_path,
     }
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Cannot retrieve firmware version from device: %s\n", device_path);
+        igsc_error("Cannot retrieve firmware version from device: %s\n", device_path);
         print_device_fw_status(&handle);
         goto exit;
     }
@@ -992,7 +992,7 @@ int firmware_update(const char *device_path,
     /* check the new version */
     if (memcmp(&image_fw_version, &device_fw_version, sizeof(struct igsc_fw_version)))
     {
-        fwupd_error("After the update fw version wasn't updated on the device\n");
+        igsc_error("After the update fw version wasn't updated on the device\n");
         ret = EXIT_FAILURE;
         goto exit;
     }
@@ -1017,7 +1017,7 @@ int firmware_version(const char *device_path)
     ret = igsc_device_init_by_device(&handle, device_path);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Cannot initialize device: %s\n", device_path);
+        igsc_error("Cannot initialize device: %s\n", device_path);
         goto exit;
     }
 
@@ -1032,11 +1032,11 @@ int firmware_version(const char *device_path)
     {
         if (ret == IGSC_ERROR_PERMISSION_DENIED)
         {
-           fwupd_error("Permission denied: missing required credentials to access the device %s\n", device_path);
+           igsc_error("Permission denied: missing required credentials to access the device %s\n", device_path);
         }
         else
         {
-            fwupd_error("Cannot retrieve firmware version from device: %s\n", device_path);
+            igsc_error("Cannot retrieve firmware version from device: %s\n", device_path);
             print_device_fw_status(&handle);
         }
         goto exit;
@@ -1069,7 +1069,7 @@ int arbsvn_commit(struct igsc_device_handle *handle)
     }
     else
     {
-       fwupd_error("ARB SVN Commit failed with return value %d, firmware error is %u\n",
+       igsc_error("ARB SVN Commit failed with return value %d, firmware error is %u\n",
                    ret, fw_error);
     }
     return ret;
@@ -1094,7 +1094,7 @@ int arbsvn_get_min_allowed_svn(struct igsc_device_handle *handle)
     }
     else
     {
-       fwupd_error("Failed to retrieve Minimal allowed ARB SVN, return value is %d\n", ret);
+       igsc_error("Failed to retrieve Minimal allowed ARB SVN, return value is %d\n", ret);
     }
     return ret;
 }
@@ -1117,10 +1117,10 @@ int oem_version(struct igsc_device_handle *handle)
     {
         if (ret == IGSC_ERROR_PERMISSION_DENIED)
         {
-           fwupd_error("Permission denied: missing required credentials to access the device\n");
+           igsc_error("Permission denied: missing required credentials to access the device\n");
         }
         else {
-            fwupd_error("Cannot retrieve OEM version from device\n");
+            igsc_error("Cannot retrieve OEM version from device\n");
             print_device_fw_status(handle);
         }
         return EXIT_FAILURE;
@@ -1149,10 +1149,10 @@ int iaf_psc_version(struct igsc_device_handle *handle)
     {
         if (ret == IGSC_ERROR_PERMISSION_DENIED)
         {
-           fwupd_error("Permission denied: missing required credentials to access the device\n");
+           igsc_error("Permission denied: missing required credentials to access the device\n");
         }
         else {
-            fwupd_error("Cannot retrieve PSC version from device\n");
+            igsc_error("Cannot retrieve PSC version from device\n");
             print_device_fw_status(handle);
         }
         return EXIT_FAILURE;
@@ -1172,7 +1172,7 @@ int image_version(const char *image_path)
     img = image_read_from_file(image_path);
     if (img == NULL)
     {
-        fwupd_error("Failed to read :%s\n", image_path);
+        igsc_error("Failed to read :%s\n", image_path);
         ret = EXIT_FAILURE;
         goto exit;
     }
@@ -1180,7 +1180,7 @@ int image_version(const char *image_path)
     ret = igsc_image_fw_version(img->blob, img->size, &fw_version);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Cannot retrieve firmware version from image: %s\n", image_path);
+        igsc_error("Cannot retrieve firmware version from image: %s\n", image_path);
         goto exit;
     }
     print_img_fw_version(&fw_version);
@@ -1204,7 +1204,7 @@ static int do_firmware_version(int argc, char *argv[])
         {
             return image_version(argv[1]);
         }
-        fwupd_error("Wrong argument %s\n", argv[0]);
+        igsc_error("Wrong argument %s\n", argv[0]);
         return ERROR_BAD_ARGUMENT;
     }
     else if (argc == 0)
@@ -1214,7 +1214,7 @@ static int do_firmware_version(int argc, char *argv[])
         if (get_first_device(&device_path_found) != IGSC_SUCCESS ||
             device_path_found == NULL)
         {
-            fwupd_error("No device or image\n");
+            igsc_error("No device or image\n");
             return EXIT_FAILURE;
         }
 
@@ -1222,7 +1222,7 @@ static int do_firmware_version(int argc, char *argv[])
         free(device_path_found);
         return ret;
     }
-    fwupd_error("Wrong number of arguments\n");
+    igsc_error("Wrong number of arguments\n");
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -1234,7 +1234,7 @@ static int image_hw_config(const char *image_path, struct igsc_hw_config *hw_con
     img = image_read_from_file(image_path);
     if (img == NULL)
     {
-        fwupd_error("Failed to read :%s\n", image_path);
+        igsc_error("Failed to read :%s\n", image_path);
         ret = EXIT_FAILURE;
         goto exit;
     }
@@ -1242,11 +1242,11 @@ static int image_hw_config(const char *image_path, struct igsc_hw_config *hw_con
     ret = igsc_image_hw_config(img->blob, img->size, hw_config);
     if (ret == IGSC_ERROR_NOT_SUPPORTED)
     {
-        fwupd_error("config option is not available\n");
+        igsc_error("config option is not available\n");
     }
     else if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Error in the image file\n");
+        igsc_error("Error in the image file\n");
     }
 
 exit:
@@ -1264,7 +1264,7 @@ static int firmware_hw_config(const char *device_path, struct igsc_hw_config *hw
     ret = igsc_device_init_by_device(&handle, device_path);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Cannot initialize device: %s\n", device_path);
+        igsc_error("Cannot initialize device: %s\n", device_path);
         goto exit;
     }
 
@@ -1276,7 +1276,7 @@ static int firmware_hw_config(const char *device_path, struct igsc_hw_config *hw
     }
     if (ret == IGSC_ERROR_NOT_SUPPORTED)
     {
-        fwupd_error("config option is not available\n");
+        igsc_error("config option is not available\n");
     }
     if (ret)
     {
@@ -1304,7 +1304,7 @@ static int do_firmware_hw_config(int argc, char *argv[])
 
     if (argc > 5)
     {
-        fwupd_error("Wrong number of arguments\n");
+        igsc_error("Wrong number of arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -1318,12 +1318,12 @@ static int do_firmware_hw_config(int argc, char *argv[])
         {
             if (device_path)
             {
-                fwupd_error("duplicated argument\n");
+                igsc_error("duplicated argument\n");
                 return ERROR_BAD_ARGUMENT;
             }
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No device to supplied\n");
+                igsc_error("No device to supplied\n");
                 return ERROR_BAD_ARGUMENT;
             }
             device_path = argv[0];
@@ -1332,19 +1332,19 @@ static int do_firmware_hw_config(int argc, char *argv[])
         {
             if (image_path)
             {
-                fwupd_error("duplicated argument\n");
+                igsc_error("duplicated argument\n");
                 return ERROR_BAD_ARGUMENT;
             }
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No image file supplied\n");
+                igsc_error("No image file supplied\n");
                 return ERROR_BAD_ARGUMENT;
             }
             image_path = argv[0];
         }
         else
         {
-            fwupd_error("Wrong argument %s\n", argv[0]);
+            igsc_error("Wrong argument %s\n", argv[0]);
             return ERROR_BAD_ARGUMENT;
         }
     }
@@ -1355,7 +1355,7 @@ no_args:
     {
         if (image_path == NULL)
         {
-            fwupd_error("No image file supplied\n");
+            igsc_error("No image file supplied\n");
             return ERROR_BAD_ARGUMENT;
         }
 
@@ -1365,7 +1365,7 @@ no_args:
                 device_path_found == NULL)
             {
                 ret = EXIT_FAILURE;
-                fwupd_error("No device to check\n");
+                igsc_error("No device to check\n");
                 goto out;
             }
             device_path = device_path_found;
@@ -1374,27 +1374,27 @@ no_args:
         ret = image_hw_config(image_path, &img_hw_config);
         if (ret != IGSC_SUCCESS)
         {
-            fwupd_error("Failed to retrieve hw config from the image %s\n", image_path);
+            igsc_error("Failed to retrieve hw config from the image %s\n", image_path);
             goto out;
         }
 
         ret = firmware_hw_config(device_path, &dev_hw_config);
         if (ret != IGSC_SUCCESS)
         {
-            fwupd_error("Failed to retrieve hw config from the device %s\n", device_path);
+            igsc_error("Failed to retrieve hw config from the device %s\n", device_path);
             goto out;
         }
 
         ret = igsc_hw_config_compatible(&img_hw_config, &dev_hw_config);
         if (ret == IGSC_ERROR_INCOMPATIBLE)
         {
-            fwupd_error("The firmware image in %s is incompatible with the device %s\n",
+            igsc_error("The firmware image in %s is incompatible with the device %s\n",
                         image_path, device_path);
             ret = EXIT_FAILURE;
         }
         else if (ret != IGSC_SUCCESS)
         {
-            fwupd_error("hw configuration comparison failure %s %s %d\n", image_path, device_path, ret);
+            igsc_error("hw configuration comparison failure %s %s %d\n", image_path, device_path, ret);
             ret = EXIT_FAILURE;
             goto out;
         }
@@ -1411,7 +1411,7 @@ no_args:
                 device_path_found == NULL)
             {
                 ret = EXIT_FAILURE;
-                fwupd_error("No device to check\n");
+                igsc_error("No device to check\n");
                 goto out;
             }
             device_path = device_path_found;
@@ -1451,7 +1451,7 @@ static int do_iaf_psc_update(int argc, char *argv[])
 
     if (argc <= 0)
     {
-        fwupd_error("No image to update\n");
+        igsc_error("No image to update\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -1466,7 +1466,7 @@ static int do_iaf_psc_update(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No device to update\n");
+                igsc_error("No device to update\n");
                 return ERROR_BAD_ARGUMENT;
             }
             device_path = argv[0];
@@ -1475,14 +1475,14 @@ static int do_iaf_psc_update(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No image to update\n");
+                igsc_error("No image to update\n");
                 return ERROR_BAD_ARGUMENT;
             }
             image_path = argv[0];
         }
         else
         {
-            fwupd_error("Wrong argument %s\n", argv[0]);
+            igsc_error("Wrong argument %s\n", argv[0]);
             return ERROR_BAD_ARGUMENT;
         }
     } while(arg_next(&argc, &argv));
@@ -1492,7 +1492,7 @@ static int do_iaf_psc_update(int argc, char *argv[])
         return iaf_psc_update(device_path, image_path);
     }
 
-    fwupd_error("No image to update\n");
+    igsc_error("No image to update\n");
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -1505,7 +1505,7 @@ static int do_firmware_update(int argc, char *argv[])
 
     if (argc <= 0)
     {
-        fwupd_error("No image to update\n");
+        igsc_error("No image to update\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -1525,7 +1525,7 @@ static int do_firmware_update(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No device to update\n");
+                igsc_error("No device to update\n");
                 return ERROR_BAD_ARGUMENT;
             }
             device_path = argv[0];
@@ -1534,7 +1534,7 @@ static int do_firmware_update(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No image to update\n");
+                igsc_error("No image to update\n");
                 return ERROR_BAD_ARGUMENT;
             }
             image_path = argv[0];
@@ -1545,7 +1545,7 @@ static int do_firmware_update(int argc, char *argv[])
         }
         else
         {
-            fwupd_error("Wrong argument %s\n", argv[0]);
+            igsc_error("Wrong argument %s\n", argv[0]);
             return ERROR_BAD_ARGUMENT;
         }
     } while(arg_next(&argc, &argv));
@@ -1555,7 +1555,7 @@ static int do_firmware_update(int argc, char *argv[])
         return firmware_update(device_path, image_path, allow_downgrade, force_update);
     }
 
-    fwupd_error("No image to update\n");
+    igsc_error("No image to update\n");
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -1570,14 +1570,14 @@ int firmware_status(uint32_t index, const char *device_path)
     ret = igsc_device_init_by_device(&handle, device_path);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Cannot initialize device: %s\n", device_path);
+        igsc_error("Cannot initialize device: %s\n", device_path);
         goto exit;
     }
 
     ret = igsc_read_fw_status_reg(&handle, index, &fw_status);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Cannot retrieve firmware status from device: %s, returned %d\n",
+        igsc_error("Cannot retrieve firmware status from device: %s, returned %d\n",
                     device_path, ret);
         goto exit;
     }
@@ -1587,7 +1587,7 @@ int firmware_status(uint32_t index, const char *device_path)
 exit:
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_verbose("last firmware transaction result: %s(%d)\n",
+        igsc_verbose("last firmware transaction result: %s(%d)\n",
                       igsc_translate_firmware_status(igsc_get_last_firmware_status(&handle)),
                       igsc_get_last_firmware_status(&handle));
     }
@@ -1603,7 +1603,7 @@ static int do_firmware_status(int argc, char *argv[])
 
     if (argc == 0)
     {
-        fwupd_error("Wrong number of arguments\n");
+        igsc_error("Wrong number of arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -1633,7 +1633,7 @@ static int do_firmware_status(int argc, char *argv[])
     }
     else
     {
-       fwupd_error("Wrong argument %s\n", argv[0]);
+       igsc_error("Wrong argument %s\n", argv[0]);
        return ERROR_BAD_ARGUMENT;
     }
 
@@ -1643,7 +1643,7 @@ static int do_firmware_status(int argc, char *argv[])
         {
             return firmware_status(index, argv[2]);
         }
-        fwupd_error("Wrong argument %s\n", argv[1]);
+        igsc_error("Wrong argument %s\n", argv[1]);
         return ERROR_BAD_ARGUMENT;
     }
     else if (argc == 1)
@@ -1653,7 +1653,7 @@ static int do_firmware_status(int argc, char *argv[])
         if (get_first_device(&device_path_found) != IGSC_SUCCESS ||
             device_path_found == NULL)
         {
-            fwupd_error("No device found\n");
+            igsc_error("No device found\n");
             return EXIT_FAILURE;
         }
 
@@ -1661,7 +1661,7 @@ static int do_firmware_status(int argc, char *argv[])
         free(device_path_found);
         return ret;
     }
-    fwupd_error("Wrong number of arguments\n");
+    igsc_error("Wrong number of arguments\n");
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -1671,7 +1671,7 @@ static int do_firmware(int argc, char *argv[])
 
     if (argc <= 0)
     {
-        fwupd_error("Missing arguments\n");
+        igsc_error("Missing arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -1699,7 +1699,7 @@ static int do_firmware(int argc, char *argv[])
         return do_firmware_hw_config(argc, argv);
     }
 
-    fwupd_error("Wrong argument %s\n", sub_command);
+    igsc_error("Wrong argument %s\n", sub_command);
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -1716,7 +1716,7 @@ int oprom_device_version(const char *device_path,
     ret = igsc_device_init_by_device(&handle, device_path);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to initialize device: %s\n", device_path);
+        igsc_error("Failed to initialize device: %s\n", device_path);
         return ret;
     }
 
@@ -1731,11 +1731,11 @@ int oprom_device_version(const char *device_path,
     {
         if (ret == IGSC_ERROR_PERMISSION_DENIED)
         {
-            fwupd_error("Permission denied: missing required credentials to access the device %s\n", device_path);
+            igsc_error("Permission denied: missing required credentials to access the device %s\n", device_path);
         }
         else
         {
-            fwupd_error("Failed to get oprom version from device: %s\n", device_path);
+            igsc_error("Failed to get oprom version from device: %s\n", device_path);
             print_device_fw_status(&handle);
         }
         goto exit;
@@ -1760,21 +1760,21 @@ int oprom_image_version(const char *image_path, enum igsc_oprom_type type)
     img = image_read_from_file(image_path);
     if (img == NULL)
     {
-        fwupd_error("Failed to read :%s\n", image_path);
+        igsc_error("Failed to read :%s\n", image_path);
         return EXIT_FAILURE;
     }
 
     ret = igsc_image_oprom_init(&oimg, img->blob, img->size);
     if (ret == IGSC_ERROR_BAD_IMAGE)
     {
-        fwupd_error("Invalid image format: %s\n", image_path);
+        igsc_error("Invalid image format: %s\n", image_path);
         ret = EXIT_FAILURE;
         goto out;
     }
 
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to parse image: %s\n", image_path);
+        igsc_error("Failed to parse image: %s\n", image_path);
         ret = EXIT_FAILURE;
         goto out;
     }
@@ -1782,7 +1782,7 @@ int oprom_image_version(const char *image_path, enum igsc_oprom_type type)
     ret = igsc_image_oprom_type(oimg, &img_type);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to parse oprom type from image: %s\n",
+        igsc_error("Failed to parse oprom type from image: %s\n",
                     image_path);
         ret = EXIT_FAILURE;
         goto out;
@@ -1790,7 +1790,7 @@ int oprom_image_version(const char *image_path, enum igsc_oprom_type type)
 
     if ((type & img_type) == 0)
     {
-        fwupd_error("Image type is %s expecting %s\n",
+        igsc_error("Image type is %s expecting %s\n",
                     oprom_type_to_str(img_type),
                     oprom_type_to_str(type));
         ret = EXIT_FAILURE;
@@ -1804,7 +1804,7 @@ int oprom_image_version(const char *image_path, enum igsc_oprom_type type)
     }
     else
     {
-        fwupd_error("Failed to get oprom bersion from image: %s\n", image_path);
+        igsc_error("Failed to get oprom bersion from image: %s\n", image_path);
     }
 
 out:
@@ -1829,21 +1829,21 @@ int oprom_code_image_supported_devices(const char *image_path)
     img = image_read_from_file(image_path);
     if (img == NULL)
     {
-        fwupd_error("Failed to read :%s\n", image_path);
+        igsc_error("Failed to read :%s\n", image_path);
         return EXIT_FAILURE;
     }
 
     ret = igsc_image_oprom_init(&oimg, img->blob, img->size);
     if (ret == IGSC_ERROR_BAD_IMAGE)
     {
-        fwupd_error("Invalid image format: %s\n", image_path);
+        igsc_error("Invalid image format: %s\n", image_path);
         ret = EXIT_FAILURE;
         goto out;
     }
 
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to parse image: %s\n", image_path);
+        igsc_error("Failed to parse image: %s\n", image_path);
         ret = EXIT_FAILURE;
         goto out;
     }
@@ -1851,14 +1851,14 @@ int oprom_code_image_supported_devices(const char *image_path)
     ret = igsc_image_oprom_type(oimg, &img_type);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to get oprom type from image: %s\n", image_path);
+        igsc_error("Failed to get oprom type from image: %s\n", image_path);
         ret = EXIT_FAILURE;
         goto out;
     }
 
     if ((IGSC_OPROM_CODE & img_type) == 0)
     {
-        fwupd_error("Image type is %s expecting %s\n",
+        igsc_error("Image type is %s expecting %s\n",
                     oprom_type_to_str(img_type),
                     oprom_type_to_str(IGSC_OPROM_DATA));
         ret = EXIT_FAILURE;
@@ -1870,7 +1870,7 @@ int oprom_code_image_supported_devices(const char *image_path)
                                               &has_4ids_extension);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to retrieve the 4ids status of the image: %d\n", ret);
+        igsc_error("Failed to retrieve the 4ids status of the image: %d\n", ret);
         ret = EXIT_FAILURE;
         goto out;
     }
@@ -1878,14 +1878,14 @@ int oprom_code_image_supported_devices(const char *image_path)
     ret = igsc_image_oprom_has_2ids_extension(oimg, &has_2ids_extension);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to retrieve the 2ids status of the image: %d\n", ret);
+        igsc_error("Failed to retrieve the 2ids status of the image: %d\n", ret);
         ret = EXIT_FAILURE;
         goto out;
     }
 
     if (has_4ids_extension && has_2ids_extension)
     {
-        fwupd_error("Illegal image %s, includes both 2ids and 4ids oprom extensions\n",
+        igsc_error("Illegal image %s, includes both 2ids and 4ids oprom extensions\n",
                     image_path);
         ret = EXIT_FAILURE;
         goto out;
@@ -1896,7 +1896,7 @@ int oprom_code_image_supported_devices(const char *image_path)
         ret = igsc_image_oprom_count_devices_typed(oimg, IGSC_OPROM_CODE, &count);
         if (ret != IGSC_SUCCESS)
         {
-            fwupd_error("Failed to count supported devices on image: %s, returned %d\n",
+            igsc_error("Failed to count supported devices on image: %s, returned %d\n",
                         image_path, ret);
             ret = EXIT_FAILURE;
             goto out;
@@ -1904,16 +1904,16 @@ int oprom_code_image_supported_devices(const char *image_path)
     }
     else
     {
-        fwupd_msg("OPROM Code image does not have the supported devices extension\n");
+        igsc_msg("OPROM Code image does not have the supported devices extension\n");
         ret = EXIT_SUCCESS;
         goto out;
     }
 
-    fwupd_verbose("Found %d supported devices in image %s\n", count, image_path);
+    igsc_verbose("Found %d supported devices in image %s\n", count, image_path);
 
     if (count == 0)
     {
-       fwupd_msg("Image %s has empty supported devices list\n", image_path);
+       igsc_msg("Image %s has empty supported devices list\n", image_path);
        ret = EXIT_SUCCESS;
        goto out;
     }
@@ -1927,14 +1927,14 @@ int oprom_code_image_supported_devices(const char *image_path)
     ret = igsc_image_oprom_supported_devices_typed(oimg, IGSC_OPROM_CODE, devices_4ids, &count);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to get %d supported devices from image: %s, ret %d\n",
+        igsc_error("Failed to get %d supported devices from image: %s, ret %d\n",
                     count, image_path, ret);
         ret = EXIT_FAILURE;
         goto out;
     }
-    fwupd_verbose("Retrieved %d supported devices in image %s\n", count, image_path);
+    igsc_verbose("Retrieved %d supported devices in image %s\n", count, image_path);
 
-    fwupd_msg("OPROM Code supported devices:\n");
+    igsc_msg("OPROM Code supported devices:\n");
     for (unsigned int i = 0; i < count; i++)
     {
         print_oprom_device_info_4ids(&devices_4ids[i]);
@@ -1966,21 +1966,21 @@ int oprom_data_image_supported_devices(const char *image_path)
     img = image_read_from_file(image_path);
     if (img == NULL)
     {
-        fwupd_error("Failed to read :%s\n", image_path);
+        igsc_error("Failed to read :%s\n", image_path);
         return EXIT_FAILURE;
     }
 
     ret = igsc_image_oprom_init(&oimg, img->blob, img->size);
     if (ret == IGSC_ERROR_BAD_IMAGE)
     {
-        fwupd_error("Invalid image format: %s\n", image_path);
+        igsc_error("Invalid image format: %s\n", image_path);
         ret = EXIT_FAILURE;
         goto out;
     }
 
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to parse image: %s\n", image_path);
+        igsc_error("Failed to parse image: %s\n", image_path);
         ret = EXIT_FAILURE;
         goto out;
     }
@@ -1988,14 +1988,14 @@ int oprom_data_image_supported_devices(const char *image_path)
     ret = igsc_image_oprom_type(oimg, &img_type);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to get oprom type from image: %s\n", image_path);
+        igsc_error("Failed to get oprom type from image: %s\n", image_path);
         ret = EXIT_FAILURE;
         goto out;
     }
 
     if ((IGSC_OPROM_DATA & img_type) == 0)
     {
-        fwupd_error("Image type is %s expecting %s\n",
+        igsc_error("Image type is %s expecting %s\n",
                     oprom_type_to_str(img_type),
                     oprom_type_to_str(IGSC_OPROM_DATA));
         ret = EXIT_FAILURE;
@@ -2007,7 +2007,7 @@ int oprom_data_image_supported_devices(const char *image_path)
                                               &has_4ids_extension);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to retrieve the 4ids status of the image: %d\n", ret);
+        igsc_error("Failed to retrieve the 4ids status of the image: %d\n", ret);
         ret = EXIT_FAILURE;
         goto out;
     }
@@ -2015,14 +2015,14 @@ int oprom_data_image_supported_devices(const char *image_path)
     ret = igsc_image_oprom_has_2ids_extension(oimg, &has_2ids_extension);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to retrieve the 2ids status of the image: %d\n", ret);
+        igsc_error("Failed to retrieve the 2ids status of the image: %d\n", ret);
         ret = EXIT_FAILURE;
         goto out;
     }
 
     if (has_4ids_extension && has_2ids_extension)
     {
-        fwupd_error("Illegal image %s, includes both 2ids and 4ids oprom extensions\n",
+        igsc_error("Illegal image %s, includes both 2ids and 4ids oprom extensions\n",
                     image_path);
         ret = EXIT_FAILURE;
         goto out;
@@ -2038,24 +2038,24 @@ int oprom_data_image_supported_devices(const char *image_path)
     }
     else
     {
-        fwupd_msg("OPROM Data image does not have the supported devices extension\n");
+        igsc_msg("OPROM Data image does not have the supported devices extension\n");
         ret = EXIT_SUCCESS;
         goto out;
     }
 
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to count supported devices on image: %s\n",
+        igsc_error("Failed to count supported devices on image: %s\n",
                     image_path);
         ret = EXIT_FAILURE;
         goto out;
     }
 
-    fwupd_verbose("Found %d supported devices in image %s\n", count, image_path);
+    igsc_verbose("Found %d supported devices in image %s\n", count, image_path);
 
     if (count == 0)
     {
-       fwupd_msg("Image %s has empty supported devices list\n", image_path);
+       igsc_msg("Image %s has empty supported devices list\n", image_path);
        ret = EXIT_SUCCESS;
        goto out;
     }
@@ -2064,7 +2064,7 @@ int oprom_data_image_supported_devices(const char *image_path)
     {
         devices_4ids = calloc(count, sizeof(struct igsc_oprom_device_info_4ids));
         if (devices_4ids == NULL) {
-            fwupd_error("Out of memory\n");
+            igsc_error("Out of memory\n");
             ret = EXIT_FAILURE;
             goto out;
         }
@@ -2076,7 +2076,7 @@ int oprom_data_image_supported_devices(const char *image_path)
     {
         devices = calloc(count, sizeof(struct igsc_oprom_device_info));
         if (devices == NULL) {
-            fwupd_error("Out of memory\n");
+            igsc_error("Out of memory\n");
             ret = EXIT_FAILURE;
             goto out;
         }
@@ -2085,14 +2085,14 @@ int oprom_data_image_supported_devices(const char *image_path)
     }
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to get %d supported devices from image: %s, ret %d, has_4ids_extension %u\n",
+        igsc_error("Failed to get %d supported devices from image: %s, ret %d, has_4ids_extension %u\n",
                     count, image_path, ret, has_4ids_extension);
         ret = EXIT_FAILURE;
         goto out;
     }
-    fwupd_verbose("Retrieved %d supported devices in image %s\n", count, image_path);
+    igsc_verbose("Retrieved %d supported devices in image %s\n", count, image_path);
 
-    fwupd_msg("OPROM Data supported devices:\n");
+    igsc_msg("OPROM Data supported devices:\n");
     for (i = 0; i < count; i++)
     {
          if (has_4ids_extension)
@@ -2122,11 +2122,11 @@ static int do_oprom_data_supported_devices(int argc, char *argv[])
         {
             return oprom_data_image_supported_devices(argv[1]);
         }
-        fwupd_error("Wrong argument %s\n", argv[0]);
+        igsc_error("Wrong argument %s\n", argv[0]);
         return ERROR_BAD_ARGUMENT;
     }
 
-    fwupd_error("Wrong number of arguments\n");
+    igsc_error("Wrong number of arguments\n");
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -2138,11 +2138,11 @@ static int do_oprom_code_supported_devices(int argc, char *argv[])
         {
             return oprom_code_image_supported_devices(argv[1]);
         }
-        fwupd_error("Wrong argument %s\n", argv[0]);
+        igsc_error("Wrong argument %s\n", argv[0]);
         return ERROR_BAD_ARGUMENT;
     }
 
-    fwupd_error("Wrong number of arguments\n");
+    igsc_error("Wrong number of arguments\n");
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -2160,7 +2160,7 @@ static int do_oprom_version(int argc, char *argv[], enum igsc_oprom_type type)
         {
             return oprom_image_version(argv[1], type);
         }
-        fwupd_error("Wrong argument %s\n", argv[0]);
+        igsc_error("Wrong argument %s\n", argv[0]);
         return ERROR_BAD_ARGUMENT;
     }
     else if (argc == 0)
@@ -2170,7 +2170,7 @@ static int do_oprom_version(int argc, char *argv[], enum igsc_oprom_type type)
         if (get_first_device(&device_path_found) != IGSC_SUCCESS ||
             device_path_found == NULL)
         {
-            fwupd_error("No device or image\n");
+            igsc_error("No device or image\n");
             return EXIT_FAILURE;
         }
 
@@ -2178,7 +2178,7 @@ static int do_oprom_version(int argc, char *argv[], enum igsc_oprom_type type)
         free(device_path_found);
         return ret;
     }
-    fwupd_error("Wrong number of arguments\n");
+    igsc_error("Wrong number of arguments\n");
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -2207,14 +2207,14 @@ int oprom_check_devid_enforcement(struct igsc_device_handle *handle,
     }
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("failed to get hw config from device, returned code %d\n", ret);
+        igsc_error("failed to get hw config from device, returned code %d\n", ret);
         return ret;
     }
 
     ret = igsc_image_oprom_code_devid_enforced(&device_hw_config, &devid_enforced);
     if (ret != IGSC_SUCCESS)
     {
-       fwupd_error("Internal error: failed to check devId enforcement: %d\n", ret);
+       igsc_error("Internal error: failed to check devId enforcement: %d\n", ret);
        return ret;
     }
 
@@ -2229,13 +2229,13 @@ int oprom_check_devid_enforcement(struct igsc_device_handle *handle,
     ret = igsc_image_oprom_count_devices_typed(img, IGSC_OPROM_CODE, &count);
     if (ret != IGSC_SUCCESS)
     {
-       fwupd_error("Internal error: failed to count oprom devices in the image\n");
+       igsc_error("Internal error: failed to count oprom devices in the image\n");
        return ret;
     }
 
     if (count != 0)
     {
-       fwupd_error("Oprom code devId enforcement bit is not set but the supported device list is not empty\n");
+       igsc_error("Oprom code devId enforcement bit is not set but the supported device list is not empty\n");
        return IGSC_ERROR_NOT_SUPPORTED;
     }
     else
@@ -2264,21 +2264,21 @@ int oprom_update(const char *image_path,
     if (img == NULL)
     {
         ret = EXIT_FAILURE;
-        fwupd_error("Failed to read: %s\n", image_path);
+        igsc_error("Failed to read: %s\n", image_path);
         goto exit;
     }
 
     ret = igsc_image_oprom_init(&oimg, img->blob, img->size);
     if (ret == IGSC_ERROR_BAD_IMAGE)
     {
-        fwupd_error("Invalid image format: %s\n", image_path);
+        igsc_error("Invalid image format: %s\n", image_path);
         ret = EXIT_FAILURE;
         goto exit;
     }
 
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to parse image: %s\n", image_path);
+        igsc_error("Failed to parse image: %s\n", image_path);
         ret = EXIT_FAILURE;
         goto exit;
     }
@@ -2286,14 +2286,14 @@ int oprom_update(const char *image_path,
     ret = igsc_image_oprom_type(oimg, &img_type);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to parse oprom type in image: %s\n",
+        igsc_error("Failed to parse oprom type in image: %s\n",
                     image_path);
         goto exit;
     }
 
     if ((type & img_type) == 0)
     {
-        fwupd_error("Image type is %s expecting %s\n",
+        igsc_error("Image type is %s expecting %s\n",
                     oprom_type_to_str(img_type),
                     oprom_type_to_str(type));
         ret = EXIT_FAILURE;
@@ -2303,7 +2303,7 @@ int oprom_update(const char *image_path,
     ret = igsc_image_oprom_version(oimg, type, &img_version);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to get oprom version from image: %s\n", image_path);
+        igsc_error("Failed to get oprom version from image: %s\n", image_path);
         goto exit;
     }
     print_oprom_version(type, &img_version);
@@ -2320,11 +2320,11 @@ int oprom_update(const char *image_path,
     {
         if (ret == IGSC_ERROR_PERMISSION_DENIED)
         {
-            fwupd_error("Permission denied: missing required credentials to access the device %s\n", dev_info->name);
+            igsc_error("Permission denied: missing required credentials to access the device %s\n", dev_info->name);
         }
         else
         {
-            fwupd_error("Cannot initialize device: %s\n", dev_info->name);
+            igsc_error("Cannot initialize device: %s\n", dev_info->name);
             print_device_fw_status(handle);
         }
         goto exit;
@@ -2340,7 +2340,7 @@ int oprom_update(const char *image_path,
         ret = oprom_check_devid_enforcement(handle, oimg);
         if (ret != IGSC_SUCCESS)
         {
-            fwupd_error("Oprom code device enforcement failed: %d\n", ret);
+            igsc_error("Oprom code device enforcement failed: %d\n", ret);
             goto exit;
         }
     }
@@ -2348,12 +2348,12 @@ int oprom_update(const char *image_path,
     ret = igsc_image_oprom_match_device(oimg, type, dev_info);
     if (ret == IGSC_ERROR_NOT_SUPPORTED)
     {
-        fwupd_error("The image is not compatible with the device, check vid/did\n");
+        igsc_error("The image is not compatible with the device, check vid/did\n");
         goto exit;
     }
     else if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Internal error: image to device match returned %d\n", ret);
+        igsc_error("Internal error: image to device match returned %d\n", ret);
         goto exit;
     }
 
@@ -2366,22 +2366,22 @@ int oprom_update(const char *image_path,
     case IGSC_VERSION_OLDER:
         /* fall through */
     case IGSC_VERSION_EQUAL:
-        fwupd_msg("Installed version is newer or equal\n");
+        igsc_msg("Installed version is newer or equal\n");
         update = allow_downgrade;
         break;
     case IGSC_VERSION_NOT_COMPATIBLE:
-        fwupd_error("OPROM version is not compatible with the installed one\n");
+        igsc_error("OPROM version is not compatible with the installed one\n");
         ret = EXIT_FAILURE;
         goto exit;
     default:
-        fwupd_error("OPROM version error in comparison\n");
+        igsc_error("OPROM version error in comparison\n");
         ret = EXIT_FAILURE;
         goto exit;
     }
 
     if (!update)
     {
-        fwupd_msg("In order to update run with -a | --allow-downgrade\n");
+        igsc_msg("In order to update run with -a | --allow-downgrade\n");
         goto exit;
     }
 
@@ -2406,14 +2406,14 @@ int oprom_update(const char *image_path,
     }
     if (ret)
     {
-        fwupd_error("OPROM update failed ret = %d\n", ret);
+        igsc_error("OPROM update failed ret = %d\n", ret);
         print_device_fw_status(handle);
     }
 
     ret = igsc_device_oprom_version(handle, type, &dev_version);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to get oprom version after update\n");
+        igsc_error("Failed to get oprom version after update\n");
         print_device_fw_status(handle);
         goto exit;
     }
@@ -2422,7 +2422,7 @@ int oprom_update(const char *image_path,
     /* check the new version */
     if (memcmp(&dev_version, &img_version, sizeof(struct igsc_oprom_version)))
     {
-        fwupd_error("After the update oprom %s version wasn't updated on the device\n",
+        igsc_error("After the update oprom %s version wasn't updated on the device\n",
                     oprom_type_to_str(type));
         ret = EXIT_FAILURE;
         goto exit;
@@ -2464,14 +2464,14 @@ int image_type(const char *image_path)
     img = image_read_from_file(image_path);
     if (img == NULL)
     {
-        fwupd_error("Failed to read: %s\n", image_path);
+        igsc_error("Failed to read: %s\n", image_path);
         return ERROR_BAD_ARGUMENT;
     }
 
     ret = igsc_image_get_type(img->blob, img->size, &type);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Unknown image type: %s\n", image_path);
+        igsc_error("Unknown image type: %s\n", image_path);
         goto exit;
     }
 
@@ -2493,20 +2493,20 @@ static int do_image_type(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No image to update\n");
+                igsc_error("No image to update\n");
                 return ERROR_BAD_ARGUMENT;
             }
             image_path = argv[0];
         }
         else
         {
-            fwupd_error("Wrong argument: %s\n", argv[0]);
+            igsc_error("Wrong argument: %s\n", argv[0]);
             return ERROR_BAD_ARGUMENT;
         }
     }
     else
     {
-        fwupd_error("Too few or too many arguments\n");
+        igsc_error("Too few or too many arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -2527,7 +2527,7 @@ static int do_oprom_update(int argc, char *argv[], enum igsc_oprom_type type)
 
     if (argc <= 0)
     {
-        fwupd_error("No image to update\n");
+        igsc_error("No image to update\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -2547,7 +2547,7 @@ static int do_oprom_update(int argc, char *argv[], enum igsc_oprom_type type)
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No device to update\n");
+                igsc_error("No device to update\n");
                 return ERROR_BAD_ARGUMENT;
             }
             device_path = argv[0];
@@ -2556,14 +2556,14 @@ static int do_oprom_update(int argc, char *argv[], enum igsc_oprom_type type)
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No image to update\n");
+                igsc_error("No image to update\n");
                 return ERROR_BAD_ARGUMENT;
             }
             image_path = argv[0];
         }
         else
         {
-            fwupd_error("Wrong argument %s\n", argv[0]);
+            igsc_error("Wrong argument %s\n", argv[0]);
             return ERROR_BAD_ARGUMENT;
         }
     } while (arg_next(&argc, &argv));
@@ -2573,7 +2573,7 @@ static int do_oprom_update(int argc, char *argv[], enum igsc_oprom_type type)
         if (get_first_device_info(&dev_info))
         {
             ret = EXIT_FAILURE;
-            fwupd_error("No device to update\n");
+            igsc_error("No device to update\n");
             goto out;
         }
 
@@ -2581,7 +2581,7 @@ static int do_oprom_update(int argc, char *argv[], enum igsc_oprom_type type)
         if (ret)
         {
             ret = EXIT_FAILURE;
-            fwupd_error("Cannot initialize device: %s\n", dev_info.name);
+            igsc_error("Cannot initialize device: %s\n", dev_info.name);
             goto out;
         }
 
@@ -2593,7 +2593,7 @@ static int do_oprom_update(int argc, char *argv[], enum igsc_oprom_type type)
         if (ret != IGSC_SUCCESS)
         {
             ret = EXIT_FAILURE;
-            fwupd_error("Cannot initialize device: %s\n", dev_info.name);
+            igsc_error("Cannot initialize device: %s\n", dev_info.name);
             goto out;
         }
 
@@ -2601,7 +2601,7 @@ static int do_oprom_update(int argc, char *argv[], enum igsc_oprom_type type)
         if (ret != IGSC_SUCCESS)
         {
             ret = EXIT_FAILURE;
-            fwupd_error("No device to update\n");
+            igsc_error("No device to update\n");
             goto out;
         }
     }
@@ -2609,7 +2609,7 @@ static int do_oprom_update(int argc, char *argv[], enum igsc_oprom_type type)
     if (image_path == NULL)
     {
         ret = ERROR_BAD_ARGUMENT;
-        fwupd_error("No image to update\n");
+        igsc_error("No image to update\n");
         goto out;
     }
 
@@ -2626,7 +2626,7 @@ static int do_oprom_data(int argc, char *argv[])
 
     if (argc <= 0)
     {
-        fwupd_error("Missing arguments\n");
+        igsc_error("Missing arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -2649,7 +2649,7 @@ static int do_oprom_data(int argc, char *argv[])
         return do_oprom_data_supported_devices(argc, argv);
     }
 
-    fwupd_error("Wrong argument %s\n", sub_command);
+    igsc_error("Wrong argument %s\n", sub_command);
 
     return ERROR_BAD_ARGUMENT;
 }
@@ -2660,7 +2660,7 @@ static int do_oprom_code(int argc, char *argv[])
 
     if (argc <= 0)
     {
-        fwupd_error("Missing arguments\n");
+        igsc_error("Missing arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -2683,7 +2683,7 @@ static int do_oprom_code(int argc, char *argv[])
         return do_oprom_code_supported_devices(argc, argv);
     }
 
-    fwupd_error("Wrong argument %s\n", sub_command);
+    igsc_error("Wrong argument %s\n", sub_command);
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -2699,21 +2699,21 @@ int fwdata_image_supported_devices(const char *image_path)
     img = image_read_from_file(image_path);
     if (img == NULL)
     {
-        fwupd_error("Failed to read :%s\n", image_path);
+        igsc_error("Failed to read :%s\n", image_path);
         return EXIT_FAILURE;
     }
 
     ret = igsc_image_fwdata_init(&oimg, img->blob, img->size);
     if (ret == IGSC_ERROR_BAD_IMAGE)
     {
-        fwupd_error("Invalid image format: %s\n", image_path);
+        igsc_error("Invalid image format: %s\n", image_path);
         ret = EXIT_FAILURE;
         goto out;
     }
 
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to parse image: %s\n", image_path);
+        igsc_error("Failed to parse image: %s\n", image_path);
         ret = EXIT_FAILURE;
         goto out;
     }
@@ -2721,23 +2721,23 @@ int fwdata_image_supported_devices(const char *image_path)
     ret = igsc_image_fwdata_count_devices(oimg, &count);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to count supported devices on image: %s\n",
+        igsc_error("Failed to count supported devices on image: %s\n",
                     image_path);
         ret = EXIT_FAILURE;
         goto out;
     }
-    fwupd_verbose("Found %d supported devices in image %s\n", count, image_path);
+    igsc_verbose("Found %d supported devices in image %s\n", count, image_path);
 
     if (count == 0)
     {
-       fwupd_msg("Image %s does not include supported devices data\n", image_path);
+       igsc_msg("Image %s does not include supported devices data\n", image_path);
        ret = EXIT_SUCCESS;
        goto out;
     }
 
     devices = calloc(count, sizeof(struct igsc_fwdata_device_info));
     if (devices == NULL) {
-        fwupd_error("Out of memory\n");
+        igsc_error("Out of memory\n");
         ret = EXIT_FAILURE;
         goto out;
     }
@@ -2745,14 +2745,14 @@ int fwdata_image_supported_devices(const char *image_path)
     ret = igsc_image_fwdata_supported_devices(oimg, devices, &count);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to get %d supported devices from image: %s\n",
+        igsc_error("Failed to get %d supported devices from image: %s\n",
                     count, image_path);
         ret = EXIT_FAILURE;
         goto out;
     }
-    fwupd_verbose("Retrieved %d supported devices in image %s\n", count, image_path);
+    igsc_verbose("Retrieved %d supported devices in image %s\n", count, image_path);
 
-    fwupd_msg("firmware data supported devices:\n");
+    igsc_msg("firmware data supported devices:\n");
     for (i = 0; i < count; i++)
     {
          print_fwdata_device_info(&devices[i]);
@@ -2777,21 +2777,21 @@ int fwdata_image_version(const char *image_path)
     img = image_read_from_file(image_path);
     if (img == NULL)
     {
-        fwupd_error("Failed to read :%s\n", image_path);
+        igsc_error("Failed to read :%s\n", image_path);
         return EXIT_FAILURE;
     }
 
     ret = igsc_image_fwdata_init(&oimg, img->blob, img->size);
     if (ret == IGSC_ERROR_BAD_IMAGE)
     {
-        fwupd_error("Invalid image format: %s\n", image_path);
+        igsc_error("Invalid image format: %s\n", image_path);
         ret = EXIT_FAILURE;
         goto out;
     }
 
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to parse image: %s\n", image_path);
+        igsc_error("Failed to parse image: %s\n", image_path);
         ret = EXIT_FAILURE;
         goto out;
     }
@@ -2803,7 +2803,7 @@ int fwdata_image_version(const char *image_path)
     }
     else
     {
-        fwupd_error("Failed to get firmware data version from image: %s\n", image_path);
+        igsc_error("Failed to get firmware data version from image: %s\n", image_path);
     }
 
 out:
@@ -2826,7 +2826,7 @@ int fwdata_device_version(const char *device_path)
     ret = igsc_device_init_by_device(&handle, device_path);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to initialize device: %s\n", device_path);
+        igsc_error("Failed to initialize device: %s\n", device_path);
         return ret;
     }
 
@@ -2841,11 +2841,11 @@ int fwdata_device_version(const char *device_path)
     {
         if (ret == IGSC_ERROR_PERMISSION_DENIED)
         {
-            fwupd_error("Permission denied: missing required credentials to access the device %s\n", device_path);
+            igsc_error("Permission denied: missing required credentials to access the device %s\n", device_path);
         }
         else
         {
-            fwupd_error("Failed to get fwdata version from device: %s\n", device_path);
+            igsc_error("Failed to get fwdata version from device: %s\n", device_path);
             print_device_fw_status(&handle);
         }
         goto exit;
@@ -2876,21 +2876,21 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
     if (img == NULL)
     {
         ret = EXIT_FAILURE;
-        fwupd_error("Failed to read: %s\n", image_path);
+        igsc_error("Failed to read: %s\n", image_path);
         goto exit;
     }
 
     ret = igsc_image_fwdata_init(&oimg, img->blob, img->size);
     if (ret == IGSC_ERROR_BAD_IMAGE)
     {
-        fwupd_error("Invalid image format: %s\n", image_path);
+        igsc_error("Invalid image format: %s\n", image_path);
         ret = EXIT_FAILURE;
         goto exit;
     }
 
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to parse image: %s\n", image_path);
+        igsc_error("Failed to parse image: %s\n", image_path);
         ret = EXIT_FAILURE;
         goto exit;
     }
@@ -2898,7 +2898,7 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
     ret = igsc_image_fwdata_version2(oimg, &img_version);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to get firmware data version from image: %s\n", image_path);
+        igsc_error("Failed to get firmware data version from image: %s\n", image_path);
         goto exit;
     }
     print_img_fwdata_version(&img_version);
@@ -2915,11 +2915,11 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
     {
         if (ret == IGSC_ERROR_PERMISSION_DENIED)
         {
-            fwupd_error("Permission denied: missing required credentials to access the device %s\n", dev_info->name);
+            igsc_error("Permission denied: missing required credentials to access the device %s\n", dev_info->name);
         }
         else
         {
-            fwupd_error("Cannot initialize device: %s\n", dev_info->name);
+            igsc_error("Cannot initialize device: %s\n", dev_info->name);
             print_device_fw_status(handle);
         }
         goto exit;
@@ -2929,12 +2929,12 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
     ret = igsc_image_fwdata_match_device(oimg, dev_info);
     if (ret == IGSC_ERROR_DEVICE_NOT_FOUND)
     {
-        fwupd_error("The image is not compatible with the device\nDevice info doesn't match image device Id extension\n");
+        igsc_error("The image is not compatible with the device\nDevice info doesn't match image device Id extension\n");
         goto exit;
     }
     else if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Internal error\n");
+        igsc_error("Internal error\n");
         goto exit;
     }
 
@@ -2945,38 +2945,38 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
         update = true;
         break;
     case IGSC_FWDATA_VERSION_OLDER_VCN:
-        fwupd_msg("Installed VCN version is newer\n");
+        igsc_msg("Installed VCN version is newer\n");
         update = allow_downgrade;
         break;
     case IGSC_FWDATA_VERSION_REJECT_DIFFERENT_PROJECT:
-        fwupd_error("firmware data version is not compatible with the installed one (project version)\n");
+        igsc_error("firmware data version is not compatible with the installed one (project version)\n");
         ret = EXIT_FAILURE;
         goto exit;
     case IGSC_FWDATA_VERSION_REJECT_VCN:
-        fwupd_error("firmware data version is not compatible with the installed one (VCN version)\n");
+        igsc_error("firmware data version is not compatible with the installed one (VCN version)\n");
         ret = EXIT_FAILURE;
         goto exit;
     case IGSC_FWDATA_VERSION_REJECT_OEM_MANUF_DATA_VERSION:
-        fwupd_error("firmware data version is not compatible with the installed one (OEM version)\n");
+        igsc_error("firmware data version is not compatible with the installed one (OEM version)\n");
         ret = EXIT_FAILURE;
         goto exit;
     case IGSC_FWDATA_VERSION_REJECT_WRONG_FORMAT:
-        fwupd_error("the version format is the wrong or incompatible\n");
+        igsc_error("the version format is the wrong or incompatible\n");
         ret = EXIT_FAILURE;
         goto exit;
     case IGSC_FWDATA_VERSION_REJECT_ARB_SVN:
-        fwupd_error("update image SVN version is smaller then the one on the device\n");
+        igsc_error("update image SVN version is smaller then the one on the device\n");
         ret = EXIT_FAILURE;
     goto exit;
     default:
-        fwupd_error("firmware data version error in comparison %u\n", (uint32_t)cmp);
+        igsc_error("firmware data version error in comparison %u\n", (uint32_t)cmp);
         ret = EXIT_FAILURE;
         goto exit;
     }
 
     if (!update)
     {
-        fwupd_msg("In order to update run with -a | --allow-downgrade\n");
+        igsc_msg("In order to update run with -a | --allow-downgrade\n");
         goto exit;
     }
 
@@ -3001,7 +3001,7 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
     }
     if (ret)
     {
-        fwupd_error("fwdata update failed ret = %d\n", ret);
+        igsc_error("fwdata update failed ret = %d\n", ret);
         print_device_fw_status(handle);
     }
 
@@ -3014,7 +3014,7 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
     }
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Failed to get firmware version after update\n");
+        igsc_error("Failed to get firmware version after update\n");
         print_device_fw_status(handle);
         goto exit;
     }
@@ -3032,7 +3032,7 @@ int fwdata_update(const char *image_path, struct igsc_device_handle *handle,
         img_version.flags != dev_version.flags ||
         img_version.data_arb_svn != dev_version.data_arb_svn)
     {
-        fwupd_error("After the update fwdata version wasn't updated on the device\n");
+        igsc_error("After the update fwdata version wasn't updated on the device\n");
         ret = EXIT_FAILURE;
         goto exit;
     }
@@ -3058,7 +3058,7 @@ static int do_fwdata_update(int argc, char *argv[])
 
     if (argc <= 0)
     {
-        fwupd_error("No image to update\n");
+        igsc_error("No image to update\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -3078,7 +3078,7 @@ static int do_fwdata_update(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No device to update\n");
+                igsc_error("No device to update\n");
                 return ERROR_BAD_ARGUMENT;
             }
             device_path = argv[0];
@@ -3087,14 +3087,14 @@ static int do_fwdata_update(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No image to update\n");
+                igsc_error("No image to update\n");
                 return ERROR_BAD_ARGUMENT;
             }
             image_path = argv[0];
         }
         else
         {
-            fwupd_error("Wrong argument %s\n", argv[0]);
+            igsc_error("Wrong argument %s\n", argv[0]);
             return ERROR_BAD_ARGUMENT;
         }
     } while (arg_next(&argc, &argv));
@@ -3104,7 +3104,7 @@ static int do_fwdata_update(int argc, char *argv[])
         if (get_first_device_info(&dev_info))
         {
             ret = EXIT_FAILURE;
-            fwupd_error("No device to update\n");
+            igsc_error("No device to update\n");
             goto out;
         }
 
@@ -3112,7 +3112,7 @@ static int do_fwdata_update(int argc, char *argv[])
         if (ret)
         {
             ret = EXIT_FAILURE;
-            fwupd_error("Cannot initialize device: %s\n", dev_info.name);
+            igsc_error("Cannot initialize device: %s\n", dev_info.name);
             goto out;
         }
     }
@@ -3122,7 +3122,7 @@ static int do_fwdata_update(int argc, char *argv[])
         if (ret != IGSC_SUCCESS)
         {
             ret = EXIT_FAILURE;
-            fwupd_error("Cannot initialize device: %s\n", dev_info.name);
+            igsc_error("Cannot initialize device: %s\n", dev_info.name);
             goto out;
         }
 
@@ -3130,7 +3130,7 @@ static int do_fwdata_update(int argc, char *argv[])
         if (ret != IGSC_SUCCESS)
         {
             ret = EXIT_FAILURE;
-            fwupd_error("No device to update\n");
+            igsc_error("No device to update\n");
             goto out;
         }
     }
@@ -3138,7 +3138,7 @@ static int do_fwdata_update(int argc, char *argv[])
     if (image_path == NULL)
     {
         ret = ERROR_BAD_ARGUMENT;
-        fwupd_error("No image to update\n");
+        igsc_error("No image to update\n");
         goto out;
     }
 
@@ -3158,11 +3158,11 @@ static int do_fwdata_supported_devices(int argc, char *argv[])
         {
             return fwdata_image_supported_devices(argv[1]);
         }
-        fwupd_error("Wrong argument %s\n", argv[0]);
+        igsc_error("Wrong argument %s\n", argv[0]);
         return ERROR_BAD_ARGUMENT;
     }
 
-    fwupd_error("Wrong number of arguments\n");
+    igsc_error("Wrong number of arguments\n");
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -3180,7 +3180,7 @@ static int do_fwdata_version(int argc, char *argv[])
         {
             return fwdata_image_version(argv[1]);
         }
-        fwupd_error("Wrong argument %s\n", argv[0]);
+        igsc_error("Wrong argument %s\n", argv[0]);
         return ERROR_BAD_ARGUMENT;
     }
     else if (argc == 0)
@@ -3190,7 +3190,7 @@ static int do_fwdata_version(int argc, char *argv[])
         if (get_first_device(&device_path_found) != IGSC_SUCCESS ||
             device_path_found == NULL)
         {
-            fwupd_error("No device or image\n");
+            igsc_error("No device or image\n");
             return EXIT_FAILURE;
         }
 
@@ -3198,7 +3198,7 @@ static int do_fwdata_version(int argc, char *argv[])
         free(device_path_found);
         return ret;
     }
-    fwupd_error("Wrong number of arguments\n");
+    igsc_error("Wrong number of arguments\n");
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -3208,7 +3208,7 @@ static int do_firmware_data(int argc, char *argv[])
 
     if (argc <= 0)
     {
-        fwupd_error("Missing arguments\n");
+        igsc_error("Missing arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -3231,7 +3231,7 @@ static int do_firmware_data(int argc, char *argv[])
         return do_fwdata_supported_devices(argc, argv);
     }
 
-    fwupd_error("Wrong argument %s\n", sub_command);
+    igsc_error("Wrong argument %s\n", sub_command);
 
     return ERROR_BAD_ARGUMENT;
 }
@@ -3266,13 +3266,13 @@ int get_mem_err(struct igsc_device_handle *handle)
     }
     if (ret)
     {
-        fwupd_error("Failed to get number of tiles, returned %d\n", ret);
+        igsc_error("Failed to get number of tiles, returned %d\n", ret);
         return EXIT_FAILURE;
     }
 
     if (tiles_num > MAX_TILES_NUM)
     {
-       fwupd_error("Number of tiles is too big (%u), should not be bigger than %u\n",
+       igsc_error("Number of tiles is too big (%u), should not be bigger than %u\n",
                    tiles_num, MAX_TILES_NUM);
     }
 
@@ -3286,7 +3286,7 @@ int get_mem_err(struct igsc_device_handle *handle)
     }
     if (ret)
     {
-        fwupd_error("Failed to get memory errors number, returned %d\n", ret);
+        igsc_error("Failed to get memory errors number, returned %d\n", ret);
         print_device_fw_status(handle);
         return EXIT_FAILURE;
     }
@@ -3365,19 +3365,19 @@ int get_mem_ppr_status(struct igsc_device_handle *handle)
     }
     if (ret)
     {
-        fwupd_error("Failed to retrieve memory ppr devices number, return code %d\n", ret);
+        igsc_error("Failed to retrieve memory ppr devices number, return code %d\n", ret);
         print_device_fw_status(handle);
         return EXIT_FAILURE;
     }
 
-    fwupd_msg("Retrieved memory ppr devices number: %u\n", device_num);
+    igsc_msg("Retrieved memory ppr devices number: %u\n", device_num);
 
     /* allocate ppr_status structure according to the number of ppr devices */
     ppr_status = (struct igsc_ppr_status *) malloc(sizeof(struct igsc_ppr_status) +
                                                    device_num * sizeof(struct igsc_device_mbist_ppr_status));
     if (!ppr_status)
     {
-        fwupd_error("Failed to allocate memory\n");
+        igsc_error("Failed to allocate memory\n");
         return EXIT_FAILURE;
     }
     /* set number of devices in the buffer structure that will be passed as parameter */
@@ -3394,7 +3394,7 @@ int get_mem_ppr_status(struct igsc_device_handle *handle)
 
     if (ret)
     {
-        fwupd_error("Failed to retrieve ppr status, return code %d\n", ret);
+        igsc_error("Failed to retrieve ppr status, return code %d\n", ret);
         print_device_fw_status(handle);
     }
     else
@@ -3428,7 +3428,7 @@ int get_status_ext(struct igsc_device_handle *handle)
 
     if (ret)
     {
-        fwupd_error("Failed to get ifr status, library return code %d\n", ret);
+        igsc_error("Failed to get ifr status, library return code %d\n", ret);
         print_device_fw_status(handle);
         return EXIT_FAILURE;
     }
@@ -3500,7 +3500,7 @@ int get_status(struct igsc_device_handle *handle)
     }
     if (ret || result)
     {
-        fwupd_error("Failed to get ifr status, library return code %d, command result %u\n",
+        igsc_error("Failed to get ifr status, library return code %d, command result %u\n",
                     ret, result);
         print_device_fw_status(handle);
         return EXIT_FAILURE;
@@ -3552,7 +3552,7 @@ int array_scan_test(struct igsc_device_handle *handle)
     }
     if (ret)
     {
-        fwupd_error("Failed to run array and scan ifr test, library return code %d\n",
+        igsc_error("Failed to run array and scan ifr test, library return code %d\n",
                     ret);
         print_device_fw_status(handle);
         return EXIT_FAILURE;
@@ -3597,7 +3597,7 @@ int mem_ppr_test(struct igsc_device_handle *handle)
     }
     if (ret)
     {
-        fwupd_error("Failed to run ppr test, library return code %d\n", ret);
+        igsc_error("Failed to run ppr test, library return code %d\n", ret);
         print_device_fw_status(handle);
         return EXIT_FAILURE;
     }
@@ -3628,7 +3628,7 @@ int ifr_count_tiles(struct igsc_device_handle *handle)
     }
     if (ret)
     {
-        fwupd_error("Failed to run ifr count tiles, library return code %d\n", ret);
+        igsc_error("Failed to run ifr count tiles, library return code %d\n", ret);
         print_device_fw_status(handle);
         return EXIT_FAILURE;
     }
@@ -3657,10 +3657,10 @@ int ifr_version(struct igsc_device_handle *handle)
     {
         if (ret == IGSC_ERROR_PERMISSION_DENIED)
         {
-           fwupd_error("Permission denied: missing required credentials to access the device\n");
+           igsc_error("Permission denied: missing required credentials to access the device\n");
         }
         else {
-            fwupd_error("Cannot retrieve IFR version from device, ret = %d\n", ret);
+            igsc_error("Cannot retrieve IFR version from device, ret = %d\n", ret);
             print_device_fw_status(handle);
         }
         return EXIT_FAILURE;
@@ -3687,13 +3687,13 @@ int ecc_config_get(struct igsc_device_handle *handle)
     }
     if (ret)
     {
-        fwupd_error("Failed to get ECC config, return code %d\n", ret);
+        igsc_error("Failed to get ECC config, return code %d\n", ret);
         print_device_fw_status(handle);
     }
     else
     {
-	    fwupd_msg("Current ECC State: %u\n", cur_ecc_state);
-	    fwupd_msg("Pending ECC State: %u\n", pen_ecc_state);
+	    igsc_msg("Current ECC State: %u\n", cur_ecc_state);
+	    igsc_msg("Pending ECC State: %u\n", pen_ecc_state);
     }
     return ret;
 }
@@ -3714,7 +3714,7 @@ static int do_no_special_args_func(int argc, char *argv[], int (*func_ptr)(struc
             if (ret)
             {
                ret = EXIT_FAILURE;
-               fwupd_error("Cannot initialize device: %s\n", argv[1]);
+               igsc_error("Cannot initialize device: %s\n", argv[1]);
                goto out;
             }
         }
@@ -3725,7 +3725,7 @@ static int do_no_special_args_func(int argc, char *argv[], int (*func_ptr)(struc
     }
     else if (argc != 0)
     {
-        fwupd_error("Too many or wrong arguments\n");
+        igsc_error("Too many or wrong arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
     else
@@ -3733,14 +3733,14 @@ static int do_no_special_args_func(int argc, char *argv[], int (*func_ptr)(struc
         /* Should be no more args */
         if (arg_next(&argc, &argv))
         {
-            fwupd_error("Too many arguments\n");
+            igsc_error("Too many arguments\n");
             return ERROR_BAD_ARGUMENT;
         }
 
         if (get_first_device_info(&dev_info))
         {
             ret = EXIT_FAILURE;
-            fwupd_error("No device to work with\n");
+            igsc_error("No device to work with\n");
             goto out;
         }
 
@@ -3748,7 +3748,7 @@ static int do_no_special_args_func(int argc, char *argv[], int (*func_ptr)(struc
         if (ret)
         {
             ret = EXIT_FAILURE;
-            fwupd_error("Cannot initialize device: %s\n", dev_info.name);
+            igsc_error("Cannot initialize device: %s\n", dev_info.name);
             goto out;
         }
     }
@@ -3853,7 +3853,7 @@ static int do_iaf_psc(int argc, char *argv[])
 
     if (argc <= 0)
     {
-        fwupd_error("Missing arguments\n");
+        igsc_error("Missing arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -3871,7 +3871,7 @@ static int do_iaf_psc(int argc, char *argv[])
         return do_iaf_psc_version(argc, argv);
     }
 
-    fwupd_error("Wrong argument %s\n", sub_command);
+    igsc_error("Wrong argument %s\n", sub_command);
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -3899,7 +3899,7 @@ int run_ifr_test(struct igsc_device_handle *handle, uint8_t test_type, uint8_t t
     }
     if (ret || result)
     {
-        fwupd_error("Failed to run test, library return code %d Heci result %u\n",
+        igsc_error("Failed to run test, library return code %d Heci result %u\n",
                     ret, result);
         print_device_fw_status(handle);
         return EXIT_FAILURE;
@@ -3924,7 +3924,7 @@ static int do_ifr_get_repair_info(int argc, char *argv[])
 
     if (argc <= 0)
     {
-        fwupd_error("Missing arguments\n");
+        igsc_error("Missing arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -3936,7 +3936,7 @@ static int do_ifr_get_repair_info(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No device was provided\n");
+                igsc_error("No device was provided\n");
                 return ERROR_BAD_ARGUMENT;
             }
             device_path = argv[0];
@@ -3945,7 +3945,7 @@ static int do_ifr_get_repair_info(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No tile provided\n");
+                igsc_error("No tile provided\n");
                 return ERROR_BAD_ARGUMENT;
             }
             if (arg_is_token(argv[0], "0"))
@@ -3958,13 +3958,13 @@ static int do_ifr_get_repair_info(int argc, char *argv[])
             }
             else
             {
-                fwupd_error("Bad tile number argument\n");
+                igsc_error("Bad tile number argument\n");
                 return ERROR_BAD_ARGUMENT;
             }
         }
         else
         {
-            fwupd_error("Wrong argument %s\n", argv[0]);
+            igsc_error("Wrong argument %s\n", argv[0]);
             return ERROR_BAD_ARGUMENT;
         }
     } while(arg_next(&argc, &argv));
@@ -3975,7 +3975,7 @@ static int do_ifr_get_repair_info(int argc, char *argv[])
         if (ret)
         {
            ret = EXIT_FAILURE;
-           fwupd_error("Cannot initialize device: %s\n", device_path);
+           igsc_error("Cannot initialize device: %s\n", device_path);
            goto out;
         }
     }
@@ -3984,7 +3984,7 @@ static int do_ifr_get_repair_info(int argc, char *argv[])
         if (get_first_device_info(&dev_info))
         {
             ret = EXIT_FAILURE;
-            fwupd_error("No device to work with\n");
+            igsc_error("No device to work with\n");
             goto out;
         }
 
@@ -3992,7 +3992,7 @@ static int do_ifr_get_repair_info(int argc, char *argv[])
         if (ret)
         {
             ret = EXIT_FAILURE;
-            fwupd_error("Cannot initialize device: %s\n", dev_info.name);
+            igsc_error("Cannot initialize device: %s\n", dev_info.name);
             goto out;
         }
     }
@@ -4012,7 +4012,7 @@ static int do_ifr_get_repair_info(int argc, char *argv[])
 
     if (ret)
     {
-       fwupd_error("Failed to run test, library return code %d\n",
+       igsc_error("Failed to run test, library return code %d\n",
                    ret);
        ret = EXIT_FAILURE;
        goto out;
@@ -4039,7 +4039,7 @@ static int do_ifr_run_test(int argc, char *argv[])
 
     if (argc <= 0)
     {
-        fwupd_error("Missing arguments\n");
+        igsc_error("Missing arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -4051,7 +4051,7 @@ static int do_ifr_run_test(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No device was provided\n");
+                igsc_error("No device was provided\n");
                 return ERROR_BAD_ARGUMENT;
             }
             device_path = argv[0];
@@ -4060,7 +4060,7 @@ static int do_ifr_run_test(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No tile provided\n");
+                igsc_error("No tile provided\n");
                 return ERROR_BAD_ARGUMENT;
             }
             if (arg_is_token(argv[0], "0"))
@@ -4077,7 +4077,7 @@ static int do_ifr_run_test(int argc, char *argv[])
             }
             else
             {
-                fwupd_error("Bad tile number argument\n");
+                igsc_error("Bad tile number argument\n");
                 return ERROR_BAD_ARGUMENT;
             }
         }
@@ -4085,7 +4085,7 @@ static int do_ifr_run_test(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No test type provided\n");
+                igsc_error("No test type provided\n");
                 return ERROR_BAD_ARGUMENT;
             }
             if (arg_is_token(argv[0], "scan"))
@@ -4098,20 +4098,20 @@ static int do_ifr_run_test(int argc, char *argv[])
             }
             else
             {
-                fwupd_error("Bad test type argument\n");
+                igsc_error("Bad test type argument\n");
                 return ERROR_BAD_ARGUMENT;
             }
         }
         else
         {
-            fwupd_error("Wrong argument %s\n", argv[0]);
+            igsc_error("Wrong argument %s\n", argv[0]);
             return ERROR_BAD_ARGUMENT;
         }
     } while(arg_next(&argc, &argv));
 
     if (0 == (tiles_mask & (IGSC_IFR_TILE_0 | IGSC_IFR_TILE_1)))
     {
-        fwupd_error("Bad tile number argument\n");
+        igsc_error("Bad tile number argument\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -4121,7 +4121,7 @@ static int do_ifr_run_test(int argc, char *argv[])
         if (ret)
         {
            ret = EXIT_FAILURE;
-           fwupd_error("Cannot initialize device: %s\n", device_path);
+           igsc_error("Cannot initialize device: %s\n", device_path);
            goto out;
         }
     }
@@ -4130,7 +4130,7 @@ static int do_ifr_run_test(int argc, char *argv[])
         if (get_first_device_info(&dev_info))
         {
             ret = EXIT_FAILURE;
-            fwupd_error("No device to work with\n");
+            igsc_error("No device to work with\n");
             goto out;
         }
 
@@ -4138,7 +4138,7 @@ static int do_ifr_run_test(int argc, char *argv[])
         if (ret)
         {
             ret = EXIT_FAILURE;
-            fwupd_error("Cannot initialize device: %s\n", dev_info.name);
+            igsc_error("Cannot initialize device: %s\n", dev_info.name);
             goto out;
         }
     }
@@ -4156,7 +4156,7 @@ static int do_ifr(int argc, char *argv[])
 
     if (argc <= 0)
     {
-        fwupd_error("Missing arguments\n");
+        igsc_error("Missing arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -4204,7 +4204,7 @@ static int do_ifr(int argc, char *argv[])
         return do_ifr_version(argc, argv);
     }
 
-    fwupd_error("Wrong argument %s\n", sub_command);
+    igsc_error("Wrong argument %s\n", sub_command);
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -4214,7 +4214,7 @@ static int do_oem(int argc, char *argv[])
 
     if (argc <= 0)
     {
-        fwupd_error("Missing arguments\n");
+        igsc_error("Missing arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -4227,7 +4227,7 @@ static int do_oem(int argc, char *argv[])
         return do_oem_version(argc, argv);
     }
 
-    fwupd_error("Wrong argument %s\n", sub_command);
+    igsc_error("Wrong argument %s\n", sub_command);
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -4237,7 +4237,7 @@ static int do_arbsvn(int argc, char *argv[])
 
     if (argc <= 0)
     {
-        fwupd_error("Missing arguments\n");
+        igsc_error("Missing arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -4255,7 +4255,7 @@ static int do_arbsvn(int argc, char *argv[])
         return do_arbsvn_get_min_allowed_svn(argc, argv);
     }
 
-    fwupd_error("Wrong argument %s\n", sub_command);
+    igsc_error("Wrong argument %s\n", sub_command);
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -4273,7 +4273,7 @@ int do_gfsp_ecc_config_set(int argc, char *argv[])
 
     if (argc <= 0)
     {
-        fwupd_error("Missing arguments\n");
+        igsc_error("Missing arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -4285,7 +4285,7 @@ int do_gfsp_ecc_config_set(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No device was provided\n");
+                igsc_error("No device was provided\n");
                 return ERROR_BAD_ARGUMENT;
             }
             device_path = argv[0];
@@ -4294,7 +4294,7 @@ int do_gfsp_ecc_config_set(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No ecc config value provided\n");
+                igsc_error("No ecc config value provided\n");
                 return ERROR_BAD_ARGUMENT;
             }
             if (arg_is_token(argv[0], "0"))
@@ -4307,20 +4307,20 @@ int do_gfsp_ecc_config_set(int argc, char *argv[])
             }
             else
             {
-                fwupd_error("Bad ecc config value argument '%s'\n", argv[0]);
+                igsc_error("Bad ecc config value argument '%s'\n", argv[0]);
                 return ERROR_BAD_ARGUMENT;
             }
         }
         else
         {
-            fwupd_error("Wrong argument %s\n", argv[0]);
+            igsc_error("Wrong argument %s\n", argv[0]);
             return ERROR_BAD_ARGUMENT;
         }
     } while(arg_next(&argc, &argv));
 
     if (!(req_ecc_state == 0 || req_ecc_state == 1))
     {
-        fwupd_error("No ecc config value\n");
+        igsc_error("No ecc config value\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -4330,7 +4330,7 @@ int do_gfsp_ecc_config_set(int argc, char *argv[])
         if (ret)
         {
            ret = EXIT_FAILURE;
-           fwupd_error("Cannot initialize device: %s\n", device_path);
+           igsc_error("Cannot initialize device: %s\n", device_path);
            goto out;
         }
     }
@@ -4339,7 +4339,7 @@ int do_gfsp_ecc_config_set(int argc, char *argv[])
         if (get_first_device_info(&dev_info))
         {
             ret = EXIT_FAILURE;
-            fwupd_error("No device to work with\n");
+            igsc_error("No device to work with\n");
             goto out;
         }
 
@@ -4347,7 +4347,7 @@ int do_gfsp_ecc_config_set(int argc, char *argv[])
         if (ret)
         {
             ret = EXIT_FAILURE;
-            fwupd_error("Cannot initialize device: %s\n", dev_info.name);
+            igsc_error("Cannot initialize device: %s\n", dev_info.name);
             goto out;
         }
     }
@@ -4360,12 +4360,12 @@ int do_gfsp_ecc_config_set(int argc, char *argv[])
     }
     if (ret)
     {
-        fwupd_error("Failed to set ECC config, return code %d\n", ret);
+        igsc_error("Failed to set ECC config, return code %d\n", ret);
     }
     else
     {
-	    fwupd_msg("Current ECC State: %u\n", cur_ecc_state);
-	    fwupd_msg("Pending ECC State: %u\n", pen_ecc_state);
+	    igsc_msg("Current ECC State: %u\n", cur_ecc_state);
+	    igsc_msg("Pending ECC State: %u\n", pen_ecc_state);
     }
 
 out:
@@ -4384,15 +4384,15 @@ static int read_from_file_to_buf(const char *p_path, uint8_t *buf, size_t buf_le
 
     if (fopen_s(&fp, p_path, "rb") != 0 || fp == NULL)
     {
-        fwupd_strerror(errno, err_msg, sizeof(err_msg));
-        fwupd_verbose("Failed to open file %s : %s\n", p_path, err_msg);
+        igsc_strerror(errno, err_msg, sizeof(err_msg));
+        igsc_verbose("Failed to open file %s : %s\n", p_path, err_msg);
         ret = -1;
         goto exit;
     }
 
     if (fseek(fp, 0L, SEEK_END) != 0)
     {
-        fwupd_verbose("Failed to get file size %s : %s\n",
+        igsc_verbose("Failed to get file size %s : %s\n",
                       p_path, err_msg);
         ret = -1;
         goto exit;
@@ -4401,8 +4401,8 @@ static int read_from_file_to_buf(const char *p_path, uint8_t *buf, size_t buf_le
     file_size = ftell(fp);
     if (file_size < 0)
     {
-        fwupd_strerror(errno, err_msg, sizeof(err_msg));
-        fwupd_verbose("Failed to get file size %s : %s\n",
+        igsc_strerror(errno, err_msg, sizeof(err_msg));
+        igsc_verbose("Failed to get file size %s : %s\n",
                       p_path, err_msg);
         ret = -1;
         goto exit;
@@ -4417,15 +4417,15 @@ static int read_from_file_to_buf(const char *p_path, uint8_t *buf, size_t buf_le
 
     if ((size_t)file_size > buf_len)
     {
-        fwupd_verbose("file size (%ld) too large\n", file_size);
+        igsc_verbose("file size (%ld) too large\n", file_size);
         ret = -1;
         goto exit;
     }
 
     if (fseek(fp, 0L, SEEK_SET) != 0)
     {
-        fwupd_strerror(errno, err_msg, sizeof(err_msg));
-        fwupd_verbose("Failed to reset file position %s : %s\n",
+        igsc_strerror(errno, err_msg, sizeof(err_msg));
+        igsc_verbose("Failed to reset file position %s : %s\n",
                       p_path, err_msg);
         ret = -1;
         goto exit;
@@ -4433,8 +4433,8 @@ static int read_from_file_to_buf(const char *p_path, uint8_t *buf, size_t buf_le
 
     if (fread(buf, 1, (size_t)file_size, fp) != (size_t)file_size)
     {
-        fwupd_strerror(errno, err_msg, sizeof(err_msg));
-        fwupd_verbose("Failed to read file %s : %s\n",
+        igsc_strerror(errno, err_msg, sizeof(err_msg));
+        igsc_verbose("Failed to read file %s : %s\n",
                       p_path, err_msg);
         ret = -1;
         goto exit;
@@ -4459,15 +4459,15 @@ static int write_to_file_from_buf(const char *p_path, uint8_t *buf, size_t buf_l
 
     if (fopen_s(&fp, p_path, "wb") != 0 || fp == NULL)
     {
-        fwupd_strerror(errno, err_msg, sizeof(err_msg));
-        fwupd_verbose("Failed to open file %s : %s\n", p_path, err_msg);
+        igsc_strerror(errno, err_msg, sizeof(err_msg));
+        igsc_verbose("Failed to open file %s : %s\n", p_path, err_msg);
         goto exit;
     }
 
     if (fwrite(buf, 1, buf_len, fp) != buf_len)
     {
-        fwupd_strerror(errno, err_msg, sizeof(err_msg));
-        fwupd_verbose("Failed to read file %s : %s\n",
+        igsc_strerror(errno, err_msg, sizeof(err_msg));
+        igsc_verbose("Failed to read file %s : %s\n",
                       p_path, err_msg);
         goto exit;
     }
@@ -4504,7 +4504,7 @@ int do_gfsp_generic_cmd(int argc, char *argv[])
 
     if (argc <= 0)
     {
-        fwupd_error("Missing arguments\n");
+        igsc_error("Missing arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -4516,7 +4516,7 @@ int do_gfsp_generic_cmd(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No device was provided\n");
+                igsc_error("No device was provided\n");
                 return ERROR_BAD_ARGUMENT;
             }
             device_path = argv[0];
@@ -4525,18 +4525,18 @@ int do_gfsp_generic_cmd(int argc, char *argv[])
         {
             if (infile)
             {
-                fwupd_error("The in-file argument appears twice\n");
+                igsc_error("The in-file argument appears twice\n");
                 return ERROR_BAD_ARGUMENT;
             }
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No fgsp command value provided\n");
+                igsc_error("No fgsp command value provided\n");
                 return ERROR_BAD_ARGUMENT;
             }
             cmd = (uint32_t)atol(argv[0]);
             if (!cmd)
             {
-                fwupd_error("Bad gfsp command value argument '%s'\n", argv[0]);
+                igsc_error("Bad gfsp command value argument '%s'\n", argv[0]);
                 return ERROR_BAD_ARGUMENT;
             }
         }
@@ -4544,7 +4544,7 @@ int do_gfsp_generic_cmd(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No in-file name provided\n");
+                igsc_error("No in-file name provided\n");
                 return ERROR_BAD_ARGUMENT;
             }
             infile = argv[0];
@@ -4553,26 +4553,26 @@ int do_gfsp_generic_cmd(int argc, char *argv[])
         {
             if (outfile)
             {
-                fwupd_error("The out-file argument appears twice\n");
+                igsc_error("The out-file argument appears twice\n");
                 return ERROR_BAD_ARGUMENT;
             }
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No out-file name provided\n");
+                igsc_error("No out-file name provided\n");
                 return ERROR_BAD_ARGUMENT;
             }
             outfile = argv[0];
         }
         else
         {
-            fwupd_error("Wrong argument %s\n", argv[0]);
+            igsc_error("Wrong argument %s\n", argv[0]);
             return ERROR_BAD_ARGUMENT;
         }
     } while(arg_next(&argc, &argv));
 
     if (cmd == 0 || !infile || !outfile)
     {
-        fwupd_error("Not enough arguments\n");
+        igsc_error("Not enough arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -4582,7 +4582,7 @@ int do_gfsp_generic_cmd(int argc, char *argv[])
         if (ret)
         {
            ret = EXIT_FAILURE;
-           fwupd_error("Cannot initialize device: %s\n", device_path);
+           igsc_error("Cannot initialize device: %s\n", device_path);
            goto out;
         }
     }
@@ -4591,7 +4591,7 @@ int do_gfsp_generic_cmd(int argc, char *argv[])
         if (get_first_device_info(&dev_info))
         {
             ret = EXIT_FAILURE;
-            fwupd_error("No device to work with\n");
+            igsc_error("No device to work with\n");
             goto out;
         }
 
@@ -4599,7 +4599,7 @@ int do_gfsp_generic_cmd(int argc, char *argv[])
         if (ret)
         {
             ret = EXIT_FAILURE;
-            fwupd_error("Cannot initialize device: %s\n", dev_info.name);
+            igsc_error("Cannot initialize device: %s\n", dev_info.name);
             goto out;
         }
     }
@@ -4635,7 +4635,7 @@ int do_gfsp_generic_cmd(int argc, char *argv[])
     printf("Received %zu bytes of data\n", actual_received_size);
     if (ret)
     {
-        fwupd_error("gfsp command failed, return code %d, bytes received %zu\n",
+        igsc_error("gfsp command failed, return code %d, bytes received %zu\n",
                      ret, actual_received_size);
     }
     if (ret == 0 || ret == IGSC_ERROR_BUFFER_TOO_SMALL)
@@ -4644,14 +4644,14 @@ int do_gfsp_generic_cmd(int argc, char *argv[])
         if (write_to_file_from_buf(outfile, out_buf, actual_received_size) != 0)
         {
             ret = EXIT_FAILURE;
-            fwupd_error("Failed to write file : %s\n", outfile);
+            igsc_error("Failed to write file : %s\n", outfile);
             goto out;
         }
         printf("Wrote %zu bytes to %s\n", actual_received_size, outfile);
     }
     else
     {
-        fwupd_error("Wrote nothing to %s\n", outfile);
+        igsc_error("Wrote nothing to %s\n", outfile);
     }
 
 out:
@@ -4714,7 +4714,7 @@ int late_binding(const char *device_path, const char *payload_path, uint32_t typ
         if (get_first_device(&device_path_found) != IGSC_SUCCESS ||
             device_path_found == NULL)
         {
-            fwupd_error("No device to update\n");
+            igsc_error("No device to update\n");
             return EXIT_FAILURE;
         }
         device_path = device_path_found;
@@ -4722,7 +4722,7 @@ int late_binding(const char *device_path, const char *payload_path, uint32_t typ
 
     if (read_from_file_to_buf(payload_path, payload, sizeof(payload), &payload_size) != 0)
     {
-        fwupd_error("Failed to read file : %s\n", payload_path);
+        igsc_error("Failed to read file : %s\n", payload_path);
         ret = EXIT_FAILURE;
         goto exit;
     }
@@ -4730,7 +4730,7 @@ int late_binding(const char *device_path, const char *payload_path, uint32_t typ
     ret = igsc_device_init_by_device(&handle, device_path);
     if (ret)
     {
-        fwupd_error("Cannot initialize device: %s\n", device_path);
+        igsc_error("Cannot initialize device: %s\n", device_path);
         goto exit;
     }
 
@@ -4745,7 +4745,7 @@ int late_binding(const char *device_path, const char *payload_path, uint32_t typ
 
     if (ret)
     {
-        fwupd_error("Failed to send late binding command: %d\n", ret);
+        igsc_error("Failed to send late binding command: %d\n", ret);
         goto exit;
     }
     parse_late_binding_status(status);
@@ -4769,7 +4769,7 @@ static int do_late_binding(int argc, char *argv[])
 
     if (argc <= 0)
     {
-        fwupd_error("No arguments provided\n");
+        igsc_error("No arguments provided\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -4779,7 +4779,7 @@ static int do_late_binding(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No device to send the command to\n");
+                igsc_error("No device to send the command to\n");
                 return ERROR_BAD_ARGUMENT;
             }
             device_path = argv[0];
@@ -4788,7 +4788,7 @@ static int do_late_binding(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No payload file to send\n");
+                igsc_error("No payload file to send\n");
                 return ERROR_BAD_ARGUMENT;
             }
             payload_path = argv[0];
@@ -4797,7 +4797,7 @@ static int do_late_binding(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No flags argument provided\n");
+                igsc_error("No flags argument provided\n");
                 return ERROR_BAD_ARGUMENT;
             }
             flags = (uint32_t)strtol(argv[0], NULL, 16);
@@ -4807,7 +4807,7 @@ static int do_late_binding(int argc, char *argv[])
         {
             if (!arg_next(&argc, &argv))
             {
-                fwupd_error("No payload type argument provided\n");
+                igsc_error("No payload type argument provided\n");
                 return ERROR_BAD_ARGUMENT;
             }
             if (arg_is_vr_config(argv[0]))
@@ -4820,14 +4820,14 @@ static int do_late_binding(int argc, char *argv[])
             }
             else
             {
-                fwupd_error("Bad payload type argument %s\n", argv[0]);
+                igsc_error("Bad payload type argument %s\n", argv[0]);
                 return ERROR_BAD_ARGUMENT;
             }
             type_set = true;
         }
         else
         {
-            fwupd_error("Wrong argument %s\n", argv[0]);
+            igsc_error("Wrong argument %s\n", argv[0]);
             return ERROR_BAD_ARGUMENT;
         }
     } while(arg_next(&argc, &argv));
@@ -4837,7 +4837,7 @@ static int do_late_binding(int argc, char *argv[])
         return late_binding(device_path, payload_path, type, flags);
     }
 
-    fwupd_error("No payload file or payload type or flags provided\n");
+    igsc_error("No payload file or payload type or flags provided\n");
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -4847,7 +4847,7 @@ static int do_gfsp(int argc, char *argv[])
 
     if (argc <= 0)
     {
-        fwupd_error("Missing arguments\n");
+        igsc_error("Missing arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
 
@@ -4880,7 +4880,7 @@ static int do_gfsp(int argc, char *argv[])
         return do_gfsp_generic_cmd(argc, argv);
     }
 
-    fwupd_error("Wrong argument %s\n", sub_command);
+    igsc_error("Wrong argument %s\n", sub_command);
     return ERROR_BAD_ARGUMENT;
 }
 
@@ -4908,7 +4908,7 @@ static int do_list_devices(int argc, char *argv[])
         }
         else
         {
-            fwupd_error("Wrong argument: %s\n", argv[0]);
+            igsc_error("Wrong argument: %s\n", argv[0]);
             return ERROR_BAD_ARGUMENT;
         }
     }
@@ -4916,14 +4916,14 @@ static int do_list_devices(int argc, char *argv[])
     /* Should be no more args */
     if (arg_next(&argc, &argv))
     {
-        fwupd_verbose("Too many arguments\n");
+        igsc_verbose("Too many arguments\n");
         return ERROR_BAD_ARGUMENT;
     }
 
     ret = igsc_device_iterator_create(&iter);
     if (ret != IGSC_SUCCESS)
     {
-        fwupd_error("Cannot create device iterator %d\n", ret);
+        igsc_error("Cannot create device iterator %d\n", ret);
         return EXIT_FAILURE;
     }
 
@@ -4996,13 +4996,13 @@ static int do_list_devices(int argc, char *argv[])
     }
     else
     {
-        fwupd_error("Failure in the device iterator: %d\n", ret);
+        igsc_error("Failure in the device iterator: %d\n", ret);
     }
     igsc_device_iterator_destroy(iter);
 
     if (ndevices == 0)
     {
-        fwupd_msg("No device found\n");
+        igsc_msg("No device found\n");
     }
 
     return ret;
