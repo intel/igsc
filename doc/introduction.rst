@@ -149,19 +149,12 @@ the library supports enumeration of graphics devices that are
 subject to firmware and OPROM update. This is done by querying
 the device via OS system API, the library provide a cross
 platform (Windows/Linux) API. The enumeration API is not required
-but recommended part of the flow, some applications such us
-`fwupd`_ provide their own enumeration API.
-
-
-.. _fwupd: https://github.com/fwupd/fwupd
+but recommended part of the flow.
 
 1.6. Integrations
 ~~~~~~~~~~~~~~~~~
 
-  1. On Linux client platforms the library integrates with fwupd.org
-     daemon via *igsc plugin. The *fwupd* daemon is commonly an integral part
-     on modern Linux distributions.
-  2. On servers platforms the library might be integrated with BMC based solution.
+  1. On servers platforms the library might be integrated with BMC based solution.
 
 1.7. Command Line Interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
