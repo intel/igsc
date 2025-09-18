@@ -2272,7 +2272,7 @@ retry:
 
     /*
      * After Gfx FW update there is a FW reset so driver reconnect is needed
-    */
+     */
     if (payload_type == GSC_FWU_HECI_PAYLOAD_TYPE_GFX_FW)
     {
         if (cp_mode)

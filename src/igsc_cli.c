@@ -4930,7 +4930,6 @@ static int do_list_devices(int argc, char *argv[])
     info.name[0] = '\0';
     while ((ret = igsc_device_iterator_next(iter, &info)) == IGSC_SUCCESS)
     {
-
         ret = igsc_device_init_by_device_info(&handle, &info);
         if (ret != IGSC_SUCCESS)
         {
