@@ -1441,7 +1441,6 @@ int igsc_ifr_get_status_ext(IN struct igsc_device_handle *handle,
 exit:
     gsc_driver_deinit(lib_ctx);
     return status;
-
 }
 
 int igsc_ecc_config_set(IN  struct igsc_device_handle *handle,
