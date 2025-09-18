@@ -2176,8 +2176,6 @@ static int gsc_update(IN struct igsc_device_handle *handle,
     cp_mode = (sts5 & HECI1_CSE_FS_MODE_MASK) == HECI1_CSE_FS_CP_MODE;
     gsc_debug("cp_mode %d, heci sts5 value 0x%x\n", cp_mode, sts5);
 
-    gsc_pref_cnt_checkpoint(perf_ctx, "Before FWU_START");
-
 retry:
     bytes_sent = 0;
     data_counter = 0;
