@@ -1429,6 +1429,7 @@ static int gsc_device_subsystem_ids(struct igsc_lib_ctx  *lib_ctx,
     status = gsc_fwu_heci_validate_response_header(lib_ctx, &resp->response, command_id);
     if (status != IGSC_SUCCESS)
     {
+        /* In older versions this command wasn't supported which is legitimate*/
         gsc_debug("Invalid HECI message response (%d)\n", status);
         goto exit;
     }
@@ -3785,7 +3786,7 @@ int igsc_read_fw_status_reg(IN struct igsc_device_handle *handle,
 
     lib_ctx = handle->ctx;
 
-    gsc_debug("read fw status: initializing driver\n");
+    gsc_debug("in get fw status, initializing driver\n");
 
     status = gsc_driver_init(lib_ctx, &GUID_METEE_FWU);
     if (status != IGSC_SUCCESS)
