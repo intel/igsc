@@ -1920,6 +1920,7 @@ int oprom_code_image_supported_devices(const char *image_path)
 
     devices_4ids = calloc(count, sizeof(struct igsc_oprom_device_info_4ids));
     if (devices_4ids == NULL) {
+        igsc_error("Out of memory\n");
         ret = EXIT_FAILURE;
         goto out;
     }
