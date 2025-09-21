@@ -1,5 +1,29 @@
 # IGSC FUL
 
+## [v1.0.0] - 2025-09-21
+
+### Changed
+1. align whitespacing
+2. CMake: move Conan requirement out of preset
+3. cli: Prefix the debugging with a more suitable name
+
+### Removed
+1. lib: drop duplicate perf checkpoint
+
+### Fixed
+1. lib: fix strings
+2. doc: small assorted fixes
+3. lib: fix structures definition coding style
+4. doc: fix igsc documentation
+5. doc: fix numbering in igsc_api.rst
+
+### Added
+1. cli: retrieve firmware version before oprom and fw data update
+2. cli: add oprom devid enforcement explanations
+3. lib: add comment describing oprom update logic
+4. cli: add missed out of memory print
+5. doc: Clarify that fwupd is not using the library
+
 ## [v0.9.6] - 2025-06-17
 
 ### Changed
