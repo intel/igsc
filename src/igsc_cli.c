@@ -2183,6 +2183,24 @@ static int do_oprom_version(int argc, char *argv[], enum igsc_oprom_type type)
     return ERROR_BAD_ARGUMENT;
 }
 
+/* The logic for the OPROM CODE Update goes like this:
+ *
+ * On DG1 there is no matching of VID/DID at all between the oprom image and the device,
+ * all oprom CODE images are fit for all devices.
+ * Starting from DG2 there are 2 types of device firmware - the old type (like in DG1) and the new one,
+ * that does the the matching between the oprom image supported 4-IDs list and the 4-IDs of the card.
+ * The matching is done like this:
+ *
+ * If oprom_code_devid_enforcement flag exists in the firmware image on the device
+ * and it is set to True:
+ * The update is accepted only if the update file contains a Device IDs whitelist (37)
+ * and the card's {VID, DID, SSVID, SSDID} is in the update file's Device IDs whitelist.
+ * In this case the dev ids list will be checked by the match function elsewhere in the flow.
+ *
+ * If oprom_code_devid_enforcement flag doesn't exist in the FW image on the device or it is False:
+ * The update is accepted only if the update file does not contain a Device ID whitelist (37).
+ * This case is checked here in this function.
+ */
 int oprom_check_devid_enforcement(struct igsc_device_handle *handle,
                                   struct igsc_oprom_image *img)
 {
