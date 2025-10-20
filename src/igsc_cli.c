@@ -123,7 +123,7 @@ static void print_oem_version(const struct igsc_oem_version *version)
     }
 
     printf("OEM Version: ");
-    for (int i = 0; i < version->length; i++)
+    for (size_t i = 0; i < version->length; i++)
     {
          printf("%x", version->version[i]);
     }
