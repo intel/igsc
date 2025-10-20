@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  */
 #include <limits.h>
 #include <stdint.h>
@@ -1585,13 +1585,6 @@ int firmware_status(uint32_t index, const char *device_path)
     printf("Firmware Status[%u] = 0x%x\n", index, fw_status);
 
 exit:
-    if (ret != IGSC_SUCCESS)
-    {
-        igsc_verbose("last firmware transaction result: %s(%d)\n",
-                      igsc_translate_firmware_status(igsc_get_last_firmware_status(&handle)),
-                      igsc_get_last_firmware_status(&handle));
-    }
-
     (void)igsc_device_close(&handle);
     return ret;
 }
