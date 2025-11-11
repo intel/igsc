@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  */
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -16,6 +16,8 @@
 
 #include "igsc_lib.h"
 #include "igsc_log.h"
+
+#define PCI_CLASS_PROCESSING_ACCELERATORS "0x128000"
 
 struct igsc_device_iterator
 {
@@ -103,10 +105,107 @@ void igsc_device_iterator_destroy(struct igsc_device_iterator *iter)
     free(iter);
 }
 
-static int get_device_info(struct udev_device *dev,
+static struct udev_device *get_gfx_device(struct udev *udev, struct udev_device *dev, const char *sysname)
+{
+    struct udev_enumerate *enumerate;
+    struct udev_device *parent;
+    struct udev_device *target = NULL;
+    struct udev_list_entry *entry;
+    const char *subsystem;
+    int ret;
+
+    /* Check direct PCI parent */
+    parent = udev_device_get_parent(dev);
+    if (parent == NULL)
+    {
+        gsc_error("Can't find device parent for '%s'\n", sysname);
+        return NULL;
+    }
+
+    subsystem = udev_device_get_subsystem(parent);
+    if (subsystem == NULL)
+    {
+        gsc_error("Can't find device parent subsystem for '%s'\n", sysname);
+        return NULL;
+    }
+
+    if (!strcmp(subsystem, "pci"))
+    {
+        parent = udev_device_get_parent(parent);
+        if (parent == NULL)
+        {
+            gsc_error("Can't find device grandparent for '%s'\n", sysname);
+            return NULL;
+        }
+
+        parent = udev_device_get_parent(parent);
+        if (parent == NULL)
+        {
+            gsc_error("Can't find device grandgrandparent for '%s'\n", sysname);
+            return NULL;
+        }
+
+        enumerate = udev_enumerate_new(udev);
+        if (!enumerate)
+        {
+            gsc_error("Cannot create udev_enumerate\n");
+            return NULL;
+        }
+
+        if ((ret = udev_enumerate_add_match_sysattr(enumerate, "class",
+                                                    PCI_CLASS_PROCESSING_ACCELERATORS)) < 0)
+        {
+            gsc_error("Cannot match udev sysattr: %d\n", ret);
+            goto clean_enum;
+        }
+
+        if ((ret = udev_enumerate_add_match_parent(enumerate, parent)) < 0)
+        {
+            gsc_error("Cannot match udev parent: %d\n", ret);
+            goto clean_enum;
+        }
+
+        if ((ret = udev_enumerate_scan_devices(enumerate)) < 0)
+        {
+            gsc_error("Cannot scan udev devices: %d\n", ret);
+            goto clean_enum;
+        }
+
+        /* There should be only one such device */
+        entry = udev_enumerate_get_list_entry(enumerate);
+        if (entry == NULL)
+        {
+            gsc_error("Cannot find gfx device.\n");
+            goto clean_enum;
+        }
+
+        target = udev_device_new_from_syspath(udev, udev_list_entry_get_name(entry));
+        if (target == NULL)
+        {
+            gsc_error("Can't find device at '%s'\n", udev_list_entry_get_name(entry));
+        }
+
+    clean_enum:
+        udev_enumerate_unref(enumerate);
+        return target;
+    }
+    else
+    {
+        /* Look for the GFX PCI parent */
+        target = udev_device_get_parent_with_subsystem_devtype(dev, "pci", NULL);
+        if (target == NULL)
+        {
+            gsc_error("Can't find device pci parent for '%s'\n", sysname);
+            return NULL;
+        }
+        return target;
+    }
+}
+
+
+static int get_device_info(struct udev *udev, struct udev_device *dev,
                            struct igsc_device_info *info)
 {
-
     struct udev_device *parent;
     const char *sysname;
     const char *prop;
@@ -127,11 +226,10 @@ static int get_device_info(struct udev_device *dev,
     }
     info->name[IGSC_INFO_NAME_SIZE - 1] = '\0';
 
-    /* Look for the GFX PCI parent */
-    parent = udev_device_get_parent_with_subsystem_devtype(dev, "pci", NULL);
+    parent = get_gfx_device(udev, dev, sysname);
     if (parent == NULL)
     {
-        gsc_error("Can't find device parent for '%s'\n", sysname);
+        gsc_error("Can't find gfx parent for '%s'\n", sysname);
         return IGSC_ERROR_INTERNAL;
     }
 
@@ -208,7 +306,7 @@ int igsc_device_iterator_next(struct igsc_device_iterator *iter,
         return IGSC_ERROR_INTERNAL; 
     }
 
-    ret = get_device_info(dev, info);
+    ret = get_device_info(iter->udev, dev, info);
     if (ret != IGSC_SUCCESS)
     {
         return ret;
@@ -246,7 +344,7 @@ int get_device_info_by_devpath(const char *devpath,
         goto out;
     }
 
-    ret = get_device_info(dev, info);
+    ret = get_device_info(udev, dev, info);
 
 out:
     udev_device_unref(dev);
