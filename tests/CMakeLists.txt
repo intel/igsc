@@ -109,3 +109,9 @@ add_cmocka_test(dataversion_tests
                 COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS} -g -Digsc_strdup=test_strdup -DUNIT_TESTING=1)
 add_cmocka_test_environment(dataversion_tests)
 
+add_cmocka_test(late_bind_tests
+                SOURCES ../lib/igsc_lib.c late_bind_tests.c ../lib/oprom.c ../lib/oprom_parser.c ../lib/fw_data_parser.c ../lib/ifr.c ../lib/igsc_log.c ${POWER_SOURCES}
+                LINK_LIBRARIES ${CMOCKA_LIBRARIES}
+                INCLUDE_DIRECTORIES ${IGCS_INCLUDE_DIRS} ${CMOCKA_INCLUDE_DIR} ${METEE_INCLUDE}
+                COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS} -g -DUNIT_TESTING=1)
+add_cmocka_test_environment(late_bind_tests)
