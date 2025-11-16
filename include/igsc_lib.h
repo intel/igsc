@@ -1656,8 +1656,10 @@ enum csc_late_binding_flags {
  */
 enum csc_late_binding_type {
     CSC_LATE_BINDING_TYPE_INVALID = 0,
-    CSC_LATE_BINDING_TYPE_FAN_TABLE,
-    CSC_LATE_BINDING_TYPE_VR_CONFIG
+    CSC_LATE_BINDING_TYPE_FAN_TABLE = 1,
+    CSC_LATE_BINDING_TYPE_VR_CONFIG = 2,
+    CSC_LATE_BINDING_TYPE_OCODE = 3,
+    CSC_LATE_BINDING_TYPE_DGDIAG = 4,
 };
 
 /**
@@ -1672,6 +1674,29 @@ enum csc_late_binding_status {
     CSC_LATE_BINDING_STATUS_INVALID_SIGNATURE = 5,
     CSC_LATE_BINDING_STATUS_INVALID_PAYLOAD   = 6,
     CSC_LATE_BINDING_STATUS_TIMEOUT           = 7,
+    CSC_LATE_BINDING_STATUS_BUFFER_TOO_SMALL                      = 8,
+    CSC_LATE_BINDING_STATUS_INTERNAL_ERROR                        = 9,
+    CSC_LATE_BINDING_STATUS_INVALID_FPT_TABLE                     = 10,
+    CSC_LATE_BINDING_STATUS_SIGNED_PAYLOAD_VERIFICATION_ERROR     = 11,
+    CSC_LATE_BINDING_STATUS_SIGNED_PAYLOAD_INVALID_CPD            = 12,
+    CSC_LATE_BINDING_STATUS_SIGNED_PAYLOAD_FW_VERSION_MISMATCH    = 13,
+    CSC_LATE_BINDING_STATUS_SIGNED_PAYLOAD_INVALID_MANIFEST       = 14,
+    CSC_LATE_BINDING_STATUS_SIGNED_PAYLOAD_INVALID_HASH           = 15,
+    CSC_LATE_BINDING_STATUS_SIGNED_PAYLOAD_BINDING_TYPE_MISMATCH  = 16,
+    CSC_LATE_BINDING_STATUS_SIGNED_PAYLOAD_HANDLE_SVN_FAILED      = 17,
+    CSC_LATE_BINDING_STATUS_DESTINATION_MBOX_FAILURE              = 18,
+    CSC_LATE_BINDING_STATUS_MISSING_LOADING_PATCH                 = 19,
+    CSC_LATE_BINDING_STATUS_INVALID_COMMAND                       = 20,
+    CSC_LATE_BINDING_STATUS_INVALID_HECI_HEADER                   = 21,
+    CSC_LATE_BINDING_STATUS_IP_ERROR_START                        = 0x80000000,
+};
+
+/**
+ * Late Binding SVN source
+ */
+enum csc_late_binding_svn_source {
+    CSC_LATE_BINDING_SVN_SOURCE_SPI = 0,
+    CSC_LATE_BINDING_SVN_SOURCE_KEY_MANIFEST = 1,
 };
 
 /**
@@ -1692,6 +1717,44 @@ int igsc_device_update_late_binding_config(IN struct igsc_device_handle *handle,
                                            IN uint32_t flags, /* enum csc_late_binding_flags */
                                            IN uint8_t *payload, IN size_t payload_size,
                                            OUT uint32_t *status); /* enum csc_late_binding_status */
+
+/**
+ *  @brief Sends Late Binding HECI command to version 2 firmware
+ *
+ *  @param handle       A handle to the device.
+ *  @param type         Late Binding payload type @enum csc_late_binding_type
+ *  @param flags        Late Binding flags to be sent to the firmware enum csc_late_binding_flags
+ *  @param payload      Late Binding data to be sent to the firmware
+ *  @param payload_size Size of the payload data
+ *  @param status       Late Binding payload status @enum csc_late_binding_status
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_device_update_late_binding_config2(IN struct igsc_device_handle* handle,
+    IN uint32_t type, /* enum csc_late_binding_type */
+    IN uint32_t flags, /* enum csc_late_binding_flags */
+    IN uint8_t* payload, IN size_t payload_size,
+    OUT uint32_t* status); /* enum csc_late_binding_status */
+
+/**
+ *  @brief Retrieve information about specific Late Binding type
+ *
+ *  @param handle       A handle to the device.
+ *  @param type         Late Binding payload type @enum csc_late_binding_type
+ *  @param svn_source   Source of the ARB SVN for the specific type
+ *  @param min_svn      The minimum ARB SVN of the specific type
+ *  @param status       Late Binding payload status @enum csc_late_binding_status
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_device_get_late_binding_info(IN struct  igsc_device_handle* handle,
+    IN uint32_t type, /* enum csc_late_binding_type */
+    OUT uint32_t* svn_source,
+    OUT uint32_t* min_svn,
+    OUT uint32_t* status); /* enum csc_late_binding_status */
+
 /**
  *  @brief Sends ARB SVN Commit HECI command
  *

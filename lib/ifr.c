@@ -22,6 +22,7 @@
 #include "igsc_lib.h"
 #include "igsc_internal.h"
 #include "ifr.h"
+#include "ipl.h"
 
 #include "utils.h"
 
@@ -30,6 +31,13 @@ DEFINE_GUID(GUID_METEE_IFR, 0x865e2b45, 0x8fb5, 0x464a,
 
 DEFINE_GUID(GUID_METEE_MKHI, 0xe2c2afa2, 0x3817, 0x4d19,
             0x9d, 0x95, 0x6, 0xb1, 0x6b, 0x58, 0x8a, 0x5d);
+
+DEFINE_GUID(GUID_METEE_LB, 0x4ed87243, 0x3980, 0x4d8e,
+    0xb1, 0xf9, 0x6f, 0xb7, 0xc0, 0x14, 0x8c, 0x4d);
+
+#ifndef MIN
+    #define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
 
 static int ifr_heci_validate_response_header(struct igsc_lib_ctx *lib_ctx,
                                              struct ifr_msg_hdr *resp_header,
@@ -1781,7 +1789,310 @@ exit:
     gsc_driver_deinit(lib_ctx);
 
     return status;
+}
 
+static int ipl_heci_validate_response_header(struct igsc_lib_ctx* lib_ctx,
+    struct ipl_heci_rsp_header* resp_header, uint32_t command)
+{
+    int status;
+
+    if (resp_header == NULL)
+    {
+        status = IGSC_ERROR_INTERNAL;
+        goto exit;
+    }
+
+    lib_ctx->last_firmware_status = resp_header->status;
+
+    if (resp_header->header.command_id != command)
+    {
+        gsc_error("Invalid command %d\n", resp_header->header.command_id);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (!(resp_header->header.flags & (uint8_t)IPL_FLAG_RESPONSE))
+    {
+        gsc_error("HECI Response not marked as response 0x%08X\n", resp_header->header.flags);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp_header->header.reserved[0] != 0)
+    {
+        gsc_error("HECI message response is leaking data\n");
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp_header->status != 0)
+    {
+        gsc_error("Firmware returned error status %u\n", resp_header->status);
+        status = IGSC_ERROR_INTERNAL;
+        goto exit;
+    }
+
+    gsc_debug("status %u\n", resp_header->status);
+    status = IGSC_SUCCESS;
+
+exit:
+    return status;
+}
+
+int igsc_device_update_late_binding_config2(IN struct  igsc_device_handle* handle,
+    IN uint32_t type, /* enum csc_late_binding_type */
+    IN uint32_t flags,
+    IN uint8_t* payload, IN size_t payload_size,
+    OUT uint32_t* cmd_status) /* enum csc_late_binding_status */
+{
+    int status;
+    size_t request_len;
+    size_t response_len;
+    size_t received_len = 0;
+    size_t buf_len;
+    size_t chunk_size;
+    size_t sent_data = 0;
+    bool first_chunk = true, last_chunk = false;
+    struct igsc_lib_ctx* lib_ctx;
+
+    struct ipl_late_binding_response* resp;
+    struct ipl_late_binding_request* req;
+
+    if (!handle || !handle->ctx || cmd_status == NULL || payload == NULL || payload_size == 0)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    lib_ctx = handle->ctx;
+
+    if (type != CSC_LATE_BINDING_TYPE_FAN_TABLE && type != CSC_LATE_BINDING_TYPE_VR_CONFIG &&
+        type != CSC_LATE_BINDING_TYPE_OCODE && type != CSC_LATE_BINDING_TYPE_DGDIAG)
+    {
+        gsc_error("Wrong payload type %u\n", type);
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    if ((flags & ~(uint32_t)CSC_LATE_BINDING_FLAGS_IS_PERSISTENT_MASK) != 0)
+    {
+        gsc_error("Wrong flags value 0x%x\n", flags);
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    gsc_debug("in late binding2, initializing driver\n");
+
+    status = gsc_driver_init(lib_ctx, &GUID_METEE_LB);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Cannot initialize driver, status %d\n", status);
+        return status;
+    }
+
+    req = (struct ipl_late_binding_request*)lib_ctx->working_buffer;
+    buf_len = lib_ctx->working_buffer_length;
+    resp = (struct ipl_late_binding_response*)lib_ctx->working_buffer;
+    response_len = sizeof(*resp);
+
+    do
+    {
+        chunk_size = MIN(payload_size - sent_data, buf_len - sizeof(*req));
+        request_len = sizeof(*req) + chunk_size;
+        if (sent_data + chunk_size == payload_size)
+        {
+            last_chunk = true;
+        }
+
+        status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
+        if (status != IGSC_SUCCESS)
+        {
+            goto exit;
+        }
+
+        gsc_debug("in late binding2, sending %zu bytes from offset %zu of %zu (%s %s)\n",
+                  chunk_size, sent_data, payload_size,
+                  (first_chunk ? "first" : ""), (last_chunk ? "last" : ""));
+
+        memset(req, 0, request_len);
+        req->header.command_id = IPL_HECI_COMMAND_ID_LATE_BINDING;
+        req->type = type;
+        req->flags = flags | (first_chunk ? CSC_LATE_BINDING_FLAG_FST_CHUNK : 0) | (last_chunk ? CSC_LATE_BINDING_FLAG_LST_CHUNK : 0);
+        req->total_payload_size = (uint32_t)payload_size;
+        req->payload_size = (uint32_t)chunk_size;
+        if (gsc_memcpy_s(req->payload, buf_len - sizeof(*req), payload + sent_data, chunk_size))
+        {
+            gsc_error("Copy of payload data failed\n");
+            status = IGSC_ERROR_INTERNAL;
+            goto exit;
+        }
+
+        status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
+        if (status != IGSC_SUCCESS)
+        {
+            gsc_error("Invalid HECI message response (%d)\n", status);
+            goto exit;
+        }
+
+        if (received_len < sizeof(resp->rheader))
+        {
+            gsc_error("Error in HECI read - bad size %zu\n", received_len);
+            status = IGSC_ERROR_PROTOCOL;
+            goto exit;
+        }
+
+        status = ipl_heci_validate_response_header(lib_ctx, &resp->rheader,
+            IPL_HECI_COMMAND_ID_LATE_BINDING);
+        if (status != IGSC_SUCCESS)
+        {
+            gsc_error("Invalid HECI message response (%d)\n", status);
+            *cmd_status = resp->rheader.status;
+            goto exit;
+        }
+
+        if (received_len != response_len)
+        {
+            gsc_error("Error in HECI read - bad size %zu\n", received_len);
+            status = IGSC_ERROR_PROTOCOL;
+            goto exit;
+        }
+
+        if (resp->type != type)
+        {
+            gsc_error("Received wrong payload type in response from firmware %u, expected %u\n",
+                resp->type, type);
+            status = IGSC_ERROR_PROTOCOL;
+            goto exit;
+        }
+
+        if (resp->reserved[0] != 0 || resp->reserved[1] != 0)
+        {
+            gsc_error("HECI message response is leaking data\n");
+            status = IGSC_ERROR_PROTOCOL;
+            goto exit;
+        }
+
+        /* prepare for the next chunk */
+        sent_data += chunk_size;
+        first_chunk = false;
+    } while (!last_chunk);
+
+    *cmd_status = 0;
+    status = IGSC_SUCCESS;
+
+exit:
+    gsc_driver_deinit(lib_ctx);
+
+    return status;
+}
+
+int igsc_device_get_late_binding_info(IN struct  igsc_device_handle* handle,
+    IN uint32_t type, /* enum csc_late_binding_type */
+    OUT uint32_t* svn_source,
+    OUT uint32_t* min_svn,
+    OUT uint32_t* cmd_status) /* enum csc_late_binding_status */
+{
+    int status;
+    size_t request_len;
+    size_t response_len;
+    size_t received_len = 0;
+    size_t buf_len;
+    struct igsc_lib_ctx* lib_ctx;
+
+    struct ipl_late_binding_get_info_response* resp;
+    struct ipl_late_binding_get_info_request* req;
+
+    if (!handle || !handle->ctx || svn_source == NULL || min_svn == NULL || cmd_status == NULL)
+    {
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    lib_ctx = handle->ctx;
+
+    if (type != CSC_LATE_BINDING_TYPE_FAN_TABLE && type != CSC_LATE_BINDING_TYPE_VR_CONFIG &&
+        type != CSC_LATE_BINDING_TYPE_OCODE && type != CSC_LATE_BINDING_TYPE_DGDIAG)
+    {
+        gsc_error("Wrong payload type %u\n", type);
+        return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    gsc_debug("in get late binding info, initializing driver\n");
+
+    status = gsc_driver_init(lib_ctx, &GUID_METEE_LB);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Cannot initialize driver, status %d\n", status);
+        return status;
+    }
+
+    req = (struct ipl_late_binding_get_info_request*)lib_ctx->working_buffer;
+    buf_len = lib_ctx->working_buffer_length;
+    request_len = sizeof(*req);
+    resp = (struct ipl_late_binding_get_info_response*)lib_ctx->working_buffer;
+    response_len = sizeof(*resp);
+
+    status = gsc_fwu_buffer_validate(lib_ctx, request_len, response_len);
+    if (status != IGSC_SUCCESS)
+    {
+        goto exit;
+    }
+
+    memset(req, 0, request_len);
+    req->header.command_id = IPL_HECI_COMMAND_ID_LATE_BINDING_GET_INFO;
+    req->header.flags = 0;
+    req->type = type;
+
+    status = gsc_tee_command(lib_ctx, req, request_len, resp, buf_len, &received_len);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response (%d)\n", status);
+        goto exit;
+    }
+
+    if (received_len < sizeof(resp->rheader))
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    status = ipl_heci_validate_response_header(lib_ctx, &resp->rheader,
+        IPL_HECI_COMMAND_ID_LATE_BINDING_GET_INFO);
+    if (status != IGSC_SUCCESS)
+    {
+        gsc_error("Invalid HECI message response (%d)\n", status);
+        *cmd_status = resp->rheader.status;
+        goto exit;
+    }
+
+    if (received_len != response_len)
+    {
+        gsc_error("Error in HECI read - bad size %zu\n", received_len);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp->type != type)
+    {
+        gsc_error("Received wrong payload type in response from firmware %u, expected %u\n",
+            resp->type, type);
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    if (resp->reserved[0] != 0 || resp->reserved[1] != 0)
+    {
+        gsc_error("HECI message response is leaking data\n");
+        status = IGSC_ERROR_PROTOCOL;
+        goto exit;
+    }
+
+    *cmd_status = 0;
+    *min_svn = resp->min_svn;
+    *svn_source = resp->svn_source;
+    status = IGSC_SUCCESS;
+
+exit:
+    gsc_driver_deinit(lib_ctx);
+
+    return status;
 }
 
 static int gsc_get_version(struct igsc_lib_ctx *lib_ctx,
