@@ -19,6 +19,7 @@
 #include "igsc_internal.h"
 #include "dev_info_mock.c"
 #include "ipl.h"
+#include "test_strdup.h"
 
 #define MAX_MSG_LEN 4096
 #define MIN_SVN 5
@@ -156,7 +157,6 @@ static int group_teardown(void** state)
 {
     struct igsc_device_handle* handle = *state;
 
-    handle->ctx->device_path = 0;
 
     igsc_device_close(handle);
 
