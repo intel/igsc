@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  */
 #include <stdarg.h>
 #include <stddef.h>
@@ -1002,6 +1002,327 @@ static void test_late_binding_bad7(void **state)
     assert_true(ret != EXIT_SUCCESS);
 }
 
+/**
+ * test: igsc late-binding2 --payload pload.bin --type fan-table --flags 0x1 --device /dev/mei0
+ */
+static void test_late_binding2_good1(void** state)
+{
+    int ret;
+    char** argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("late-binding2");
+    argv[argc++] = test_strdup("--payload");
+    argv[argc++] = test_strdup("pload.bin");
+    argv[argc++] = test_strdup("--type");
+    argv[argc++] = test_strdup("fan-table");
+    argv[argc++] = test_strdup("--flags");
+    argv[argc++] = test_strdup("0x1");
+    argv[argc++] = test_strdup("--device");
+    argv[argc++] = test_strdup("/dev/mei0");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret == EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc late-binding2 --payload pload.bin --type vr-config --flags 0x0
+ */
+static void test_late_binding2_good2(void** state)
+{
+    int ret;
+    char** argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("late-binding2");
+    argv[argc++] = test_strdup("--payload");
+    argv[argc++] = test_strdup("pload.bin");
+    argv[argc++] = test_strdup("--type");
+    argv[argc++] = test_strdup("vr-config");
+    argv[argc++] = test_strdup("--flags");
+    argv[argc++] = test_strdup("0x0");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret == EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc late-binding2 --payload --type vr-config --flags 0x0
+ * missing payload file
+ */
+static void test_late_binding2_bad1(void** state)
+{
+    int ret;
+    char** argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("late-binding2");
+    argv[argc++] = test_strdup("--payload");
+    argv[argc++] = test_strdup("--type");
+    argv[argc++] = test_strdup("vr-config");
+    argv[argc++] = test_strdup("--flags");
+    argv[argc++] = test_strdup("0x0");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc late-binding2 --type vr-config --flags 0x0
+ * missing --payload
+ */
+static void test_late_binding2_bad2(void** state)
+{
+    int ret;
+    char** argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("late-binding2");
+    argv[argc++] = test_strdup("--type");
+    argv[argc++] = test_strdup("vr-config");
+    argv[argc++] = test_strdup("--flags");
+    argv[argc++] = test_strdup("0x0");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc late-binding2 --payload pload.bin --type --flags 0x0
+ * missing --type value
+ */
+static void test_late_binding2_bad3(void** state)
+{
+    int ret;
+    char** argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("late-binding2");
+    argv[argc++] = test_strdup("--payload");
+    argv[argc++] = test_strdup("pload.bin");
+    argv[argc++] = test_strdup("--type");
+    argv[argc++] = test_strdup("--flags");
+    argv[argc++] = test_strdup("0x0");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc late-binding2 --payload pload.bin --flags 0x0
+ * missing --type
+ */
+static void test_late_binding2_bad4(void** state)
+{
+    int ret;
+    char** argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("late-binding2");
+    argv[argc++] = test_strdup("--payload");
+    argv[argc++] = test_strdup("pload.bin");
+    argv[argc++] = test_strdup("--flags");
+    argv[argc++] = test_strdup("0x0");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc late-binding2 --payload pload.bin --type vr-config --flags
+ * missing --flags value
+ */
+static void test_late_binding2_bad5(void** state)
+{
+    int ret;
+    char** argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("late-binding2");
+    argv[argc++] = test_strdup("--payload");
+    argv[argc++] = test_strdup("pload.bin");
+    argv[argc++] = test_strdup("--type");
+    argv[argc++] = test_strdup("vr-config");
+    argv[argc++] = test_strdup("--flags");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc late-binding2 --payload pload.bin --type vr-config
+ * missing --flags
+ */
+static void test_late_binding2_bad6(void** state)
+{
+    int ret;
+    char** argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("late-binding2");
+    argv[argc++] = test_strdup("--payload");
+    argv[argc++] = test_strdup("pload.bin");
+    argv[argc++] = test_strdup("--type");
+    argv[argc++] = test_strdup("vr-config");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc late-binding2 --payload pload.bin --type fan-config --flags 0x0
+ * bad --type value
+ */
+static void test_late_binding2_bad7(void** state)
+{
+    int ret;
+    char** argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("late-binding2");
+    argv[argc++] = test_strdup("--payload");
+    argv[argc++] = test_strdup("pload.bin");
+    argv[argc++] = test_strdup("--type");
+    argv[argc++] = test_strdup("fan-config");
+    argv[argc++] = test_strdup("--flags");
+    argv[argc++] = test_strdup("0x0");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc late-binding2
+ * no parameters
+ */
+static void test_late_binding2_bad8(void** state)
+{
+    int ret;
+    char** argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("late-binding2");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc late-binding2 info --type fan-table --device /dev/mei0
+ */
+static void test_late_binding2_info_good1(void** state)
+{
+    int ret;
+    char** argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("late-binding2");
+    argv[argc++] = test_strdup("info");
+    argv[argc++] = test_strdup("--type");
+    argv[argc++] = test_strdup("fan-table");
+    argv[argc++] = test_strdup("--device");
+    argv[argc++] = test_strdup("/dev/mei0");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret == EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc late-binding2 info --type fan-config
+ * bad --type value
+ */
+static void test_late_binding2_info_bad1(void** state)
+{
+    int ret;
+    char** argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("late-binding2");
+    argv[argc++] = test_strdup("info");
+    argv[argc++] = test_strdup("--type");
+    argv[argc++] = test_strdup("fan-config");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc late-binding2 info --type
+ * no --type value
+ */
+static void test_late_binding2_info_bad2(void** state)
+{
+    int ret;
+    char** argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("late-binding2");
+    argv[argc++] = test_strdup("info");
+    argv[argc++] = test_strdup("--type");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc late-binding2 info
+ * no --type at all
+ */
+static void test_late_binding2_info_bad3(void** state)
+{
+    int ret;
+    char** argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("late-binding2");
+    argv[argc++] = test_strdup("info");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
 #undef main
 int main(void)
 {
@@ -1048,6 +1369,20 @@ int main(void)
         cmocka_unit_test(test_late_binding_bad5),
         cmocka_unit_test(test_late_binding_bad6),
         cmocka_unit_test(test_late_binding_bad7),
+        cmocka_unit_test(test_late_binding2_good1),
+        cmocka_unit_test(test_late_binding2_good2),
+        cmocka_unit_test(test_late_binding2_bad1),
+        cmocka_unit_test(test_late_binding2_bad2),
+        cmocka_unit_test(test_late_binding2_bad3),
+        cmocka_unit_test(test_late_binding2_bad4),
+        cmocka_unit_test(test_late_binding2_bad5),
+        cmocka_unit_test(test_late_binding2_bad6),
+        cmocka_unit_test(test_late_binding2_bad7),
+        cmocka_unit_test(test_late_binding2_bad8),
+        cmocka_unit_test(test_late_binding2_info_good1),
+        cmocka_unit_test(test_late_binding2_info_bad1),
+        cmocka_unit_test(test_late_binding2_info_bad2),
+        cmocka_unit_test(test_late_binding2_info_bad3),
     };
 
     status += cmocka_run_group_tests(ifr_tests, group_setup, group_teardown);

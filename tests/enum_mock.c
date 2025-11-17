@@ -140,3 +140,15 @@ int late_binding(const char *device_path, const char *payload_path, uint32_t typ
     fprintf(stderr, "mock %s\n", __func__);
     return EXIT_SUCCESS;
 }
+
+int late_binding2(const char *device_path, const char *payload_path, uint32_t type, uint32_t flags)
+{
+    fprintf(stderr, "mock %s\n", __func__);
+    return EXIT_SUCCESS;
+}
+
+int late_binding_info(const char* device_path, uint32_t type)
+{
+    fprintf(stderr, "mock %s\n", __func__);
+    return EXIT_SUCCESS;
+}
