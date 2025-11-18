@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  */
 
 #include <stdint.h>
@@ -172,14 +172,20 @@ void gsc_driver_deinit(struct igsc_lib_ctx *lib_ctx)
 
 void gsc_metee_log(bool is_error, const char* fmt, ...)
 {
-    UNUSED_VAR(is_error);
 #define DEBUG_MSG_LEN 1024
     char msg[DEBUG_MSG_LEN];
     va_list varl;
     va_start(varl, fmt);
     vsnprintf(msg, DEBUG_MSG_LEN, fmt, varl);
     va_end(varl);
-    printf("%s\n", msg);
+    if (is_error)
+    {
+        gsc_error("%s", msg);
+    }
+    else
+    {
+        gsc_debug("%s", msg);
+    }
 }
 
 #define INIT_ITERATIONS  3
