@@ -1,5 +1,11 @@
 # IGSC FUL
 
+## [v1.0.1] - 2025-11-19
+
+### Fixed
+
+1. lib: fix metee logs
+
 ## [v1.0.0] - 2025-09-21
 
 ### Changed
