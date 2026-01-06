@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  */
 #include <stdarg.h>
 #include <stddef.h>
@@ -1003,6 +1003,56 @@ static void test_late_binding_bad7(void **state)
 }
 
 /**
+ * test: igsc late-binding --payload pload.bin --type vr-config --flags number
+ * bad --flags value
+ */
+static void test_late_binding_bad8(void** state)
+{
+    int ret;
+    char** argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("late-binding");
+    argv[argc++] = test_strdup("--payload");
+    argv[argc++] = test_strdup("pload.bin");
+    argv[argc++] = test_strdup("--type");
+    argv[argc++] = test_strdup("vr-config");
+    argv[argc++] = test_strdup("--flags");
+    argv[argc++] = test_strdup("number");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc late-binding --payload pload.bin --type vr-config --flags 0x00number
+ * bad --flags value (trailer)
+ */
+static void test_late_binding_bad9(void** state)
+{
+    int ret;
+    char** argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("late-binding");
+    argv[argc++] = test_strdup("--payload");
+    argv[argc++] = test_strdup("pload.bin");
+    argv[argc++] = test_strdup("--type");
+    argv[argc++] = test_strdup("vr-config");
+    argv[argc++] = test_strdup("--flags");
+    argv[argc++] = test_strdup("0x00number");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
  * test: igsc late-binding2 --payload pload.bin --type fan-table --flags 0x1 --device /dev/mei0
  */
 static void test_late_binding2_good1(void** state)
@@ -1238,6 +1288,56 @@ static void test_late_binding2_bad8(void** state)
 }
 
 /**
+ * test: igsc late-binding2 --payload pload.bin --type vr-config --flags number
+ * bad --flags value
+ */
+static void test_late_binding2_bad9(void** state)
+{
+    int ret;
+    char** argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("late-binding2");
+    argv[argc++] = test_strdup("--payload");
+    argv[argc++] = test_strdup("pload.bin");
+    argv[argc++] = test_strdup("--type");
+    argv[argc++] = test_strdup("vr-config");
+    argv[argc++] = test_strdup("--flags");
+    argv[argc++] = test_strdup("number");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc late-binding2 --payload pload.bin --type vr-config --flags 0x00number
+ * bad --flags value (trailer)
+ */
+static void test_late_binding2_bad10(void** state)
+{
+    int ret;
+    char** argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("late-binding2");
+    argv[argc++] = test_strdup("--payload");
+    argv[argc++] = test_strdup("pload.bin");
+    argv[argc++] = test_strdup("--type");
+    argv[argc++] = test_strdup("vr-config");
+    argv[argc++] = test_strdup("--flags");
+    argv[argc++] = test_strdup("0x00number");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
  * test: igsc late-binding2 info --type fan-table --device /dev/mei0
  */
 static void test_late_binding2_info_good1(void** state)
@@ -1369,6 +1469,8 @@ int main(void)
         cmocka_unit_test(test_late_binding_bad5),
         cmocka_unit_test(test_late_binding_bad6),
         cmocka_unit_test(test_late_binding_bad7),
+        cmocka_unit_test(test_late_binding_bad8),
+        cmocka_unit_test(test_late_binding_bad9),
         cmocka_unit_test(test_late_binding2_good1),
         cmocka_unit_test(test_late_binding2_good2),
         cmocka_unit_test(test_late_binding2_bad1),
@@ -1379,6 +1481,8 @@ int main(void)
         cmocka_unit_test(test_late_binding2_bad6),
         cmocka_unit_test(test_late_binding2_bad7),
         cmocka_unit_test(test_late_binding2_bad8),
+        cmocka_unit_test(test_late_binding2_bad9),
+        cmocka_unit_test(test_late_binding2_bad10),
         cmocka_unit_test(test_late_binding2_info_good1),
         cmocka_unit_test(test_late_binding2_info_bad1),
         cmocka_unit_test(test_late_binding2_info_bad2),

@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  */
 #include <limits.h>
 #include <stdint.h>
@@ -4940,6 +4940,7 @@ static int do_late_binding(int argc, char *argv[])
     bool flags_set = false;
     uint32_t type = 0;
     bool type_set = false;
+    char* end = NULL;
 
     if (argc <= 0)
     {
@@ -4974,7 +4975,12 @@ static int do_late_binding(int argc, char *argv[])
                 igsc_error("No flags argument provided\n");
                 return ERROR_BAD_ARGUMENT;
             }
-            flags = (uint32_t)strtol(argv[0], NULL, 16);
+            flags = (uint32_t)strtoul(argv[0], &end, 16);
+            if (end != argv[0] + strlen(argv[0]))
+            {
+                igsc_error("Bad flags argument\n");
+                return ERROR_BAD_ARGUMENT;
+            }
             flags_set = true;
         }
         else if (arg_is_type(argv[0]))
@@ -5085,6 +5091,7 @@ static int do_late_binding2_push(int argc, char* argv[])
     bool flags_set = false;
     uint32_t type = 0;
     bool type_set = false;
+    char* end = NULL;
 
     do
     {
@@ -5113,7 +5120,12 @@ static int do_late_binding2_push(int argc, char* argv[])
                 igsc_error("No flags argument provided\n");
                 return ERROR_BAD_ARGUMENT;
             }
-            flags = (uint32_t)strtol(argv[0], NULL, 16);
+            flags = (uint32_t)strtoul(argv[0], &end, 16);
+            if (end != argv[0] + strlen(argv[0]))
+            {
+                igsc_error("Bad flags argument\n");
+                return ERROR_BAD_ARGUMENT;
+            }
             flags_set = true;
         }
         else if (arg_is_type(argv[0]))
