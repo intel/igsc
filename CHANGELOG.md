@@ -1,9 +1,13 @@
 # IGSC FUL
 
+## [v1.0.2] - 2026-01-14
+
+### Fixed
+1. CMake: Linux: overwrite FORTIFY_SOURCE from distribution
+
 ## [v1.0.1] - 2025-11-19
 
 ### Fixed
-
 1. lib: fix metee logs
 
 ## [v1.0.0] - 2025-09-21
