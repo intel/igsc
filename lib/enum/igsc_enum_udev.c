@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  */
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -17,7 +17,9 @@
 #include "igsc_lib.h"
 #include "igsc_log.h"
 
-#define PCI_CLASS_PROCESSING_ACCELERATORS "0x128000"
+#define PCI_CLASS_ACCELERATOR_PROCESSING "0x120000"
+#define PCI_CLASS_ACCELERATOR_PROCESSING_BAD "0x128000"
+#define PCI_CLASS_DISPLAY_VGA "0x030000"
 
 struct igsc_device_iterator
 {
@@ -153,7 +155,19 @@ static struct udev_device *get_gfx_device(struct udev *udev, struct udev_device 
         }
 
         if ((ret = udev_enumerate_add_match_sysattr(enumerate, "class",
-                                                    PCI_CLASS_PROCESSING_ACCELERATORS)) < 0)
+                                                    PCI_CLASS_ACCELERATOR_PROCESSING)) < 0)
+        {
+            gsc_error("Cannot match udev sysattr: %d\n", ret);
+            goto clean_enum;
+        }
+        if ((ret = udev_enumerate_add_match_sysattr(enumerate, "class",
+                                                    PCI_CLASS_ACCELERATOR_PROCESSING_BAD)) < 0)
+        {
+            gsc_error("Cannot match udev sysattr: %d\n", ret);
+            goto clean_enum;
+        }
+        if ((ret = udev_enumerate_add_match_sysattr(enumerate, "class",
+                                                    PCI_CLASS_DISPLAY_VGA)) < 0)
         {
             gsc_error("Cannot match udev sysattr: %d\n", ret);
             goto clean_enum;
