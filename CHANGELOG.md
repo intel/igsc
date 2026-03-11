@@ -1,5 +1,22 @@
 # IGSC FUL
 
+## [v1.1.0] - 2026-03-15
+
+### Fixed
+1. cli: use signed variable
+2. cli: reject non-hex flags in late-binding
+
+### Removed
+1. cli: drop unneeded status print
+
+### Added
+1. enum: find device with separate bdf
+2. enum: udev: detect more gfx classes
+3. lib: add new late bind APIs
+4. test: add new late bind tests
+5. cli: add new late bind commands
+6. test: add tests for new late bind cli commands
+
 ## [v1.0.2] - 2026-01-14
 
 ### Fixed
