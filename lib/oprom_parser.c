@@ -359,8 +359,15 @@ static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len, u
     struct code_partition_directory_header *header = (struct code_partition_directory_header *)img->cpd_ptr;
     struct cpd_image *cpd_img = &img->cpd_img;
 
-    if (buf_len <= sizeof(*header) + header->num_of_entries * sizeof(header->entries[0]) ||
-         header->num_of_entries < MAX_INDEX)
+    if (buf_len < sizeof(*header))
+    {
+        gsc_error("Illegal oprom cpd image size (%zu  < %zu)\n",
+            buf_len, sizeof(*header));
+        return IGSC_ERROR_BAD_IMAGE;
+    }
+
+    if ((buf_len - sizeof(*header)) / sizeof(header->entries[0]) < header->num_of_entries ||
+        header->num_of_entries < MAX_INDEX)
     {
         gsc_error("Illegal oprom cpd image (size/num_of_entries %zu/%u)\n",
                   buf_len, header->num_of_entries);
