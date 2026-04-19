@@ -54,7 +54,6 @@ static bool use_progress_bar = false;
         fprintf(stdout, fmt, ##__VA_ARGS__);   \
 } while (0)
 
-#define MAX_UPDATE_IMAGE_SIZE (8*1024*1024)
 #define MAX_CONNECT_RETRIES 3
 #define CONNECT_RETRIES_SLEEP_MSEC 2000 /* 2 sec */
 
