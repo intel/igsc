@@ -2942,10 +2942,6 @@ int igsc_image_fwdata_init(IN OUT struct igsc_fwdata_image **img,
                            IN uint32_t buffer_len)
 {
     int ret;
-    if (img == NULL || buffer == NULL || buffer_len == 0)
-    {
-        return IGSC_ERROR_INVALID_PARAMETER;
-    }
 
     ret = image_fwdata_alloc_handle(img, buffer, buffer_len);
     if (ret != IGSC_SUCCESS)

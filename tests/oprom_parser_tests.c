@@ -509,7 +509,7 @@ static void test_oprom_parse_bad_signature_offset(void **state)
     assert_true(ret != IGSC_SUCCESS);
 }
 
-static void test_oprom_parse_bad_manifest_size_length(void **state)
+static void test_oprom_parse_bad_manifest_header_size_length(void **state)
 {
     int ret;
 
@@ -525,6 +525,50 @@ static void test_oprom_parse_bad_manifest_size_length(void **state)
                                           dir_header->entries[MANIFEST_INDEX].offset);
 
     manifest_header->header_length = manifest_header->size + 1;
+
+    ret = image_oprom_parse(img);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
+static void test_oprom_parse_bad_manifest_header_length_huge(void **state)
+{
+    int ret;
+
+    struct igsc_oprom_image *img = *state;
+    struct oprom_header_ext_v2 *pci_header = (struct oprom_header_ext_v2 *)img->buffer;
+
+    struct code_partition_directory_header *dir_header =
+        (struct code_partition_directory_header *)
+        (img->buffer + pci_header->unofficial_payload_offset);
+
+    // set manifest_header->header_length huge
+    struct mft_header *manifest_header = (struct mft_header *)((uint8_t *)dir_header +
+        dir_header->entries[MANIFEST_INDEX].offset);
+
+    manifest_header->header_length = UINT32_MAX;
+
+    ret = image_oprom_parse(img);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
+static void test_oprom_parse_bad_manifest_size_huge(void **state)
+{
+    int ret;
+
+    struct igsc_oprom_image *img = *state;
+    struct oprom_header_ext_v2 *pci_header = (struct oprom_header_ext_v2 *)img->buffer;
+
+    struct code_partition_directory_header *dir_header =
+        (struct code_partition_directory_header *)
+        (img->buffer + pci_header->unofficial_payload_offset);
+
+    // set manifest_header->size huge
+    struct mft_header *manifest_header = (struct mft_header *)((uint8_t *)dir_header +
+        dir_header->entries[MANIFEST_INDEX].offset);
+
+    manifest_header->size = UINT32_MAX;
 
     ret = image_oprom_parse(img);
 
@@ -727,7 +771,9 @@ int main(void)
         cmocka_unit_test_setup(test_oprom_parse_bad_manifest_offset_2, test_setup),
         cmocka_unit_test_setup(test_oprom_parse_bad_public_key_offset, test_setup),
         cmocka_unit_test_setup(test_oprom_parse_bad_signature_offset, test_setup),
-        cmocka_unit_test_setup(test_oprom_parse_bad_manifest_size_length, test_setup),
+        cmocka_unit_test_setup(test_oprom_parse_bad_manifest_header_size_length, test_setup),
+        cmocka_unit_test_setup(test_oprom_parse_bad_manifest_header_length_huge, test_setup),
+        cmocka_unit_test_setup(test_oprom_parse_bad_manifest_size_huge, test_setup),
         cmocka_unit_test_setup(test_oprom_parse_bad_metadata_offset, test_setup),
         cmocka_unit_test_setup(test_oprom_parse_bad_metadata_length, test_setup),
         cmocka_unit_test_setup(test_oprom_parse_manifest_ext_length_underflow, test_setup),
