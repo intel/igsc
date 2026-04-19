@@ -463,7 +463,8 @@ static int image_oprom_parse_cpd(struct igsc_oprom_image *img, size_t buf_len, u
 
     }
 
-    if (cpd_img->manifest_header->size < cpd_img->manifest_header->header_length)
+    if (cpd_img->manifest_header->size < cpd_img->manifest_header->header_length ||
+        cpd_img->manifest_header->size > IGSC_MAX_IMAGE_SIZE || cpd_img->manifest_header->header_length > IGSC_MAX_IMAGE_SIZE)
     {
         gsc_error("Illegal oprom cpd image (header size/length %u/%u)\n",
                   cpd_img->manifest_header->size, cpd_img->manifest_header->header_length);
@@ -993,7 +994,8 @@ int image_oprom_alloc_handle(struct igsc_oprom_image **img,
     void *_buffer;
 
     if (img == NULL || buffer == NULL ||
-        buffer_len <= sizeof(struct oprom_header_ext_v2))
+        buffer_len <= sizeof(struct oprom_header_ext_v2) ||
+        buffer_len > IGSC_MAX_IMAGE_SIZE)
     {
         return IGSC_ERROR_INVALID_PARAMETER;
     }
