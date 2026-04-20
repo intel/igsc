@@ -290,6 +290,7 @@ enum gsc_fwu_heci_metadata_version {
 #define MCHI_READ_FILE_EX 0xA
 
 #define FILE_ID_MCA_OEM_VERSION 0x1001f000
+#define FILE_ID_MCA_OEM_SERIAL_NUMBER 0x1001c500
 
 #define MCA_ARBH_SVN_COMMIT   0x1b
 #define MCA_ARBH_SVN_GET_INFO 0x1c

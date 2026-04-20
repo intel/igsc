@@ -118,14 +118,30 @@ static void print_oem_version(const struct igsc_oem_version *version)
 {
     if (version->length > IGSC_MAX_OEM_VERSION_LENGTH)
     {
-        printf("Illegal OEM Version: length bigger than %u\n", version->length);
+        printf("Illegal OEM Version: length %u bigger than %u\n", version->length, IGSC_MAX_OEM_VERSION_LENGTH);
         return;
     }
 
     printf("OEM Version: ");
     for (size_t i = 0; i < version->length; i++)
     {
-         printf("%x", version->version[i]);
+         printf("%02x", version->version[i]);
+    }
+    printf("\n");
+}
+
+static void print_oem_serial_number(const struct igsc_oem_serial_number *sn)
+{
+    if (sn->length > IGSC_MAX_OEM_SN_LENGTH)
+    {
+        printf("Illegal OEM serial number: length %u bigger than %u\n", sn->length, IGSC_MAX_OEM_SN_LENGTH);
+        return;
+    }
+
+    printf("OEM serial number: ");
+    for (size_t i = 0; i < sn->length; i++)
+    {
+         printf("%02x", sn->sn[i]);
     }
     printf("\n");
 }
@@ -1137,6 +1153,37 @@ int oem_version(struct igsc_device_handle *handle)
     }
 
     print_oem_version(&version);
+
+    return ret;
+}
+
+mockable_static
+int oem_serial_number(struct igsc_device_handle *handle)
+{
+    struct igsc_oem_serial_number sn;
+    int ret;
+    unsigned int retries = 0;
+
+    memset(&sn, 0, sizeof(sn));
+    while ((ret = igsc_device_oem_serial_number(handle, &sn)) == IGSC_ERROR_BUSY)
+    {
+        gsc_msleep(CONNECT_RETRIES_SLEEP_MSEC);
+        if (++retries >= MAX_CONNECT_RETRIES)
+            break;
+    }
+    if (ret != IGSC_SUCCESS)
+    {
+        if (ret == IGSC_ERROR_PERMISSION_DENIED)
+           igsc_error("Permission denied: missing required credentials to access the device\n");
+        else
+        {
+            igsc_error("Cannot retrieve OEM serial number from device\n");
+            print_device_fw_status(handle);
+        }
+        return EXIT_FAILURE;
+    }
+
+    print_oem_serial_number(&sn);
 
     return ret;
 }
@@ -3826,6 +3873,11 @@ static int do_oem_version(int argc, char *argv[])
     return do_no_special_args_func(argc, argv, oem_version);
 }
 
+static int do_oem_serial_number(int argc, char *argv[])
+{
+    return do_no_special_args_func(argc, argv, oem_serial_number);
+}
+
 static int do_gfsp_get_mem_err(int argc, char *argv[])
 {
     return do_no_special_args_func(argc, argv, get_mem_err);
@@ -4276,6 +4328,11 @@ static int do_oem(int argc, char *argv[])
     if (arg_is_token(sub_command, "version"))
     {
         return do_oem_version(argc, argv);
+    }
+
+    if (arg_is_token(sub_command, "sn"))
+    {
+        return do_oem_serial_number(argc, argv);
     }
 
     igsc_error("Wrong argument %s\n", sub_command);
@@ -5696,11 +5753,13 @@ static const struct gsc_op g_ops[] = {
         .name  = "oem",
         .op    = do_oem,
         .usage = {"version [--device <dev>]",
+                   "sn [--device <dev>]",
                    NULL},
         .help  = "Retrieve OEM version from the devices\n"
+                 "Retrieve OEM serial number from the devices\n"
                  "\nOPTIONS:\n\n"
                  "    -d | --device <device>\n"
-                 "            device to retrieve OEM version from\n"
+                 "            device to retrieve OEM info from\n"
     },
     {
         .name  = "arbsvn",

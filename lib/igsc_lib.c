@@ -3777,6 +3777,41 @@ int igsc_device_oem_version(IN  struct igsc_device_handle *handle,
     return ret;
 }
 
+int igsc_device_oem_serial_number(IN  struct igsc_device_handle *handle,
+                                  OUT struct igsc_oem_serial_number *sn)
+{
+    int ret;
+    uint32_t received_sn_size;
+
+    if (!handle || !sn)
+    {
+       gsc_error("Invalid parameters\n");
+       return IGSC_ERROR_INVALID_PARAMETER;
+    }
+
+    ret = mchi_read_file(handle, FILE_ID_MCA_OEM_SERIAL_NUMBER,
+                         IGSC_MAX_OEM_SN_LENGTH, sn->sn,
+                         &received_sn_size);
+    if (ret != IGSC_SUCCESS)
+    {
+       gsc_error("Failed to read OEM_SERIAL_NUMBER file, ret=%d\n", ret);
+       return ret;
+    }
+
+    gsc_debug("ret = %d, received %u bytes\n", ret, received_sn_size);
+
+    if (received_sn_size == 0 || received_sn_size > IGSC_MAX_OEM_SN_LENGTH)
+    {
+       gsc_error("Received wrong size of OEM_SERIAL_NUMBER file (%u)\n", received_sn_size);
+       return IGSC_ERROR_PROTOCOL;
+    }
+
+    gsc_trace_hex_dump("OEM Serial Number:", sn->sn, received_sn_size);
+
+    sn->length = (uint16_t) received_sn_size;
+    return ret;
+}
+
 int igsc_read_fw_status_reg(IN struct igsc_device_handle *handle,
                             IN uint32_t fwsts_index,
                             OUT uint32_t *fwsts_value)

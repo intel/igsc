@@ -151,6 +151,16 @@ struct igsc_oem_version {
     uint8_t  version[IGSC_MAX_OEM_VERSION_LENGTH];  /**< buffer to store oem version */
 };
 
+#define IGSC_MAX_OEM_SN_LENGTH 512
+
+/**
+ * Structure to store oem serial number
+ */
+struct igsc_oem_serial_number {
+    uint16_t length; /**< actual OEM serial number length */
+    uint8_t  sn[IGSC_MAX_OEM_SN_LENGTH];  /**< buffer to store the oem serial number */
+};
+
 /**
  * versions comparison results
  */
@@ -1581,6 +1591,18 @@ int igsc_ecc_config_get(IN  struct igsc_device_handle *handle,
 IGSC_EXPORT
 int igsc_device_oem_version(IN  struct igsc_device_handle *handle,
                             OUT struct igsc_oem_version *version);
+
+/**
+ *  @brief Retrieves the OEM serial number from the device.
+ *
+ *  @param handle A handle to the device.
+ *  @param sn The memory to store obtained OEM serial number.
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_device_oem_serial_number(IN  struct igsc_device_handle *handle,
+                                  OUT struct igsc_oem_serial_number *sn);
 
 /**
  *  @brief Retrieves the IFR Binary Version from the device.

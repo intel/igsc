@@ -630,6 +630,20 @@ static void igsc_device_oem_version_bad_version(void **state)
     assert_int_equal(igsc_device_oem_version(handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
 }
 
+static void igsc_device_oem_serial_number_bad_handle(void **state)
+{
+    struct igsc_oem_serial_number sn;
+
+    assert_int_equal(igsc_device_oem_serial_number(NULL, &sn), IGSC_ERROR_INVALID_PARAMETER);
+}
+
+static void igsc_device_oem_serial_number_bad_sn(void **state)
+{
+    struct igsc_device_handle *handle = *state;
+
+    assert_int_equal(igsc_device_oem_serial_number(handle, NULL), IGSC_ERROR_INVALID_PARAMETER);
+}
+
 static void igsc_device_psc_version_bad_handle(void **state)
 {
     struct igsc_psc_version version;
@@ -1209,6 +1223,8 @@ int main(void)
     const struct CMUnitTest get_version_tests[] = {
         cmocka_unit_test(igsc_device_oem_version_bad_handle),
         cmocka_unit_test(igsc_device_oem_version_bad_version),
+        cmocka_unit_test(igsc_device_oem_serial_number_bad_handle),
+        cmocka_unit_test(igsc_device_oem_serial_number_bad_sn),
         cmocka_unit_test(igsc_device_psc_version_bad_handle),
         cmocka_unit_test(igsc_device_psc_version_bad_version),
         cmocka_unit_test(igsc_device_ifr_bin_version_bad_handle),
