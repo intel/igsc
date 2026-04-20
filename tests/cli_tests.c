@@ -1329,6 +1329,125 @@ static void test_progress_percent_2(void **state)
     printf("\n");
 }
 
+/**
+ * test: igsc oem version bad_arg
+ */
+static void test_oem_version_bad_1(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("oem");
+    argv[argc++] = test_strdup("version");
+    argv[argc++] = test_strdup("bad_arg");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc oem version --image fw.img
+ */
+static void test_oem_version_bad_2(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("oem");
+    argv[argc++] = test_strdup("version");
+    argv[argc++] = test_strdup("--image");
+    argv[argc++] = test_strdup("fw.img");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc oem sn bad_arg
+ */
+static void test_oem_sn_bad_1(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("oem");
+    argv[argc++] = test_strdup("sn");
+    argv[argc++] = test_strdup("bad_arg");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc oem sn --image fw.img
+ */
+static void test_oem_sn_bad_2(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("oem");
+    argv[argc++] = test_strdup("sn");
+    argv[argc++] = test_strdup("--image");
+    argv[argc++] = test_strdup("fw.img");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc oem (missing subcommand)
+ */
+static void test_oem_bad_1(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("oem");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
+/**
+ * test: igsc oem bad_sub
+ */
+static void test_oem_bad_2(void **state)
+{
+    int ret;
+    char **argv = *state;
+    int argc = 1;
+
+    argv[argc++] = test_strdup("oem");
+    argv[argc++] = test_strdup("bad_sub");
+
+    ret = ut_main(argc, argv);
+
+    test_arg_free(argc, argv);
+
+    assert_true(ret != EXIT_SUCCESS);
+}
+
 
 /**
  * igsc fw version --image <image>
@@ -1401,6 +1520,12 @@ int main(void)
         cmocka_unit_test(test_oprom_code_version_bad_1),
         cmocka_unit_test(test_oprom_code_version_bad_2),
         cmocka_unit_test(test_oprom_code_version_bad_3),
+        cmocka_unit_test(test_oem_version_bad_1),
+        cmocka_unit_test(test_oem_version_bad_2),
+        cmocka_unit_test(test_oem_sn_bad_1),
+        cmocka_unit_test(test_oem_sn_bad_2),
+        cmocka_unit_test(test_oem_bad_1),
+        cmocka_unit_test(test_oem_bad_2),
     };
 
     const struct CMUnitTest progress_bar_tests[] = {
