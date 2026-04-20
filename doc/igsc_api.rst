@@ -131,7 +131,18 @@ image.
        uint8_t  version[IGSC_MAX_OEM_VERSION_LENGTH];  /**< buffer to store oem version */
    };
 
-9. Structure to store ifr binary version data
+9. Structure to store oem serial number data
+
+.. code-block:: c
+
+   #define IGSC_MAX_OEM_SN_LENGTH 512
+
+   struct igsc_oem_serial_number {
+       uint16_t length; /**< actual OEM serial number length */
+       uint8_t  sn[IGSC_MAX_OEM_SN_LENGTH];  /**< buffer to store the oem serial number */
+   };
+
+10. Structure to store ifr binary version data
 
 .. code-block:: c
 
@@ -142,7 +153,7 @@ image.
         uint16_t   build;      /**< IFR Binary Build Number */
     };
 
-10. Structure to store psc version data
+11. Structure to store psc version data
 
 .. code-block:: c
 
@@ -1388,11 +1399,27 @@ The following APIs retrieve versions of the relevant firmware components.
 
    The OEM version is Firmware Named Variable which a customer can use to set
    its own version during building the image or at manufacturing line.
-   In case OEM version is not implemented by the firmware, the api returns
-   MKHI_STATUS_NOT_FOUND(0x81) or MKHI_STATUS_INVALID_PARAMS(0x85) depending on the
-   firmware.
+   The function returns IGSC_SUCCESS on success and the version data in the
+   version structure. If the OEM version file does not exist in the firmware
+   or the received data size is invalid, the function returns IGSC_ERROR_PROTOCOL.
+   Other IGSC_ERROR_* codes may be returned on communication or internal errors.
 
    .. code-block:: c
 
       int igsc_device_oem_version(IN  struct igsc_device_handle *handle,
                                   OUT struct igsc_oem_version *version);
+
+4. Retrieve the OEM serial number from the device:
+
+   The function reads the OEM programmed serial number from the device.
+   The serial number is programmed by AIBs using FPT tool on the manufacturing line.
+   The function returns IGSC_SUCCESS on success and the serial number data
+   in the sn structure. If the OEM serial number file does not exist in the
+   firmware or the received data size is invalid, the function returns
+   IGSC_ERROR_PROTOCOL.
+   Other IGSC_ERROR_* codes may be returned on communication or internal errors.
+
+   .. code-block:: c
+
+      int igsc_device_oem_serial_number(IN  struct igsc_device_handle *handle,
+                                        OUT struct igsc_oem_serial_number *sn);
