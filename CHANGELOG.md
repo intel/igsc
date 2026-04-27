@@ -1,5 +1,12 @@
 # IGSC FUL
 
+## [v1.2.0] - 2026-04-27
+
+### Added
+
+1. add OEM serial number API
+2. test: add CLI bad input tests for oem
+
 ## [v1.1.0] - 2026-03-15
 
 ### Fixed
