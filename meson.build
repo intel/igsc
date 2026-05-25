@@ -75,7 +75,21 @@ add_project_link_arguments(
   language: 'c'
 )
 
-inc_dirs = include_directories('include')
+ver_conf = configuration_data()
+ver_conf.set('GSC_VERSION_MAJOR', lt_major)
+ver_conf.set('GSC_VERSION_MINOR', lt_minor)
+ver_conf.set('GSC_VERSION_PATCH', lt_patch)
+ver_conf.set('GSC_VERSION_BUILD', '0')
+
+igsc_lib_h = configure_file(
+  input : 'include/igsc_lib.h.in',
+  output : 'igsc_lib.h',
+  configuration : ver_conf,
+  install : true,
+  install_dir : get_option('includedir'),
+)
+
+inc_dirs = include_directories('include', '.')
 
 subdir('lib')
 

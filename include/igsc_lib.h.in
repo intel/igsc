@@ -50,6 +50,11 @@ extern "C" {
 #include <stdbool.h>
 #include <stddef.h>
 
+#define IGSC_LIBRARY_VERSION_MAJOR (@GSC_VERSION_MAJOR@)
+#define IGSC_LIBRARY_VERSION_MINOR (@GSC_VERSION_MINOR@)
+#define IGSC_LIBRARY_VERSION_PATCH (@GSC_VERSION_PATCH@)
+#define IGSC_LIBRARY_VERSION_BUILD (@GSC_VERSION_BUILD@)
+
 #ifndef BIT
 #define BIT(x) (1U << (x))
 #endif /* BIT */
@@ -1871,6 +1876,19 @@ int igsc_memory_ppr_status(IN struct  igsc_device_handle *handle,
 /**
  * @}
  */
+
+/**
+ *  @brief Return the library version
+ *
+ *  @param major pointer to fill for major version part
+ *  @param minor pointer to fill for minor version part
+ *  @param patch pointer to fill for patch version part
+ *  @param build pointer to fill for build version part
+ */
+IGSC_EXPORT
+void igsc_library_version(uint32_t *major, uint32_t *minor,
+                          uint32_t *patch, uint32_t *build);
+
 #ifdef __cplusplus
 }
 #endif

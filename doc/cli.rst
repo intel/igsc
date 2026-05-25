@@ -17,8 +17,9 @@ usage of the library.
        * *oprom-code* : code (GOP) OPROM partition
        * *oprom-data* : data (VBT) OPROM partition
 
-    *Flgas:*
+    *Flags:*
        * -h | --help: displays usage and help for the tool
+       * -V | --version: displays the CLI version and igsc library version
        * -v | --verbose:  verbose mode
 
 

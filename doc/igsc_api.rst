@@ -8,8 +8,6 @@
 
 3. Samples
 
-4. Library API versioning.
-
 2.1 Introduction
 ~~~~~~~~~~~~~~~~~
 
@@ -1423,3 +1421,22 @@ The following APIs retrieve versions of the relevant firmware components.
 
       int igsc_device_oem_serial_number(IN  struct igsc_device_handle *handle,
                                         OUT struct igsc_oem_serial_number *sn);
+
+2.13 Library API versioning
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The library version is available through macros and a runtime API:
+
+.. code-block:: c
+
+    #define IGSC_LIBRARY_VERSION_MAJOR (1)
+    #define IGSC_LIBRARY_VERSION_MINOR (2)
+    #define IGSC_LIBRARY_VERSION_PATCH (0)
+    #define IGSC_LIBRARY_VERSION_BUILD (0)
+
+    void igsc_library_version(OUT uint32_t *major,
+                              OUT uint32_t *minor,
+                              OUT uint32_t *patch,
+                              OUT uint32_t *build);
+
+All output parameters are optional and can be ``NULL``.

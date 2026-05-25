@@ -5809,7 +5809,11 @@ static const char igsc_version[] = IGSC_VERSION;
 
 static void print_version(const char *exe_name)
 {
+    uint32_t major, minor, patch, build;
+
     printf("%s version %s\n", exe_name, igsc_version);
+    igsc_library_version(&major, &minor, &patch, &build);
+    printf("igsc library version %u.%u.%u.%u\n", major, minor, patch, build);
 }
 
 /* FIXME: currently same as usage */
