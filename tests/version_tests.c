@@ -999,6 +999,47 @@ static void test_image_fw_version_zero_length(void **state)
 }
 
 
+static void test_igsc_library_version_positive(void **state)
+{
+    uint32_t major = IGSC_LIBRARY_VERSION_MAJOR + 1;
+    uint32_t minor = IGSC_LIBRARY_VERSION_MINOR + 1;
+    uint32_t patch = IGSC_LIBRARY_VERSION_PATCH + 1;
+    uint32_t build = IGSC_LIBRARY_VERSION_BUILD + 1;
+
+    (void)state;
+
+    igsc_library_version(&major, &minor, &patch, &build);
+    assert_int_equal(major, IGSC_LIBRARY_VERSION_MAJOR);
+    assert_int_equal(minor, IGSC_LIBRARY_VERSION_MINOR);
+    assert_int_equal(patch, IGSC_LIBRARY_VERSION_PATCH);
+    assert_int_equal(build, IGSC_LIBRARY_VERSION_BUILD);
+}
+
+static void test_igsc_library_version_nulls(void **state)
+{
+    uint32_t v;
+
+    (void)state;
+
+    igsc_library_version(NULL, NULL, NULL, NULL);
+
+    v = IGSC_LIBRARY_VERSION_MAJOR + 1;
+    igsc_library_version(&v, NULL, NULL, NULL);
+    assert_int_equal(v, IGSC_LIBRARY_VERSION_MAJOR);
+
+    v = IGSC_LIBRARY_VERSION_MINOR + 1;
+    igsc_library_version(NULL, &v, NULL, NULL);
+    assert_int_equal(v, IGSC_LIBRARY_VERSION_MINOR);
+
+    v = IGSC_LIBRARY_VERSION_PATCH + 1;
+    igsc_library_version(NULL, NULL, &v, NULL);
+    assert_int_equal(v, IGSC_LIBRARY_VERSION_PATCH);
+
+    v = IGSC_LIBRARY_VERSION_BUILD + 1;
+    igsc_library_version(NULL, NULL, NULL, &v);
+    assert_int_equal(v, IGSC_LIBRARY_VERSION_BUILD);
+}
+
 int main(void)
 {
     const struct CMUnitTest tests[] = {
@@ -1052,6 +1093,8 @@ int main(void)
         cmocka_unit_test(test_image_fw_version_empty_buffer),
         cmocka_unit_test(test_image_fw_version_null_version),
         cmocka_unit_test(test_image_fw_version_zero_length),
+        cmocka_unit_test(test_igsc_library_version_positive),
+        cmocka_unit_test(test_igsc_library_version_nulls),
     };
 
     return cmocka_run_group_tests(tests, group_setup, group_teardown);

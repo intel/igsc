@@ -11,6 +11,12 @@ if(WIN32)
     )
 endif()
 
+configure_file(
+    "${CMAKE_SOURCE_DIR}/include/igsc_lib.h.in"
+    "${CMAKE_BINARY_DIR}/include/igsc_lib.h"
+    @ONLY
+)
+
 set(ENUM_SOURCES
      $<$<BOOL:${UNIX}>:enum/igsc_enum_udev.c>
      $<$<BOOL:${WIN32}>:enum/igsc_enum_windows.c>
@@ -36,10 +42,14 @@ set(LIBSOURCES
 
 add_library(${PROJECT_NAME} ${LIBSOURCES})
 set_target_properties(${PROJECT_NAME}
-                      PROPERTIES PUBLIC_HEADER ${CMAKE_SOURCE_DIR}/include/igsc_lib.h)
+                      PROPERTIES PUBLIC_HEADER ${CMAKE_BINARY_DIR}/include/igsc_lib.h)
 
 target_include_directories(${PROJECT_NAME} PRIVATE .)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(${PROJECT_NAME} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
 
 target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
 

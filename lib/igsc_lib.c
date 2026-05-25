@@ -3852,3 +3852,16 @@ exit:
 
     return status;
 }
+
+void igsc_library_version(uint32_t *major, uint32_t *minor,
+                          uint32_t *patch, uint32_t *build)
+{
+    if (major)
+        *major = IGSC_LIBRARY_VERSION_MAJOR;
+    if (minor)
+        *minor = IGSC_LIBRARY_VERSION_MINOR;
+    if (patch)
+        *patch = IGSC_LIBRARY_VERSION_PATCH;
+    if (build)
+        *build = IGSC_LIBRARY_VERSION_BUILD;
+}
