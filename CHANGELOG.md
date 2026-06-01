@@ -1,5 +1,12 @@
 # IGSC FUL
 
+## [v1.3.0] - 2026-06-01
+
+### Added
+
+1. lib: add igsc_library_version API for runtime version query
+2. test: add unit tests for library version
+
 ## [v1.2.0] - 2026-04-27
 
 ### Added
