@@ -39,6 +39,9 @@ static int group_setup(void **state)
         goto fail;
     }
 
+    img->buffer = (const uint8_t *)header;
+    img->buffer_len = IMAGE_SIZE;
+
     img->layout.table[FWU_FPT_ENTRY_FW_DATA_IMAGE].content = (uint8_t *)header;
     img->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].content = (uint8_t *)metadata;
     *state = img;
