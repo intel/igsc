@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  */
 
 #include <stdint.h>
@@ -2950,7 +2950,7 @@ int igsc_image_fwdata_init(IN OUT struct igsc_fwdata_image **img,
     }
 
     gsc_fwu_img_layout_reset(&(*img)->layout);
-    ret = gsc_fwu_img_layout_parse(&(*img)->layout, buffer, buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA);
+    ret = gsc_fwu_img_layout_parse(&(*img)->layout, (*img)->buffer, (*img)->buffer_len, GSC_FWU_HECI_PAYLOAD_TYPE_FWDATA);
     if (ret != IGSC_SUCCESS)
     {
         igsc_image_fwdata_release(*img);
