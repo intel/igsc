@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  */
 
 #include <stdint.h>
@@ -377,20 +377,22 @@ int igsc_gfsp_heci_cmd(struct igsc_device_handle *handle, uint32_t gfsp_cmd,
     struct gfsp_generic_req *req;
     struct gfsp_generic_res *resp;
 
+    static const size_t IGSC_GFSP_BUFFER_MAX_SIZE_BYTES = 0x10000;
+
     if (!handle || !handle->ctx || !actual_out_buffer_size ||
         (!in_buffer && in_buffer_size) || (!out_buffer && out_buffer_size))
     {
         return IGSC_ERROR_INVALID_PARAMETER;
     }
 
-    lib_ctx = handle->ctx;
-
-    if (in_buffer_size > lib_ctx->working_buffer_length - sizeof(*req))
+    if (in_buffer_size > IGSC_GFSP_BUFFER_MAX_SIZE_BYTES)
     {
-        gsc_error("Input buffer is too big, must not be bigger than %zd\n",
-                  lib_ctx->working_buffer_length - sizeof(*req));
+        gsc_error("Input buffer size %zu must not exceed %zu\n",
+            in_buffer_size, IGSC_GFSP_BUFFER_MAX_SIZE_BYTES);
         return IGSC_ERROR_INVALID_PARAMETER;
     }
+
+    lib_ctx = handle->ctx;
 
     gsc_debug("in generic gfsp heci command, initializing driver\n");
 
@@ -403,12 +405,6 @@ int igsc_gfsp_heci_cmd(struct igsc_device_handle *handle, uint32_t gfsp_cmd,
 
     req = (struct gfsp_generic_req *)lib_ctx->working_buffer;
     request_len = sizeof(*req) + in_buffer_size;
-    memset(req, 0, request_len);
-    if (in_buffer)
-    {
-        gsc_memcpy_s(req->buffer, lib_ctx->working_buffer_length - sizeof(*req),
-                     in_buffer, in_buffer_size);
-    }
 
     resp = (struct gfsp_generic_res *)lib_ctx->working_buffer;
     response_len = sizeof(*resp);
@@ -423,9 +419,15 @@ int igsc_gfsp_heci_cmd(struct igsc_device_handle *handle, uint32_t gfsp_cmd,
         goto exit;
     }
 
+    memset(req, 0, request_len);
     req->header.group_id = MKHI_GROUP_ID_GFSP;
     req->header.command = 0;
     req->gfsp_heci_header = gfsp_cmd;
+    if (in_buffer)
+    {
+        gsc_memcpy_s(req->buffer, lib_ctx->working_buffer_length - sizeof(*req),
+                     in_buffer, in_buffer_size);
+    }
 
     gsc_debug("sending command\n");
 
