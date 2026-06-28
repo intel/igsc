@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  */
 #include <stdarg.h>
 #include <stddef.h>
@@ -724,6 +724,15 @@ static void igsc_gfsp_heci_cmd_bad_actual_response_size(void **state)
                                         &buffer, 1, NULL), IGSC_ERROR_INVALID_PARAMETER);
 }
 
+static void igsc_gfsp_heci_cmd_big_in_buf_size(void **state)
+{
+    struct igsc_device_handle *handle = *state;
+    size_t actual_response_size;
+    uint8_t buffer;
+
+    assert_int_equal(igsc_gfsp_heci_cmd(handle, 0x30, &buffer, 0x20000,
+                                        &buffer, 1, &actual_response_size), IGSC_ERROR_INVALID_PARAMETER);
+}
 
 static void igsc_device_update_late_binding_config_bad_handle(void **state)
 {
@@ -1247,6 +1256,7 @@ int main(void)
         cmocka_unit_test(igsc_gfsp_heci_cmd_bad_in_buf),
         cmocka_unit_test(igsc_gfsp_heci_cmd_bad_out_buf),
         cmocka_unit_test(igsc_gfsp_heci_cmd_bad_actual_response_size),
+        cmocka_unit_test(igsc_gfsp_heci_cmd_big_in_buf_size),
     };
 
     const struct CMUnitTest late_binding_tests[] = {
