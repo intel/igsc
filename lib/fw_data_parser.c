@@ -49,6 +49,13 @@ int image_fwdata_get_version(struct igsc_fwdata_image *img,
     struct gsc_fwu_heci_image_metadata *metadata = (struct gsc_fwu_heci_image_metadata *)img->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].content;
     struct igsc_fwdata_metadata *meta = (struct igsc_fwdata_metadata *)&metadata->metadata;
 
+    if (img->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].size <
+        sizeof(*metadata) + sizeof(*meta))
+    {
+        gsc_error("FWDATA INFO partition too small\n");
+        return IGSC_ERROR_BAD_IMAGE;
+    }
+
     version->oem_manuf_data_version = meta->oem_manuf_data_version;
     version->major_vcn = meta->major_vcn;
     version->major_version = meta->major_fw_version;
@@ -61,6 +68,13 @@ int image_fwdata_get_version2(struct igsc_fwdata_image* img,
 {
     struct gsc_fwu_heci_image_metadata* metadata = (struct gsc_fwu_heci_image_metadata*)img->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].content;
     struct igsc_fwdata_metadata* meta = (struct igsc_fwdata_metadata*)&metadata->metadata;
+
+    if (img->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].size <
+        sizeof(*metadata) + sizeof(*meta))
+    {
+        gsc_error("FWDATA INFO partition too small\n");
+        return IGSC_ERROR_BAD_IMAGE;
+    }
 
     switch (metadata->metadata_format_version)
     {
