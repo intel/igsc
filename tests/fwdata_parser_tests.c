@@ -161,6 +161,47 @@ static void test_fwdata_get_version2_bad_format_version(void **state)
     assert_true(ret == IGSC_ERROR_BAD_IMAGE);
 }
 
+static void test_fwdata_get_version_info_too_small(void **state)
+{
+    struct igsc_fwdata_image *img = *state;
+    struct igsc_fwdata_version version;
+    int ret;
+
+    img->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].size = 0;
+
+    ret = image_fwdata_get_version(img, &version);
+
+    assert_true(ret == IGSC_ERROR_BAD_IMAGE);
+}
+
+static void test_fwdata_get_version2_info_too_small(void **state)
+{
+    struct igsc_fwdata_image *img = *state;
+    struct igsc_fwdata_version2 version;
+    int ret;
+
+    img->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].size = 0;
+
+    ret = image_fwdata_get_version2(img, &version);
+
+    assert_true(ret == IGSC_ERROR_BAD_IMAGE);
+}
+
+static void test_fwdata_get_version2_info_one_below_min(void **state)
+{
+    struct igsc_fwdata_image *img = *state;
+    struct igsc_fwdata_version2 version;
+    int ret;
+
+    img->layout.table[FWU_FPT_ENTRY_IMAGE_INFO].size =
+        sizeof(struct gsc_fwu_heci_image_metadata) +
+        sizeof(struct igsc_fwdata_metadata) - 1;
+
+    ret = image_fwdata_get_version2(img, &version);
+
+    assert_true(ret == IGSC_ERROR_BAD_IMAGE);
+}
+
 static void test_fwdata_parse_good_img(void **state)
 {
     int ret;
@@ -507,6 +548,9 @@ int main(void)
         cmocka_unit_test_setup(test_fwdata_get_version2_good_img, test_setup),
         cmocka_unit_test_setup(test_fwdata_get_version2_good_img2, test_setup),
         cmocka_unit_test_setup(test_fwdata_get_version2_bad_format_version, test_setup),
+        cmocka_unit_test_setup(test_fwdata_get_version_info_too_small, test_setup),
+        cmocka_unit_test_setup(test_fwdata_get_version2_info_too_small, test_setup),
+        cmocka_unit_test_setup(test_fwdata_get_version2_info_one_below_min, test_setup),
     };
 
     return cmocka_run_group_tests(tests, group_setup, group_teardown);
