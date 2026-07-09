@@ -108,7 +108,7 @@ static int image_fwdata_parse_extensions(struct igsc_fwdata_image *img,
     bool device_id_ext = false;
     bool manifest_ext = false;
 
-    while (cur_offset < ext_end)
+    while (cur_offset + sizeof(*header) <= ext_end)
     {
         header = (struct mft_ext_header_with_data *)(img->cpd_ptr + cur_offset);
         if (header->extension_length < sizeof(*header) ||
@@ -145,6 +145,13 @@ static int image_fwdata_parse_extensions(struct igsc_fwdata_image *img,
             manifest_ext = true;
         }
         cur_offset += header->extension_length;
+    }
+
+    if (cur_offset != ext_end)
+    {
+        gsc_error("Illegal fwdata image (extension trailer %zu bytes)\n",
+                  ext_end - cur_offset);
+        return IGSC_ERROR_BAD_IMAGE;
     }
 
     if (!manifest_ext || !device_id_ext)
