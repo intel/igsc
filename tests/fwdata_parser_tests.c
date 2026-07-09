@@ -522,6 +522,24 @@ static void test_fwdata_parse_bad_manifest_ext_length(void **state)
     assert_true(ret != IGSC_SUCCESS);
 }
 
+static void test_fwdata_parse_ext_partial_header_tail(void **state)
+{
+    int ret;
+    struct igsc_fwdata_image *img = *state;
+    struct code_partition_directory_header *dir_header =
+        (struct code_partition_directory_header *)
+            img->layout.table[FWU_FPT_ENTRY_FW_DATA_IMAGE].content;
+    struct mft_header *manifest_header =
+        (struct mft_header *)((uint8_t *)dir_header +
+                              dir_header->entries[CPD_MANIFEST_INDEX].offset);
+
+    manifest_header->size += 1;
+
+    ret = image_fwdata_parse(img);
+
+    assert_true(ret != IGSC_SUCCESS);
+}
+
 int main(void)
 {
     const struct CMUnitTest tests[] = {
@@ -545,6 +563,7 @@ int main(void)
         cmocka_unit_test_setup(test_fwdata_parse_manifest_ext_length_overflow, test_setup),
         cmocka_unit_test_setup(test_fwdata_parse_bad_manifest_device_ext_length, test_setup),
         cmocka_unit_test_setup(test_fwdata_parse_bad_manifest_ext_length, test_setup),
+        cmocka_unit_test_setup(test_fwdata_parse_ext_partial_header_tail, test_setup),
         cmocka_unit_test_setup(test_fwdata_get_version2_good_img, test_setup),
         cmocka_unit_test_setup(test_fwdata_get_version2_good_img2, test_setup),
         cmocka_unit_test_setup(test_fwdata_get_version2_bad_format_version, test_setup),
