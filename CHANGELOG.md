@@ -1,5 +1,30 @@
 # IGSC FUL
 
+## [v1.3.1] - 2026-07-12
+
+### Fixed
+
+1. lib: check buffer and number of entries
+2. lib: limit sizes in manifest header
+3. lib: use internal buffer in igsc_image_fwdata_init
+4. ifr: fix input buffer size check
+5. test: fix uninitialized buffer_len in fwdata parser tests
+6. lib: validate fwdata INFO partition minimum size
+7. lib: validate fwdata extension header bounds
+
+### Added
+
+1. test: cover undersized fwdata INFO partition
+3. test: cover fwdata extension partial header tail
+
+### Changed
+
+1. move to Visual Studio 2022
+
+### Removed
+
+1. cli: drop unused MAX_UPDATE_IMAGE_SIZE macro
+
 ## [v1.3.0] - 2026-06-01
 
 ### Added
