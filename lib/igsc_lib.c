@@ -2641,6 +2641,11 @@ int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
 
 uint32_t igsc_get_last_firmware_status(IN  struct igsc_device_handle *handle)
 {
+    if (handle == NULL || handle->ctx == NULL)
+    {
+        gsc_error("Invalid parameter: Null pointer\n");
+        return 0;
+    }
     return handle->ctx->last_firmware_status;
 }
 
