@@ -1,5 +1,12 @@
 # IGSC FUL
 
+## [v1.3.2] - 2026-09-09
+
+### Fixed
+
+1. lib: check input data in igsc_get_last_firmware_status
+2. fix LegalCopyright copyright string format
+
 ## [v1.3.1] - 2026-07-12
 
 ### Fixed
