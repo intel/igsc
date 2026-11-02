@@ -231,19 +231,26 @@ const char *oprom_type_to_str(uint32_t type)
     return "DATA and CODE";
 }
 
+/*
+ * OPROM version is stored as four little-endian 16-bit words:
+ * major, minor, hotfix, build
+ */
+static inline uint16_t oprom_version_word(const struct igsc_oprom_version *oprom_version,
+                                          unsigned int index)
+{
+    return (uint16_t)(oprom_version->version[2 * index] |
+                      (oprom_version->version[2 * index + 1] << 8));
+}
+
 static void print_oprom_version(enum igsc_oprom_type type,
                                 const struct igsc_oprom_version *oprom_version)
 {
-    printf("OPROM %s Version: %02X %02X %02X %02X %02X %02X %02X %02X\n",
+    printf("OPROM %s Version: %u.%u.%u.%u\n",
            oprom_type_to_str(type),
-           oprom_version->version[0],
-           oprom_version->version[1],
-           oprom_version->version[2],
-           oprom_version->version[3],
-           oprom_version->version[4],
-           oprom_version->version[5],
-           oprom_version->version[6],
-           oprom_version->version[7]);
+           oprom_version_word(oprom_version, 0),
+           oprom_version_word(oprom_version, 1),
+           oprom_version_word(oprom_version, 2),
+           oprom_version_word(oprom_version, 3));
 }
 
 static void print_oprom_device_info(const struct igsc_oprom_device_info *info)
